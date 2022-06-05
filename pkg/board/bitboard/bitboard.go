@@ -19,27 +19,27 @@ import (
 	"laptudirm.com/x/mess/pkg/square"
 )
 
-// Bitboard is a 64-bit bitboard
-type Bitboard uint64
+// Board is a 64-bit bitboard
+type Board uint64
 
 // IsSet checks whether the given Square is set in the bitboard.
-func (b Bitboard) IsSet(index square.Square) bool {
+func (b Board) IsSet(index square.Square) bool {
 	return (b>>index)&1 == 1
 }
 
 // Set sets the given Square in the bitboard.
-func (b *Bitboard) Set(index square.Square) {
+func (b *Board) Set(index square.Square) {
 	new := *b | buffer(index)
 	b = &new
 }
 
 // Unset clears the given Square in the bitboard.
-func (b *Bitboard) Unset(index square.Square) {
+func (b *Board) Unset(index square.Square) {
 	new := *b &^ buffer(index)
 	b = &new
 }
 
 // buffer creates a utility bitboard in which only the given square is set.
-func buffer(index square.Square) Bitboard {
-	return 1 << Bitboard(index)
+func buffer(index square.Square) Board {
+	return 1 << Board(index)
 }

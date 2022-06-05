@@ -26,8 +26,8 @@ import (
 // Board represents the state of a chessboard at a given position.
 type Board struct {
 	// position data
-	position  [64]piece.Piece       // 8x8 for fast lookup
-	bitboards [13]bitboard.Bitboard // bitboards for eval
+	position  [64]piece.Piece    // 8x8 for fast lookup
+	bitboards [13]bitboard.Board // bitboards for eval
 
 	sideToMove piece.Color
 
