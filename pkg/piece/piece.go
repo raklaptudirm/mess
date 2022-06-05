@@ -39,7 +39,8 @@ type Color int
 
 // various piece colors
 const (
-	WhiteColor Color = iota
+	EmptyColor Color = iota
+	WhiteColor
 	BlackColor
 )
 
@@ -50,6 +51,8 @@ func (c Color) String() string {
 		return "b"
 	case WhiteColor:
 		return "w"
+	case EmptyColor:
+		return "e"
 	default:
 		panic("new color: invalid color id")
 	}
@@ -141,11 +144,14 @@ func (p Piece) Type() Piece {
 
 // Color returns the piece color of the given Piece.
 func (p Piece) Color() Color {
-	if p > Pawn {
+	switch {
+	case p == Empty:
+		return EmptyColor
+	case p > Pawn:
 		return BlackColor
+	default:
+		return WhiteColor
 	}
-
-	return WhiteColor
 }
 
 // Is checks if the type of the given Piece matches the given type.
