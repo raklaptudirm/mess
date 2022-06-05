@@ -27,7 +27,7 @@ import (
 type Board struct {
 	// position data
 	position  [64]piece.Piece       // 8x8 for fast lookup
-	bitboards [12]bitboard.Bitboard // bitboards for eval
+	bitboards [13]bitboard.Bitboard // bitboards for eval
 
 	sideToMove piece.Color
 
