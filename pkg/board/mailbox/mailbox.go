@@ -27,19 +27,19 @@ type Board [8 * 8]piece.Piece
 
 // String converts a Board into it's human readable string representation.
 func (b Board) String() string {
-
+	// leading divider
 	s := "+---+---+---+---+---+---+---+---+\n"
 
-	for rank := 0; rank < 8; rank++ {
+	for rank := square.Rank8; rank <= square.Rank1; rank++ {
 		s += "| "
 
-		for file := 0; file < 8; file++ {
-			square := square.Square(rank*8 + file)
+		for file := square.FileA; file <= square.FileH; file++ {
+			square := square.From(file, rank)
 			s += b[square].String() + " | "
 		}
 
-		s += fmt.Sprintln(8 - rank)
-		s += "+---+---+---+---+---+---+---+---+\n"
+		s += rank.String()
+		s += "\n+---+---+---+---+---+---+---+---+\n"
 	}
 
 	s += "  a   b   c   d   e   f   g   h\n"
@@ -54,6 +54,8 @@ func (b *Board) FEN() string {
 
 	empty := 0
 	for i, p := range b {
+		currSquare := square.Square(i)
+
 		if p == piece.Empty {
 			// increase empty square count
 			empty++
@@ -67,15 +69,15 @@ func (b *Board) FEN() string {
 			fen += p.String()
 		}
 
-		// rank separators
-		if (i+1)%8 == 0 {
+		// rank separators after last file
+		if currSquare.File() == square.FileH {
 			if empty > 0 {
 				fen += fmt.Sprint(empty)
 				empty = 0
 			}
 
-			// no trailing separator
-			if i < 63 {
+			// no trailing separator after last rank
+			if currSquare.Rank() != square.Rank1 {
 				fen += "/"
 			}
 		}

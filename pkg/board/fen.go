@@ -32,13 +32,13 @@ func New(fen string) *Board {
 	// generate position
 	ranks := strings.Split(parts[0], "/")
 	for rankId, rankData := range ranks {
-		fileId := 0
+		fileId := square.FileA
 		for _, id := range rankData {
-			square := square.Square(rankId*8 + fileId)
+			currSquare := square.From(fileId, square.Rank(rankId))
 
 			if id >= '1' && id <= '8' {
-				skip := int(id - 48) // ascii value to number
-				fileId += skip       // skip over squares
+				skip := square.File(id - 48) // ascii value to number
+				fileId += skip               // skip over squares
 				continue
 			}
 
@@ -46,8 +46,8 @@ func New(fen string) *Board {
 			pieceType := piece.New(string(id))
 
 			// update board
-			board.position[square] = pieceType     // 8x8
-			board.bitboards[pieceType].Set(square) // bitboard
+			board.position[currSquare] = pieceType     // 8x8
+			board.bitboards[pieceType].Set(currSquare) // bitboard
 
 			fileId++
 		}

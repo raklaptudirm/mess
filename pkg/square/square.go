@@ -19,17 +19,24 @@
 // The null square is represented using the "-" symbol.
 package square
 
+import "fmt"
+
 // New creates a new instance of a Square from the given identifier.
 func New(id string) Square {
 	switch {
 	case id == "-":
 		return None
-	case len(id) != 2, id[0] < 'a' || id[0] > 'h', id[1] < '1' || id[1] > '8':
+	case len(id) != 2:
 		panic("new square: invalid square id")
 	}
 
 	// ascii code to square index
-	return Square((8-id[1]+48)*8 + (id[0] - 97))
+	return From(fileFrom(string(id[0])), rankFrom(string(id[1])))
+}
+
+// From creates a new instance of a Square from the given file and rank.
+func From(file File, rank Rank) Square {
+	return Square(int(rank*8) + int(file))
 }
 
 // Square represents a square on a chessboard.
@@ -119,5 +126,15 @@ func (s Square) String() string {
 	}
 
 	// <file><rank>
-	return string(s%8+97) + string(8-s/8+48)
+	return fmt.Sprintf("%s%s", s.File(), s.Rank())
+}
+
+// File returns the file of the given square.
+func (s Square) File() File {
+	return File(s % 8)
+}
+
+// Rank returns the rank of the given square.
+func (s Square) Rank() Rank {
+	return Rank(s / 8)
 }
