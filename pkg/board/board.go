@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"laptudirm.com/x/mess/pkg/board/bitboard"
+	"laptudirm.com/x/mess/pkg/board/mailbox"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
 )
@@ -26,7 +27,7 @@ import (
 // Board represents the state of a chessboard at a given position.
 type Board struct {
 	// position data
-	position  [64]piece.Piece    // 8x8 for fast lookup
+	position  mailbox.Board      // 8x8 for fast lookup
 	bitboards [13]bitboard.Board // bitboards for eval
 
 	sideToMove piece.Color
@@ -46,26 +47,7 @@ type Board struct {
 
 // String converts a Board into a human readable string.
 func (b Board) String() string {
-	divider := "+---+---+---+---+---+---+---+---+\n"
-
-	s := divider
-
-	for rank := 0; rank < 8; rank++ {
-		s += "| "
-
-		for file := 0; file < 8; file++ {
-			square := square.Square(rank*8 + file)
-			s += b.position[square].String() + " | "
-		}
-
-		s += fmt.Sprintln(8 - rank)
-		s += divider
-	}
-
-	s += "  a   b   c   d   e   f   g   h\n\n"
-	s += fmt.Sprintf("FEN: %s\n", b.FEN())
-
-	return s
+	return fmt.Sprintf("%s\nFEN: %s\n", b.position, b.FEN())
 }
 
 // MakeMove plays a legal move on the Board.

@@ -74,70 +74,35 @@ func New(fen string) *Board {
 
 // FEN returns the fen string of the current Board position.
 func (b *Board) FEN() string {
-	var fen string
-
-	// position strings
-	empty := 0
-	for i, p := range b.position {
-		if p == piece.Empty {
-			empty++
-		} else {
-
-			if empty > 0 {
-				fen += fmt.Sprint(empty)
-				empty = 0
-			}
-
-			fen += p.String()
-		}
-
-		// rank separators
-		if (i+1)%8 == 0 {
-			if empty > 0 {
-				fen += fmt.Sprint(empty)
-				empty = 0
-			}
-
-			if i < 63 {
-				fen += "/"
-			}
-		}
+	// castling rights
+	var castling string
+	if castling = b.castleFEN(); castling != "" {
+		castling += " "
 	}
 
-	// side to move
-	fen += " " + b.sideToMove.String() + " "
+	// <position> <side to move> <castling rights> <en passant target> <half move count> <full move count>
+	return fmt.Sprintf("%s %s %s%s %d %d", b.position.FEN(), b.sideToMove, castling, b.enPassantTarget, b.halfMoves, b.fullMoves)
+}
 
-	// castling rights
-	any := false
+// castleFEN generates the castling rights part of a fen string.
+func (b *Board) castleFEN() string {
+	var fen string
+
 	if b.whiteCastleKingside {
 		fen += "K"
-		any = true
 	}
 
 	if b.whiteCastleQueenside {
 		fen += "Q"
-		any = true
 	}
 
 	if b.blackCastleKingside {
 		fen += "k"
-		any = true
 	}
 
 	if b.blackCastleQueenside {
 		fen += "q"
-		any = true
 	}
-
-	if any {
-		fen += " "
-	}
-
-	// en passant target square
-	fen += b.enPassantTarget.String()
-
-	// move counters
-	fen += fmt.Sprintf(" %d %d", b.halfMoves, b.fullMoves)
 
 	return fen
 }
