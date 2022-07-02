@@ -71,13 +71,15 @@ func (b *Board) MakeMove(from, to square.Square) {
 		b.halfMoves++
 	}
 
+	// move piece in bitboard
+	b.bitboards[b.position[from]].Unset(from)
+	b.bitboards[b.position[from]].Set(to)
+	// remove captured piece from bitboard
+	b.bitboards[b.position[to]].Unset(to)
+
 	// move piece in 8x8 board
 	b.position[to] = b.position[from]
 	b.position[from] = piece.Empty
-
-	// move piece in bitboard
-	b.bitboards[b.position[to]].Unset(from)
-	b.bitboards[b.position[to]].Set(to)
 
 	b.switchTurn()
 	b.updateBitboards()
@@ -97,7 +99,7 @@ func (b *Board) updateBitboards() {
 	b.friends = bitboard.Empty
 	b.enemies = bitboard.Empty
 
-	for p := piece.King + piece.White; p <= piece.Pawn + piece.Black; p++ {
+	for p := piece.King + piece.White; p <= piece.Pawn+piece.Black; p++ {
 		if p.Color() == b.sideToMove {
 			b.friends |= b.bitboards[p]
 		} else {
