@@ -18,6 +18,7 @@ package board
 import (
 	"fmt"
 
+	"laptudirm.com/x/mess/pkg/attacks"
 	"laptudirm.com/x/mess/pkg/board/bitboard"
 	"laptudirm.com/x/mess/pkg/board/mailbox"
 	"laptudirm.com/x/mess/pkg/piece"
@@ -61,6 +62,9 @@ func (b *Board) MakeMove(from, to square.Square) {
 	case b.position[from].Color() != b.sideToMove:
 		panic("invalid move: from square occupied by enemy piece")
 
+	case !b.MovesOf(from).IsSet(to):
+		panic("invalid move: piece can't move to given square")
+
 	case b.position[to] == piece.Empty:
 		break
 
@@ -84,4 +88,18 @@ func (b *Board) MakeMove(from, to square.Square) {
 		b.sideToMove = piece.WhiteColor
 		b.fullMoves++ // turn completed
 	}
+}
+
+func (b *Board) MovesOf(index square.Square) bitboard.Board {
+	var attackFunc func(square.Square) bitboard.Board
+	switch b.position[index].Type() {
+	case piece.King:
+		attackFunc = attacks.King
+	case piece.Knight:
+		attackFunc = attacks.Knight
+	default:
+		return 0 // empty bitboard
+	}
+
+	return attackFunc(index)
 }
