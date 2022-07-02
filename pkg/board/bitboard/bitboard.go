@@ -22,6 +22,12 @@ import (
 // Board is a 64-bit bitboard
 type Board uint64
 
+// useful bitboard definitions
+var (
+	Empty    Board = 0
+	Universe Board = 0xffffffffffffffff
+)
+
 // IsSet checks whether the given Square is set in the bitboard.
 func (b Board) IsSet(index square.Square) bool {
 	return (b>>index)&1 == 1
