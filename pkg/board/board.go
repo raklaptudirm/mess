@@ -79,7 +79,11 @@ func (b *Board) MakeMove(from, to square.Square) {
 	b.bitboards[b.position[to]].Unset(from)
 	b.bitboards[b.position[to]].Set(to)
 
-	// switch turn
+	b.switchTurn()
+	b.updateBitboards()
+}
+
+func (b *Board) switchTurn() {
 	switch b.sideToMove {
 	case piece.WhiteColor:
 		b.sideToMove = piece.BlackColor
@@ -87,8 +91,6 @@ func (b *Board) MakeMove(from, to square.Square) {
 		b.sideToMove = piece.WhiteColor
 		b.fullMoves++ // turn completed
 	}
-
-	b.updateBitboards()
 }
 
 func (b *Board) updateBitboards() {
