@@ -31,6 +31,10 @@ type Board struct {
 	position  mailbox.Board      // 8x8 for fast lookup
 	bitboards [13]bitboard.Board // bitboards for eval
 
+	// useful bitboards
+	friends bitboard.Board
+	enemies bitboard.Board
+
 	sideToMove piece.Color
 
 	enPassantTarget square.Square
@@ -53,23 +57,9 @@ func (b Board) String() string {
 
 // MakeMove plays a legal move on the Board.
 func (b *Board) MakeMove(from, to square.Square) {
-
-	// basic legality checks
-	switch {
-	case b.position[from] == piece.Empty:
-		panic("invalid move: empty from square")
-
-	case b.position[from].Color() != b.sideToMove:
-		panic("invalid move: from square occupied by enemy piece")
-
-	case !b.MovesOf(from).IsSet(to):
+	if !b.MovesOf(from).IsSet(to) {
+		// move not in attack board, illegal move
 		panic("invalid move: piece can't move to given square")
-
-	case b.position[to] == piece.Empty:
-		break
-
-	case b.position[to].Color() == b.sideToMove:
-		panic("invalid move: to square occupied by friendly piece")
 	}
 
 	// half-move clock stuff
@@ -97,18 +87,40 @@ func (b *Board) MakeMove(from, to square.Square) {
 		b.sideToMove = piece.WhiteColor
 		b.fullMoves++ // turn completed
 	}
+
+	b.updateBitboards()
+}
+
+func (b *Board) updateBitboards() {
+	b.friends = bitboard.Empty
+	b.enemies = bitboard.Empty
+
+	for p := piece.King + piece.White; p <= piece.Pawn + piece.Black; p++ {
+		if p.Color() == b.sideToMove {
+			b.friends |= b.bitboards[p]
+		} else {
+			b.enemies |= b.bitboards[p]
+		}
+	}
 }
 
 func (b *Board) MovesOf(index square.Square) bitboard.Board {
-	var attackFunc func(square.Square) bitboard.Board
-	switch b.position[index].Type() {
-	case piece.King:
-		attackFunc = attacks.King
-	case piece.Knight:
-		attackFunc = attacks.Knight
-	default:
-		return 0 // empty bitboard
+	p := b.position[index]
+	if p.Color() != b.sideToMove {
+		// other side has no moves
+		return bitboard.Empty
 	}
 
-	return attackFunc(index)
+	var attackBoard bitboard.Board
+	switch p.Type() {
+	case piece.King:
+		attackBoard = attacks.King(index)
+	case piece.Knight:
+		attackBoard = attacks.Knight(index)
+	default:
+		attackBoard = bitboard.Empty
+	}
+
+	// can't move to squares occupied by friendly pieces
+	return attackBoard &^ b.friends
 }
