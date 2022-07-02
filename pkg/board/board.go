@@ -72,6 +72,15 @@ func (b *Board) MakeMove(from, to square.Square) {
 		panic("invalid move: to square occupied by friendly piece")
 	}
 
+	// half-move clock stuff
+	switch {
+	case b.position[from].Type() == piece.Pawn, b.position[to] != piece.Empty:
+		// reset clock
+		b.halfMoves = 0
+	default:
+		b.halfMoves++
+	}
+
 	// move piece in 8x8 board
 	b.position[to] = b.position[from]
 	b.position[from] = piece.Empty
