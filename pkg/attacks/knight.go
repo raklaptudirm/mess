@@ -21,19 +21,19 @@ import (
 // knightAttacksFrom generates an attack bitboard containing all the
 // possible squares a knight can move to from the given square.
 func knightAttacksFrom(from square.Square) bitboard.Board {
-	var board bitboard.Board
+	b := board{origin: from}
 
 	// set all possible attack squares
-	addAttack(&board, from-9)  // noWeWe
-	addAttack(&board, from-17) // noNoWe
-	addAttack(&board, from-15) // noNoEa
-	addAttack(&board, from-6)  // noEaEa
-	addAttack(&board, from+9)  // soEaEa
-	addAttack(&board, from+17) // soSoEa
-	addAttack(&board, from+15) // soSoWe
-	addAttack(&board, from+6)  // soWeWe
+	b.addAttack(2, 1)   // soEaEa
+	b.addAttack(1, 2)   // soSoEa
+	b.addAttack(1, -2)  // noNoEa
+	b.addAttack(2, -1)  // noEaEa
+	b.addAttack(-1, 2)  // soSoWe
+	b.addAttack(-2, 1)  // soWeWe
+	b.addAttack(-2, -1) // noWeWe
+	b.addAttack(-1, -2) // noNoWe
 
-	return board
+	return b.board
 }
 
 // Knight acts as a wrapper method on the precalculated attacks bitboards

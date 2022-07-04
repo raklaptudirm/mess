@@ -34,10 +34,23 @@ func init() {
 	}
 }
 
+type board struct {
+	origin square.Square
+	board bitboard.Board
+}
+
 // addAttack adds the given square to the provided attack bitboard, but
 // only if the square lies on the board, i.e, within A8 to H1.
-func addAttack(b *bitboard.Board, s square.Square) {
-	if s >= square.A8 && s <= square.H1 {
-		b.Set(s)
+func (b *board) addAttack(fileOffset square.File, rankOffset square.Rank) {
+	attackFile := b.origin.File() + fileOffset
+	attackRank := b.origin.Rank() + rankOffset
+
+	attackSquare := square.From(attackFile, attackRank)
+
+	switch {
+	case attackFile < 0, attackFile > square.FileH, attackRank < 0, attackRank > square.Rank1:
+		return
 	}
+
+	b.board.Set(attackSquare)
 }

@@ -21,19 +21,19 @@ import (
 // kingAttacksFrom generates an attack bitboard containing all the
 // possible squares a king can move to from the given square.
 func kingAttacksFrom(from square.Square) bitboard.Board {
-	var board bitboard.Board
+	b := board{origin: from}
 
 	// set all possible attack squares
-	addAttack(&board, from-1) // W
-	addAttack(&board, from-9) // NW
-	addAttack(&board, from-8) // N
-	addAttack(&board, from-7) // NE
-	addAttack(&board, from+1) // E
-	addAttack(&board, from+9) // SE
-	addAttack(&board, from+8) // S
-	addAttack(&board, from+7) // SW
+	b.addAttack(1, 0)   // E
+	b.addAttack(1, 1)   // SE
+	b.addAttack(0, 1)   // S
+	b.addAttack(-1, 0)  // W
+	b.addAttack(0, -1)  // N
+	b.addAttack(1, -1)  // NE
+	b.addAttack(-1, 1)  // SW
+	b.addAttack(-1, -1) // NW
 
-	return board
+	return b.board
 }
 
 // King acts as a wrapper method for the precalculated attack bitboards of
