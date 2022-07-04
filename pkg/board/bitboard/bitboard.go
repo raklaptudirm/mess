@@ -22,6 +22,25 @@ import (
 // Board is a 64-bit bitboard
 type Board uint64
 
+func (b Board) String() string {
+	var str string
+	for s := square.A8; s <= square.H1; s++ {
+		if b.IsSet(s) {
+			str += "1"
+		} else {
+			str += "0"
+		}
+
+		if s.File() == square.FileH {
+			str += "\n"
+		} else {
+			str += " "
+		}
+	}
+
+	return str
+}
+
 // useful bitboard definitions
 var (
 	Empty    Board = 0
@@ -35,14 +54,12 @@ func (b Board) IsSet(index square.Square) bool {
 
 // Set sets the given Square in the bitboard.
 func (b *Board) Set(index square.Square) {
-	new := *b | buffer(index)
-	b = &new
+	*b |= buffer(index)
 }
 
 // Unset clears the given Square in the bitboard.
 func (b *Board) Unset(index square.Square) {
-	new := *b &^ buffer(index)
-	b = &new
+	*b &^= buffer(index)
 }
 
 // buffer creates a utility bitboard in which only the given square is set.

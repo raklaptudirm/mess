@@ -57,9 +57,9 @@ func (b Board) String() string {
 
 // MakeMove plays a legal move on the Board.
 func (b *Board) MakeMove(from, to square.Square) {
-	if !b.MovesOf(from).IsSet(to) {
+	if attackSet := b.MovesOf(from); !attackSet.IsSet(to) {
 		// move not in attack board, illegal move
-		panic("invalid move: piece can't move to given square")
+		panic(fmt.Sprintf("invalid move: piece can't move to given square\n%s", attackSet))
 	}
 
 	// half-move clock stuff
