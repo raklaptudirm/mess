@@ -20,8 +20,10 @@ import (
 
 // lookup tables for precalculated attack boards of non-sliding pieces
 var (
-	kingAttacks   [64]bitboard.Board
-	knightAttacks [64]bitboard.Board
+	kingAttacks      [64]bitboard.Board
+	knightAttacks    [64]bitboard.Board
+	whitePawnAttacks [64]bitboard.Board
+	blackPawnAttacks [64]bitboard.Board
 )
 
 // init initializes the attack bitboard lookup tables for non-sliding
@@ -31,12 +33,14 @@ func init() {
 		// compute attack bitboards for current square
 		kingAttacks[s] = kingAttacksFrom(s)
 		knightAttacks[s] = knightAttacksFrom(s)
+		whitePawnAttacks[s] = whitePawnAttacksFrom(s)
+		blackPawnAttacks[s] = blackPawnAttacksFrom(s)
 	}
 }
 
 type board struct {
 	origin square.Square
-	board bitboard.Board
+	board  bitboard.Board
 }
 
 // addAttack adds the given square to the provided attack bitboard, but

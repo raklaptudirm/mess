@@ -117,6 +117,8 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 
 	var attackBoard bitboard.Board
 	switch p.Type() {
+	case piece.Pawn:
+		attackBoard = attacks.Pawn(index, b.sideToMove)
 	case piece.King:
 		attackBoard = attacks.King(index)
 	case piece.Knight:
