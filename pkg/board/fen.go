@@ -69,6 +69,9 @@ func New(fen string) *Board {
 	board.halfMoves, _ = strconv.Atoi(parts[4])
 	board.fullMoves, _ = strconv.Atoi(parts[5])
 
+	// update bitboards
+	board.updateBitboards()
+
 	return &board
 }
 
