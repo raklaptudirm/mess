@@ -19,6 +19,18 @@ import (
 	"laptudirm.com/x/mess/pkg/square"
 )
 
+func whitePawnMovesFrom(s square.Square) bitboard.Board {
+	b := board{origin: s}
+	b.addAttack(0, -1)
+	return b.board
+}
+
+func blackPawnMovesFrom(s square.Square) bitboard.Board {
+	b := board{origin: s}
+	b.addAttack(0, 1)
+	return b.board
+}
+
 func whitePawnAttacksFrom(s square.Square) bitboard.Board {
 	b := board{origin: s}
 
@@ -37,13 +49,24 @@ func blackPawnAttacksFrom(s square.Square) bitboard.Board {
 	return b.board
 }
 
-func Pawn(s square.Square, c piece.Color) bitboard.Board {
+func Pawn(s square.Square, c piece.Color, friends, enemies bitboard.Board) bitboard.Board {
+	var occupied = friends | enemies
+	var attackSet bitboard.Board
+
 	switch c {
 	case piece.WhiteColor:
-		return whitePawnAttacks[s]
+		attackSet = whitePawnMoves[s] &^ occupied  // 1 square ahead
+		attackSet |= (attackSet >> 8) &^ occupied  // 2 squares ahead
+		attackSet |= whitePawnAttacks[s] & enemies // diagonal attacks
+
 	case piece.BlackColor:
-		return blackPawnAttacks[s]
+		attackSet = blackPawnMoves[s] &^ occupied  // 1 square ahead
+		attackSet |= (attackSet >> 8) &^ occupied  // 2 squares ahead
+		attackSet |= blackPawnAttacks[s] & enemies // diagonal attacks
+
 	default:
 		panic("pawn attacks: invalid color")
 	}
+
+	return attackSet
 }

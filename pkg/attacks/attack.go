@@ -22,6 +22,8 @@ import (
 var (
 	kingAttacks      [64]bitboard.Board
 	knightAttacks    [64]bitboard.Board
+	whitePawnMoves   [64]bitboard.Board
+	blackPawnMoves   [64]bitboard.Board
 	whitePawnAttacks [64]bitboard.Board
 	blackPawnAttacks [64]bitboard.Board
 )
@@ -33,6 +35,8 @@ func init() {
 		// compute attack bitboards for current square
 		kingAttacks[s] = kingAttacksFrom(s)
 		knightAttacks[s] = knightAttacksFrom(s)
+		whitePawnMoves[s] = whitePawnMovesFrom(s)
+		blackPawnMoves[s] = blackPawnMovesFrom(s)
 		whitePawnAttacks[s] = whitePawnAttacksFrom(s)
 		blackPawnAttacks[s] = blackPawnAttacksFrom(s)
 	}

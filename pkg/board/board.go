@@ -115,18 +115,14 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 		return bitboard.Empty
 	}
 
-	var attackBoard bitboard.Board
 	switch p.Type() {
 	case piece.Pawn:
-		attackBoard = attacks.Pawn(index, b.sideToMove)
+		return attacks.Pawn(index, b.sideToMove, b.friends, b.enemies)
 	case piece.King:
-		attackBoard = attacks.King(index)
+		return attacks.King(index)
 	case piece.Knight:
-		attackBoard = attacks.Knight(index)
+		return attacks.Knight(index)
 	default:
-		attackBoard = bitboard.Empty
+		return bitboard.Empty
 	}
-
-	// can't move to squares occupied by friendly pieces
-	return attackBoard &^ b.friends
 }
