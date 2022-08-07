@@ -39,6 +39,6 @@ func kingAttacksFrom(from square.Square) bitboard.Board {
 // King acts as a wrapper method for the precalculated attack bitboards of
 // a king from every position on the chessboard. It returns the attack
 // bitboard for the provided square.
-func King(s square.Square) bitboard.Board {
-	return kingAttacks[s]
+func King(s square.Square, friends bitboard.Board) bitboard.Board {
+	return kingAttacks[s] &^ friends
 }

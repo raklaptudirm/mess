@@ -39,6 +39,6 @@ func knightAttacksFrom(from square.Square) bitboard.Board {
 // Knight acts as a wrapper method on the precalculated attacks bitboards
 // of knights from every square on the board. It returns the attack
 // bitboard for the provided square.
-func Knight(s square.Square) bitboard.Board {
-	return knightAttacks[s]
+func Knight(s square.Square, friends bitboard.Board) bitboard.Board {
+	return knightAttacks[s] &^ friends
 }
