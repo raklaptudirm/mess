@@ -56,15 +56,15 @@ func (b Board) String() string {
 }
 
 // MakeMove plays a legal move on the Board.
-func (b *Board) MakeMove(from, to square.Square) {
-	if attackSet := b.MovesOf(from); !attackSet.IsSet(to) {
+func (b *Board) MakeMove(move Move) {
+	if attackSet := b.MovesOf(move.From); !attackSet.IsSet(move.To) {
 		// move not in attack board, illegal move
 		panic(fmt.Sprintf("invalid move: piece can't move to given square\n%s", attackSet))
 	}
 
 	// half-move clock stuff
 	switch {
-	case b.position[from].Type() == piece.Pawn, b.position[to] != piece.Empty:
+	case b.position[move.From].Type() == piece.Pawn, b.position[move.To] != piece.Empty:
 		// reset clock
 		b.halfMoves = 0
 	default:
@@ -72,14 +72,14 @@ func (b *Board) MakeMove(from, to square.Square) {
 	}
 
 	// move piece in bitboard
-	b.bitboards[b.position[from]].Unset(from)
-	b.bitboards[b.position[from]].Set(to)
-	// remove captured piece from bitboard
-	b.bitboards[b.position[to]].Unset(to)
+	b.bitboards[b.position[move.From]].Unset(move.From)
+	b.bitboards[b.position[move.From]].Set(move.To)
+	// remove captured piece move.From bitboard
+	b.bitboards[b.position[move.To]].Unset(move.To)
 
 	// move piece in 8x8 board
-	b.position[to] = b.position[from]
-	b.position[from] = piece.Empty
+	b.position[move.To] = b.position[move.From]
+	b.position[move.From] = piece.Empty
 
 	b.switchTurn()
 	b.updateBitboards()
@@ -108,6 +108,28 @@ func (b *Board) updateBitboards() {
 	}
 }
 
+func (b *Board) GenerateMoves() []Move {
+	var moves []Move
+
+	for i := 0; i < 64; i++ {
+		from := square.Square(i)
+		moveSet := b.MovesOf(from)
+		for j := 0; j < 64 && moveSet != bitboard.Empty; j++ {
+			to := square.Square(j)
+			if moveSet.IsSet(to) {
+				move := Move{
+					From: from,
+					To:   to,
+				}
+				moves = append(moves, move)
+			}
+			moveSet.Unset(to)
+		}
+	}
+
+	return moves
+}
+
 func (b *Board) MovesOf(index square.Square) bitboard.Board {
 	p := b.position[index]
 	if p.Color() != b.sideToMove {
@@ -127,7 +149,7 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 	case piece.Bishop:
 		return attacks.Bishop(index, b.friends, b.friends|b.enemies)
 	case piece.Pawn:
-		return attacks.Pawn(index, b.sideToMove, b.friends, b.enemies)	
+		return attacks.Pawn(index, b.sideToMove, b.friends, b.enemies)
 	default:
 		return bitboard.Empty
 	}
