@@ -41,12 +41,6 @@ func (b Board) String() string {
 	return str
 }
 
-// useful bitboard definitions
-var (
-	Empty    Board = 0
-	Universe Board = 0xffffffffffffffff
-)
-
 // IsSet checks whether the given Square is set in the bitboard.
 func (b Board) IsSet(index square.Square) bool {
 	return (b>>index)&1 == 1

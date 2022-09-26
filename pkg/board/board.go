@@ -116,12 +116,18 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 	}
 
 	switch p.Type() {
-	case piece.Pawn:
-		return attacks.Pawn(index, b.sideToMove, b.friends, b.enemies)
 	case piece.King:
 		return attacks.King(index, b.friends)
+	case piece.Queen:
+		return attacks.Queen(index, b.friends, b.friends|b.enemies)
+	case piece.Rook:
+		return attacks.Rook(index, b.friends, b.friends|b.enemies)
 	case piece.Knight:
 		return attacks.Knight(index, b.friends)
+	case piece.Bishop:
+		return attacks.Bishop(index, b.friends, b.friends|b.enemies)
+	case piece.Pawn:
+		return attacks.Pawn(index, b.sideToMove, b.friends, b.enemies)	
 	default:
 		return bitboard.Empty
 	}
