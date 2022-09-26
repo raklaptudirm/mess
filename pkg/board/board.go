@@ -62,24 +62,53 @@ func (b *Board) MakeMove(move Move) {
 		panic(fmt.Sprintf("invalid move: piece can't move to given square\n%s", attackSet))
 	}
 
+	isPawn := b.position[move.From].Type() == piece.Pawn
+	isCapture := b.position[move.To] != piece.Empty
+	captureSquare := move.To
+
+	if isPawn && move.To == b.enPassantTarget {
+		// en-passant capture
+		isCapture = true
+		captureSquare = b.enPassantTarget
+		if b.sideToMove == piece.WhiteColor {
+			captureSquare += 8
+		} else {
+			captureSquare -= 8
+		}
+	}
+
 	// half-move clock stuff
 	switch {
-	case b.position[move.From].Type() == piece.Pawn, b.position[move.To] != piece.Empty:
+	case isPawn, isCapture:
 		// reset clock
 		b.halfMoves = 0
 	default:
 		b.halfMoves++
 	}
 
+	if isCapture {
+		b.bitboards[b.position[captureSquare]].Unset(captureSquare)
+		b.position[captureSquare] = piece.Empty
+	}
+
 	// move piece in bitboard
 	b.bitboards[b.position[move.From]].Unset(move.From)
 	b.bitboards[b.position[move.From]].Set(move.To)
-	// remove captured piece move.From bitboard
-	b.bitboards[b.position[move.To]].Unset(move.To)
 
 	// move piece in 8x8 board
 	b.position[move.To] = b.position[move.From]
 	b.position[move.From] = piece.Empty
+
+	b.enPassantTarget = square.None
+
+	if isPawn && move.IsDoublePawnPush() {
+		b.enPassantTarget = move.From
+		if b.sideToMove == piece.WhiteColor {
+			b.enPassantTarget += 8
+		} else {
+			b.enPassantTarget -= 8
+		}
+	}
 
 	b.switchTurn()
 	b.updateBitboards()
