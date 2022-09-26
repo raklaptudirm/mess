@@ -49,9 +49,11 @@ func blackPawnAttacksFrom(s square.Square) bitboard.Board {
 	return b.board
 }
 
-func Pawn(s square.Square, c piece.Color, friends, enemies bitboard.Board) bitboard.Board {
+func Pawn(s, ep square.Square, c piece.Color, friends, enemies bitboard.Board) bitboard.Board {
 	var occupied = friends | enemies
 	var attackSet bitboard.Board
+
+	enemies.Set(ep)
 
 	switch c {
 	case piece.WhiteColor:

@@ -149,7 +149,7 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 	case piece.Bishop:
 		return attacks.Bishop(index, b.friends, b.friends|b.enemies)
 	case piece.Pawn:
-		return attacks.Pawn(index, b.sideToMove, b.friends, b.enemies)
+		return attacks.Pawn(index, b.enPassantTarget, b.sideToMove, b.friends, b.enemies)
 	default:
 		return bitboard.Empty
 	}
