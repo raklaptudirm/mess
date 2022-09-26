@@ -138,3 +138,11 @@ func (s Square) File() File {
 func (s Square) Rank() Rank {
 	return Rank(s / 8)
 }
+
+func (s Square) Diagonal() Diagonal {
+	return 14 - Diagonal(s.Rank()) - Diagonal(s.File())
+}
+
+func (s Square) AntiDiagonal() AntiDiagonal {
+	return 7 - AntiDiagonal(s.Rank()) + AntiDiagonal(s.File())
+}
