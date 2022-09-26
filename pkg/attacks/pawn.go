@@ -63,7 +63,7 @@ func Pawn(s, ep square.Square, c piece.Color, friends, enemies bitboard.Board) b
 
 	case piece.BlackColor:
 		attackSet = blackPawnMoves[s] &^ occupied  // 1 square ahead
-		attackSet |= (attackSet >> 8) &^ occupied  // 2 squares ahead
+		attackSet |= (attackSet << 8) &^ occupied  // 2 squares ahead
 		attackSet |= blackPawnAttacks[s] & enemies // diagonal attacks
 
 	default:
