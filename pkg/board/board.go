@@ -131,18 +131,20 @@ func (b *Board) MakeMove(move Move) {
 	}
 
 	if isCapture {
+		b.enemies.Unset(captureSquare)
 		b.bitboards[b.position[captureSquare]].Unset(captureSquare)
 		b.position[captureSquare] = piece.Empty
 	}
 
-	// move piece in bitboard
-	b.bitboards[b.position[move.From]].Unset(move.From)
-	b.bitboards[b.position[move.From]].Set(move.To)
+	b.friends.Unset(move.From)                          // friends bitboard
+	b.bitboards[b.position[move.From]].Unset(move.From) // piece bitboard
+	b.position[move.To] = b.position[move.From]         // 8x8 board
 
-	// move piece in 8x8 board
-	b.position[move.To] = b.position[move.From]
-	b.position[move.From] = piece.Empty
+	b.friends.Set(move.To)                          // friends bitboard
+	b.bitboards[b.position[move.From]].Set(move.To) // piece bitboard
+	b.position[move.From] = piece.Empty             // 8x8 board
 
+	// reset en passant target
 	b.enPassantTarget = square.None
 
 	if isPawn && move.IsDoublePawnPush() {
@@ -155,7 +157,6 @@ func (b *Board) MakeMove(move Move) {
 	}
 
 	b.switchTurn()
-	b.updateBitboards()
 }
 
 func (b *Board) switchTurn() {
@@ -166,6 +167,10 @@ func (b *Board) switchTurn() {
 		b.sideToMove = piece.WhiteColor
 		b.fullMoves++ // turn completed
 	}
+
+	// switch bitboards
+	b.friends, b.enemies = b.enemies, b.friends
+
 }
 
 func (b *Board) GenerateMoves() []Move {
