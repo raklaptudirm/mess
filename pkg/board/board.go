@@ -62,6 +62,18 @@ func (b *Board) MakeMove(move Move) {
 		panic(fmt.Sprintf("invalid move: piece can't move to given square\n%s", attackSet))
 	}
 
+	isPawn := b.position[move.From].Type() == piece.Pawn
+	isCapture := b.position[move.To] != piece.Empty || move.IsEnPassant
+
+	// half-move clock stuff
+	switch {
+	case isPawn, isCapture:
+		// reset clock
+		b.halfMoves = 0
+	default:
+		b.halfMoves++
+	}
+
 	// update castling rights
 
 	// rooks or king moved
@@ -106,28 +118,16 @@ func (b *Board) MakeMove(move Move) {
 		b.blackCastleQueenside = false
 	}
 
-	isPawn := b.position[move.From].Type() == piece.Pawn
-	isCapture := b.position[move.To] != piece.Empty
 	captureSquare := move.To
 
-	if isPawn && move.To == b.enPassantTarget {
-		// en-passant capture
-		isCapture = true
+	if move.IsEnPassant {
+		// en-passant capture, captureSquare will be different to move.To
 		captureSquare = b.enPassantTarget
 		if b.sideToMove == piece.WhiteColor {
 			captureSquare += 8
 		} else {
 			captureSquare -= 8
 		}
-	}
-
-	// half-move clock stuff
-	switch {
-	case isPawn, isCapture:
-		// reset clock
-		b.halfMoves = 0
-	default:
-		b.halfMoves++
 	}
 
 	if isCapture {
@@ -165,19 +165,6 @@ func (b *Board) switchTurn() {
 	case piece.BlackColor:
 		b.sideToMove = piece.WhiteColor
 		b.fullMoves++ // turn completed
-	}
-}
-
-func (b *Board) updateBitboards() {
-	b.friends = bitboard.Empty
-	b.enemies = bitboard.Empty
-
-	for p := piece.King + piece.White; p <= piece.Pawn+piece.Black; p++ {
-		if p.Color() == b.sideToMove {
-			b.friends |= b.bitboards[p]
-		} else {
-			b.enemies |= b.bitboards[p]
-		}
 	}
 }
 
