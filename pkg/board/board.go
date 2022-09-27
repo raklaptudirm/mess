@@ -62,6 +62,50 @@ func (b *Board) MakeMove(move Move) {
 		panic(fmt.Sprintf("invalid move: piece can't move to given square\n%s", attackSet))
 	}
 
+	// update castling rights
+
+	// rooks or king moved
+	switch move.From {
+	// white rights
+	case square.H1:
+		// kingside rook moved
+		b.whiteCastleKingside = false
+	case square.A1:
+		// queenside rook moved
+		b.whiteCastleQueenside = false
+	case square.E1:
+		// king moved
+		b.whiteCastleKingside = false
+		b.whiteCastleQueenside = false
+
+	// black rights
+	case square.H8:
+		// kingside rook moved
+		b.blackCastleKingside = false
+	case square.A8:
+		// queenside rook moved
+		b.blackCastleQueenside = false
+	case square.E8:
+		// king moved
+		b.blackCastleKingside = false
+		b.blackCastleQueenside = false
+	}
+
+	// rooks captured
+	switch move.To {
+	// white rooks
+	case square.H1:
+		b.whiteCastleKingside = false
+	case square.A1:
+		b.whiteCastleQueenside = false
+
+	// black rooks
+	case square.H8:
+		b.blackCastleKingside = false
+	case square.A8:
+		b.blackCastleQueenside = false
+	}
+
 	isPawn := b.position[move.From].Type() == piece.Pawn
 	isCapture := b.position[move.To] != piece.Empty
 	captureSquare := move.To
