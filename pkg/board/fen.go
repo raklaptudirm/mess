@@ -43,11 +43,18 @@ func New(fen string) *Board {
 			}
 
 			// piece string to piece
-			pieceType := piece.New(string(id))
+			p := piece.New(string(id))
 
 			// update board
-			board.position[currSquare] = pieceType     // 8x8
-			board.bitboards[pieceType].Set(currSquare) // bitboard
+			board.position[currSquare] = p     // 8x8
+			board.bitboards[p].Set(currSquare) // bitboard
+
+			// update friend and enemy bitboards
+			if p.Color() == board.sideToMove {
+				board.friends.Set(currSquare)
+			} else {
+				board.enemies.Set(currSquare)
+			}
 
 			fileId++
 		}
@@ -68,9 +75,6 @@ func New(fen string) *Board {
 	// move counters
 	board.halfMoves, _ = strconv.Atoi(parts[4])
 	board.fullMoves, _ = strconv.Atoi(parts[5])
-
-	// update bitboards
-	board.updateBitboards()
 
 	return &board
 }
