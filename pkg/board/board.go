@@ -187,16 +187,59 @@ func (b *Board) GenerateMoves() []Move {
 	for i := 0; i < 64; i++ {
 		from := square.Square(i)
 		moveSet := b.MovesOf(from)
-		for j := 0; j < 64 && moveSet != bitboard.Empty; j++ {
-			to := square.Square(j)
-			if moveSet.IsSet(to) {
+
+		switch b.position[from] {
+		// handle pawns separately for en passant and promotions
+		case piece.Pawn:
+			for j := 0; j < 64 && moveSet != bitboard.Empty; j++ {
+				to := square.Square(j)
+				if !moveSet.IsSet(to) {
+					continue
+				}
+
 				move := Move{
 					From: from,
 					To:   to,
 				}
-				moves = append(moves, move)
+
+				switch {
+				// pawn will promote
+				case b.sideToMove == piece.WhiteColor && to.Rank() == square.Rank8:
+					fallthrough
+				case b.sideToMove == piece.BlackColor && to.Rank() == square.Rank1:
+					// evaluate all possible promotions
+					for _, promotion := range piece.Promotions {
+						move.Promotion = promotion
+						moves = append(moves, move)
+					}
+
+				// en passant capture
+				case to == b.enPassantTarget:
+					// check for en passant
+					move.IsEnPassant = true
+					fallthrough
+
+				// simple push or capture
+				default:
+					moves = append(moves, move)
+				}
+
+				moveSet.Unset(to)
 			}
-			moveSet.Unset(to)
+
+		// other pieces move simply
+		default:
+			for j := 0; j < 64 && moveSet != bitboard.Empty; j++ {
+				to := square.Square(j)
+				if moveSet.IsSet(to) {
+					move := Move{
+						From: from,
+						To:   to,
+					}
+					moves = append(moves, move)
+				}
+				moveSet.Unset(to)
+			}
 		}
 	}
 

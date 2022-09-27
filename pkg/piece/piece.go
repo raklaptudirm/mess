@@ -104,6 +104,10 @@ const (
 	Pawn
 )
 
+var Promotions = []Piece{
+	Queen, Rook, Bishop, Knight,
+}
+
 // colors of chess pieces for easy creation
 // for example: piece.Black + piece.King
 const (

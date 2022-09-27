@@ -8,9 +8,12 @@ import (
 )
 
 type Move struct {
-	From      square.Square
-	To        square.Square
+	From square.Square
+	To   square.Square
+
 	Promotion piece.Piece
+
+	IsEnPassant bool
 }
 
 func (m Move) String() string {
