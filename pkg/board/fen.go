@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 
+	"laptudirm.com/x/mess/pkg/move"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
 )
@@ -64,7 +65,7 @@ func New(fen string) *Board {
 	board.sideToMove = piece.NewColor(parts[1])
 
 	// castling rights
-	board.castlingRights = CastlingRightsFrom(parts[2])
+	board.castlingRights = move.CastlingRightsFrom(parts[2])
 
 	// en-passant target square
 	board.enPassantTarget = square.New(parts[3])

@@ -21,6 +21,7 @@ import (
 	"laptudirm.com/x/mess/pkg/attacks"
 	"laptudirm.com/x/mess/pkg/board/bitboard"
 	"laptudirm.com/x/mess/pkg/board/mailbox"
+	"laptudirm.com/x/mess/pkg/move"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
 )
@@ -37,7 +38,7 @@ type Board struct {
 
 	sideToMove      piece.Color
 	enPassantTarget square.Square
-	castlingRights  CastlingRights
+	castlingRights  move.CastlingRights
 
 	// move counters
 	halfMoves int
@@ -50,14 +51,14 @@ func (b Board) String() string {
 }
 
 // MakeMove plays a legal move on the Board.
-func (b *Board) MakeMove(move Move) {
-	if attackSet := b.MovesOf(move.From); !attackSet.IsSet(move.To) {
+func (b *Board) MakeMove(m move.Move) {
+	if attackSet := b.MovesOf(m.From); !attackSet.IsSet(m.To) {
 		// move not in attack board, illegal move
 		panic(fmt.Sprintf("invalid move: piece can't move to given square\n%s", attackSet))
 	}
 
-	isPawn := b.position[move.From].Type() == piece.Pawn
-	isCapture := b.position[move.To] != piece.Empty || move.IsEnPassant
+	isPawn := b.position[m.From].Type() == piece.Pawn
+	isCapture := b.position[m.To] != piece.Empty || m.IsEnPassant
 
 	// half-move clock stuff
 	switch {
@@ -71,50 +72,50 @@ func (b *Board) MakeMove(move Move) {
 	// update castling rights
 
 	// rooks or king moved
-	switch move.From {
+	switch m.From {
 	// white rights
 	case square.H1:
 		// kingside rook moved
-		b.castlingRights &^= CastleWhiteKingside
+		b.castlingRights &^= move.CastleWhiteKingside
 	case square.A1:
 		// queenside rook moved
-		b.castlingRights &^= CastleWhiteQueenside
+		b.castlingRights &^= move.CastleWhiteQueenside
 	case square.E1:
 		// king moved
-		b.castlingRights &^= CastleWhiteKingside
-		b.castlingRights &^= CastleWhiteQueenside
+		b.castlingRights &^= move.CastleWhiteKingside
+		b.castlingRights &^= move.CastleWhiteQueenside
 
 	// black rights
 	case square.H8:
 		// kingside rook moved
-		b.castlingRights &^= CastleBlackKingside
+		b.castlingRights &^= move.CastleBlackKingside
 	case square.A8:
 		// queenside rook moved
-		b.castlingRights &^= CastleBlackQueenside
+		b.castlingRights &^= move.CastleBlackQueenside
 	case square.E8:
 		// king moved
-		b.castlingRights &^= CastleBlackKingside
-		b.castlingRights &^= CastleBlackQueenside
+		b.castlingRights &^= move.CastleBlackKingside
+		b.castlingRights &^= move.CastleBlackQueenside
 	}
 
 	// rooks captured
-	switch move.To {
+	switch m.To {
 	// white rooks
 	case square.H1:
-		b.castlingRights &^= CastleWhiteKingside
+		b.castlingRights &^= move.CastleWhiteKingside
 	case square.A1:
-		b.castlingRights &^= CastleWhiteQueenside
+		b.castlingRights &^= move.CastleWhiteQueenside
 
 	// black rooks
 	case square.H8:
-		b.castlingRights &^= CastleBlackKingside
+		b.castlingRights &^= move.CastleBlackKingside
 	case square.A8:
-		b.castlingRights &^= CastleBlackKingside
+		b.castlingRights &^= move.CastleBlackKingside
 	}
 
-	captureSquare := move.To
+	captureSquare := m.To
 
-	if move.IsEnPassant {
+	if m.IsEnPassant {
 		// en-passant capture, captureSquare will be different to move.To
 		captureSquare = b.enPassantTarget
 		if b.sideToMove == piece.WhiteColor {
@@ -130,19 +131,19 @@ func (b *Board) MakeMove(move Move) {
 		b.position[captureSquare] = piece.Empty
 	}
 
-	b.friends.Unset(move.From)                          // friends bitboard
-	b.bitboards[b.position[move.From]].Unset(move.From) // piece bitboard
-	b.position[move.To] = b.position[move.From]         // 8x8 board
+	b.friends.Unset(m.From)                       // friends bitboard
+	b.bitboards[b.position[m.From]].Unset(m.From) // piece bitboard
+	b.position[m.To] = b.position[m.From]         // 8x8 board
 
-	b.friends.Set(move.To)                          // friends bitboard
-	b.bitboards[b.position[move.From]].Set(move.To) // piece bitboard
-	b.position[move.From] = piece.Empty             // 8x8 board
+	b.friends.Set(m.To)                       // friends bitboard
+	b.bitboards[b.position[m.From]].Set(m.To) // piece bitboard
+	b.position[m.From] = piece.Empty          // 8x8 board
 
 	// reset en passant target
 	b.enPassantTarget = square.None
 
-	if isPawn && move.IsDoublePawnPush() {
-		b.enPassantTarget = move.From
+	if isPawn && m.IsDoublePawnPush() {
+		b.enPassantTarget = m.From
 		if b.sideToMove == piece.WhiteColor {
 			b.enPassantTarget += 8
 		} else {
@@ -167,8 +168,8 @@ func (b *Board) switchTurn() {
 
 }
 
-func (b *Board) GenerateMoves() []Move {
-	var moves []Move
+func (b *Board) GenerateMoves() []move.Move {
+	var moves []move.Move
 
 	for i := 0; i < 64; i++ {
 		from := square.Square(i)
@@ -183,7 +184,7 @@ func (b *Board) GenerateMoves() []Move {
 					continue
 				}
 
-				move := Move{
+				m := move.Move{
 					From: from,
 					To:   to,
 				}
@@ -195,19 +196,19 @@ func (b *Board) GenerateMoves() []Move {
 				case b.sideToMove == piece.BlackColor && to.Rank() == square.Rank1:
 					// evaluate all possible promotions
 					for _, promotion := range piece.Promotions {
-						move.Promotion = promotion
-						moves = append(moves, move)
+						m.Promotion = promotion
+						moves = append(moves, m)
 					}
 
 				// en passant capture
 				case to == b.enPassantTarget:
 					// check for en passant
-					move.IsEnPassant = true
+					m.IsEnPassant = true
 					fallthrough
 
 				// simple push or capture
 				default:
-					moves = append(moves, move)
+					moves = append(moves, m)
 				}
 
 				moveSet.Unset(to)
@@ -218,11 +219,11 @@ func (b *Board) GenerateMoves() []Move {
 			for j := 0; j < 64 && moveSet != bitboard.Empty; j++ {
 				to := square.Square(j)
 				if moveSet.IsSet(to) {
-					move := Move{
+					m := move.Move{
 						From: from,
 						To:   to,
 					}
-					moves = append(moves, move)
+					moves = append(moves, m)
 				}
 				moveSet.Unset(to)
 			}
