@@ -64,10 +64,7 @@ func New(fen string) *Board {
 	board.sideToMove = piece.NewColor(parts[1])
 
 	// castling rights
-	board.whiteCastleKingside = strings.Contains(parts[2], "K")
-	board.whiteCastleQueenside = strings.Contains(parts[2], "Q")
-	board.blackCastleKingside = strings.Contains(parts[2], "k")
-	board.blackCastleQueenside = strings.Contains(parts[2], "q")
+	board.castlingRights = CastlingRightsFrom(parts[2])
 
 	// en-passant target square
 	board.enPassantTarget = square.New(parts[3])
@@ -83,33 +80,10 @@ func New(fen string) *Board {
 func (b *Board) FEN() string {
 	// castling rights
 	var castling string
-	if castling = b.castleFEN(); castling != "" {
+	if castling = b.castlingRights.String(); castling != "" {
 		castling += " "
 	}
 
 	// <position> <side to move> <castling rights> <en passant target> <half move count> <full move count>
 	return fmt.Sprintf("%s %s %s%s %d %d", b.position.FEN(), b.sideToMove, castling, b.enPassantTarget, b.halfMoves, b.fullMoves)
-}
-
-// castleFEN generates the castling rights part of a fen string.
-func (b *Board) castleFEN() string {
-	var fen string
-
-	if b.whiteCastleKingside {
-		fen += "K"
-	}
-
-	if b.whiteCastleQueenside {
-		fen += "Q"
-	}
-
-	if b.blackCastleKingside {
-		fen += "k"
-	}
-
-	if b.blackCastleQueenside {
-		fen += "q"
-	}
-
-	return fen
 }

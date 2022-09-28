@@ -35,15 +35,9 @@ type Board struct {
 	friends bitboard.Board
 	enemies bitboard.Board
 
-	sideToMove piece.Color
-
+	sideToMove      piece.Color
 	enPassantTarget square.Square
-
-	// castling rights
-	blackCastleKingside  bool
-	blackCastleQueenside bool
-	whiteCastleKingside  bool
-	whiteCastleQueenside bool
+	castlingRights  CastlingRights
 
 	// move counters
 	halfMoves int
@@ -81,41 +75,41 @@ func (b *Board) MakeMove(move Move) {
 	// white rights
 	case square.H1:
 		// kingside rook moved
-		b.whiteCastleKingside = false
+		b.castlingRights &^= CastleWhiteKingside
 	case square.A1:
 		// queenside rook moved
-		b.whiteCastleQueenside = false
+		b.castlingRights &^= CastleWhiteQueenside
 	case square.E1:
 		// king moved
-		b.whiteCastleKingside = false
-		b.whiteCastleQueenside = false
+		b.castlingRights &^= CastleWhiteKingside
+		b.castlingRights &^= CastleWhiteQueenside
 
 	// black rights
 	case square.H8:
 		// kingside rook moved
-		b.blackCastleKingside = false
+		b.castlingRights &^= CastleBlackKingside
 	case square.A8:
 		// queenside rook moved
-		b.blackCastleQueenside = false
+		b.castlingRights &^= CastleBlackQueenside
 	case square.E8:
 		// king moved
-		b.blackCastleKingside = false
-		b.blackCastleQueenside = false
+		b.castlingRights &^= CastleBlackKingside
+		b.castlingRights &^= CastleBlackQueenside
 	}
 
 	// rooks captured
 	switch move.To {
 	// white rooks
 	case square.H1:
-		b.whiteCastleKingside = false
+		b.castlingRights &^= CastleWhiteKingside
 	case square.A1:
-		b.whiteCastleQueenside = false
+		b.castlingRights &^= CastleWhiteQueenside
 
 	// black rooks
 	case square.H8:
-		b.blackCastleKingside = false
+		b.castlingRights &^= CastleBlackKingside
 	case square.A8:
-		b.blackCastleQueenside = false
+		b.castlingRights &^= CastleBlackKingside
 	}
 
 	captureSquare := move.To
