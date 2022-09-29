@@ -31,6 +31,12 @@ func New(fen string) *Board {
 
 	parts := strings.Split(fen, " ")
 
+	// side to move
+	board.sideToMove = piece.NewColor(parts[1])
+	if board.sideToMove == piece.BlackColor {
+		board.hash ^= zobrist.SideToMove
+	}
+
 	// generate position
 	ranks := strings.Split(parts[0], "/")
 	for rankId, rankData := range ranks {
@@ -65,12 +71,6 @@ func New(fen string) *Board {
 
 			fileId++
 		}
-	}
-
-	// side to move
-	board.sideToMove = piece.NewColor(parts[1])
-	if board.sideToMove == piece.BlackColor {
-		board.hash ^= zobrist.SideToMove
 	}
 
 	// castling rights
