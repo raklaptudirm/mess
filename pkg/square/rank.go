@@ -28,6 +28,9 @@ const (
 	Rank1
 )
 
+// Number of ranks
+const RankN = 8
+
 // String converts a Rank into it's string representation.
 func (r Rank) String() string {
 	ranks := [...]string{

@@ -104,6 +104,9 @@ const (
 	Pawn
 )
 
+// Number of pieces
+const N = 7
+
 var Promotions = []Piece{
 	Queen, Rook, Bishop, Knight,
 }

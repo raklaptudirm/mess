@@ -119,6 +119,9 @@ const (
 	H1
 )
 
+// Number of squares
+const N = 64
+
 // String converts a square into it's algebraic string representation.
 func (s Square) String() string {
 	if s == None {

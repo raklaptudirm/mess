@@ -33,6 +33,8 @@ const (
 	CastleBlackKingside  CastlingRights = 1 << 2
 	CastleBlackQueenside CastlingRights = 1 << 3
 
+	CastleNone CastlingRights = 0
+
 	CastleWhite CastlingRights = CastleWhiteKingside | CastleWhiteQueenside
 	CastleBlack CastlingRights = CastleBlackKingside | CastleBlackQueenside
 

@@ -24,11 +24,13 @@ import (
 	"laptudirm.com/x/mess/pkg/move"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
+	"laptudirm.com/x/mess/pkg/zobrist"
 )
 
 // Board represents the state of a chessboard at a given position.
 type Board struct {
 	// position data
+	hash      zobrist.Key
 	position  mailbox.Board      // 8x8 for fast lookup
 	bitboards [13]bitboard.Board // bitboards for eval
 
@@ -47,7 +49,7 @@ type Board struct {
 
 // String converts a Board into a human readable string.
 func (b Board) String() string {
-	return fmt.Sprintf("%s\nFEN: %s\n", b.position, b.FEN())
+	return fmt.Sprintf("%s\nFen: %s\nKey: %X\n", b.position, b.FEN(), b.hash)
 }
 
 // MakeMove plays a legal move on the Board.
@@ -70,6 +72,7 @@ func (b *Board) MakeMove(m move.Move) {
 	}
 
 	// update castling rights
+	b.hash ^= zobrist.Castling[b.castlingRights]
 
 	// rooks or king moved
 	switch m.From {
@@ -113,6 +116,8 @@ func (b *Board) MakeMove(m move.Move) {
 		b.castlingRights &^= move.CastleBlackKingside
 	}
 
+	b.hash ^= zobrist.Castling[b.castlingRights]
+
 	captureSquare := m.To
 
 	if m.IsEnPassant {
@@ -126,18 +131,28 @@ func (b *Board) MakeMove(m move.Move) {
 	}
 
 	if isCapture {
+		capturedPiece := b.position[captureSquare]
+		b.hash ^= zobrist.PieceSquare[capturedPiece][captureSquare]
 		b.enemies.Unset(captureSquare)
-		b.bitboards[b.position[captureSquare]].Unset(captureSquare)
+		b.bitboards[capturedPiece].Unset(captureSquare)
 		b.position[captureSquare] = piece.Empty
 	}
 
-	b.friends.Unset(m.From)                       // friends bitboard
-	b.bitboards[b.position[m.From]].Unset(m.From) // piece bitboard
-	b.position[m.To] = b.position[m.From]         // 8x8 board
+	movedPiece := b.position[m.From]
 
-	b.friends.Set(m.To)                       // friends bitboard
-	b.bitboards[b.position[m.From]].Set(m.To) // piece bitboard
-	b.position[m.From] = piece.Empty          // 8x8 board
+	b.hash ^= zobrist.PieceSquare[movedPiece][m.From]
+	b.friends.Unset(m.From)               // friends bitboard
+	b.bitboards[movedPiece].Unset(m.From) // piece bitboard
+	b.position[m.To] = b.position[m.From] // 8x8 board
+
+	b.hash ^= zobrist.PieceSquare[movedPiece][m.To]
+	b.friends.Set(m.To)               // friends bitboard
+	b.bitboards[movedPiece].Set(m.To) // piece bitboard
+	b.position[m.From] = piece.Empty  // 8x8 board
+
+	if b.enPassantTarget != square.None {
+		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
+	}
 
 	// reset en passant target
 	b.enPassantTarget = square.None
@@ -149,6 +164,8 @@ func (b *Board) MakeMove(m move.Move) {
 		} else {
 			b.enPassantTarget -= 8
 		}
+
+		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
 	}
 
 	b.switchTurn()
@@ -166,6 +183,7 @@ func (b *Board) switchTurn() {
 	// switch bitboards
 	b.friends, b.enemies = b.enemies, b.friends
 
+	b.hash ^= zobrist.SideToMove
 }
 
 func (b *Board) GenerateMoves() []move.Move {

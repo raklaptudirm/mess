@@ -28,6 +28,9 @@ const (
 	FileH
 )
 
+// Number of files
+const FileN = 8
+
 // String converts a File into it's string representation.
 func (f File) String() string {
 	files := [...]string{

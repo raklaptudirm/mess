@@ -21,6 +21,7 @@ import (
 	"laptudirm.com/x/mess/pkg/move"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
+	"laptudirm.com/x/mess/pkg/zobrist"
 )
 
 // New creates an instance of a *Board from a given fen string.
@@ -35,7 +36,7 @@ func New(fen string) *Board {
 	for rankId, rankData := range ranks {
 		fileId := square.FileA
 		for _, id := range rankData {
-			currSquare := square.From(fileId, square.Rank(rankId))
+			s := square.From(fileId, square.Rank(rankId))
 
 			if id >= '1' && id <= '8' {
 				skip := square.File(id - 48) // ascii value to number
@@ -46,15 +47,20 @@ func New(fen string) *Board {
 			// piece string to piece
 			p := piece.New(string(id))
 
-			// update board
-			board.position[currSquare] = p     // 8x8
-			board.bitboards[p].Set(currSquare) // bitboard
+			if p.Type() != piece.Empty {
+				// update hash
+				board.hash ^= zobrist.PieceSquare[p][s]
 
-			// update friend and enemy bitboards
-			if p.Color() == board.sideToMove {
-				board.friends.Set(currSquare)
-			} else {
-				board.enemies.Set(currSquare)
+				// update board
+				board.position[s] = p     // 8x8
+				board.bitboards[p].Set(s) // bitboard
+
+				// update friend and enemy bitboards
+				if p.Color() == board.sideToMove {
+					board.friends.Set(s)
+				} else {
+					board.enemies.Set(s)
+				}
 			}
 
 			fileId++
@@ -63,12 +69,19 @@ func New(fen string) *Board {
 
 	// side to move
 	board.sideToMove = piece.NewColor(parts[1])
+	if board.sideToMove == piece.BlackColor {
+		board.hash ^= zobrist.SideToMove
+	}
 
 	// castling rights
 	board.castlingRights = move.CastlingRightsFrom(parts[2])
+	board.hash ^= zobrist.Castling[board.castlingRights]
 
 	// en-passant target square
 	board.enPassantTarget = square.New(parts[3])
+	if board.enPassantTarget != square.None {
+		board.hash ^= zobrist.EnPassant[board.enPassantTarget.File()]
+	}
 
 	// move counters
 	board.halfMoves, _ = strconv.Atoi(parts[4])
