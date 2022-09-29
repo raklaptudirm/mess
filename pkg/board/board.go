@@ -327,7 +327,7 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 
 	switch p.Type() {
 	case piece.King:
-		return attacks.King(index, b.friends)
+		return attacks.King(index, b.friends, b.friends|b.enemies, b.castlingRights)
 	case piece.Queen:
 		return attacks.Queen(index, b.friends, b.friends|b.enemies)
 	case piece.Rook:

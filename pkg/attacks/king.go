@@ -15,6 +15,7 @@ package attacks
 
 import (
 	"laptudirm.com/x/mess/pkg/board/bitboard"
+	"laptudirm.com/x/mess/pkg/move"
 	"laptudirm.com/x/mess/pkg/square"
 )
 
@@ -39,6 +40,33 @@ func kingAttacksFrom(from square.Square) bitboard.Board {
 // King acts as a wrapper method for the precalculated attack bitboards of
 // a king from every position on the chessboard. It returns the attack
 // bitboard for the provided square.
-func King(s square.Square, friends bitboard.Board) bitboard.Board {
-	return kingAttacks[s] &^ friends
+func King(s square.Square, friends, occupied bitboard.Board, cr move.CastlingRights) bitboard.Board {
+	base := kingAttacks[s] &^ friends
+
+	switch s {
+	case square.E1:
+		kingsideMask := bitboard.Board(0x6000000000000000)
+		queensideMask := bitboard.Board(0xe00000000000000)
+
+		if cr&move.CastleWhiteKingside != 0 && occupied&kingsideMask == 0 {
+			base.Set(square.G1)
+		}
+
+		if cr&move.CastleWhiteQueenside != 0 && occupied&queensideMask == 0 {
+			base.Set(square.C1)
+		}
+	case square.E8:
+		kingsideMask := bitboard.Board(0x60)
+		queensideMask := bitboard.Board(0xe)
+
+		if cr&move.CastleBlackKingside != 0 && occupied&kingsideMask == 0 {
+			base.Set(square.G8)
+		}
+
+		if cr&move.CastleBlackQueenside != 0 && occupied&queensideMask == 0 {
+			base.Set(square.C8)
+		}
+	}
+
+	return base
 }
