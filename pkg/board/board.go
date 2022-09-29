@@ -209,8 +209,8 @@ func (b *Board) GenerateMoves() []move.Move {
 					ToPiece:       b.position[from],
 					CapturedPiece: b.position[to],
 
-					HalfMoves: b.halfMoves,
-					CastlingRights: b.castlingRights,
+					HalfMoves:       b.halfMoves,
+					CastlingRights:  b.castlingRights,
 					EnPassantSquare: b.enPassantTarget,
 				}
 
@@ -256,8 +256,8 @@ func (b *Board) GenerateMoves() []move.Move {
 						ToPiece:       b.position[from],
 						CapturedPiece: b.position[to],
 
-						HalfMoves: b.halfMoves,
-						CastlingRights: b.castlingRights,
+						HalfMoves:       b.halfMoves,
+						CastlingRights:  b.castlingRights,
 						EnPassantSquare: b.enPassantTarget,
 					}
 					moves = append(moves, m)
@@ -268,6 +268,54 @@ func (b *Board) GenerateMoves() []move.Move {
 	}
 
 	return moves
+}
+
+func (b *Board) Unmove(m move.Move) {
+	b.hash ^= zobrist.SideToMove
+
+	b.friends, b.enemies = b.enemies, b.friends
+
+	// update side to move
+	switch b.sideToMove {
+	case piece.WhiteColor:
+		b.sideToMove = piece.BlackColor
+		b.fullMoves--
+	case piece.BlackColor:
+		b.sideToMove = piece.WhiteColor
+	}
+
+	if b.enPassantTarget != square.None {
+		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
+		b.enPassantTarget = square.None
+	}
+
+	if m.EnPassantSquare != square.None {
+		b.enPassantTarget = m.EnPassantSquare
+		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
+	}
+
+	b.hash ^= zobrist.PieceSquare[m.FromPiece][m.To] // zobrist hash
+	b.friends.Unset(m.To)                            // friends bitboard
+	b.bitboards[m.ToPiece].Unset(m.To)               // piece bitboard
+	b.position[m.To] = piece.Empty                   // mailbox board
+
+	b.hash ^= zobrist.PieceSquare[m.FromPiece][m.From] // zobrist hash
+	b.friends.Unset(m.From)                            // friends bitboard
+	b.bitboards[m.FromPiece].Unset(m.From)             // piece bitboard
+	b.position[m.From] = m.FromPiece                   // mailbox board
+
+	if m.IsCapture() {
+		b.hash ^= zobrist.PieceSquare[m.CapturedPiece][m.Capture] // zobrist hash
+		b.enemies.Set(m.Capture)                                  // enemy bitboard
+		b.bitboards[m.CapturedPiece].Set(m.Capture)               // piece bitboard
+		b.position[m.Capture] = m.CapturedPiece                   // mailbox board
+	}
+
+	b.hash ^= zobrist.Castling[b.castlingRights]
+	b.hash ^= zobrist.Castling[m.CastlingRights]
+	b.castlingRights = m.CastlingRights
+
+	b.halfMoves = m.HalfMoves
 }
 
 func (b *Board) MovesOf(index square.Square) bitboard.Board {
