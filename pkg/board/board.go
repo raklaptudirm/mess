@@ -133,13 +133,13 @@ func (b *Board) MakeMove(m move.Move) {
 	b.hash ^= zobrist.PieceSquare[m.FromPiece][m.From] // zobrist hash
 	b.friends.Unset(m.From)                            // friends bitboard
 	b.bitboards[m.FromPiece].Unset(m.From)             // piece bitboard
-	b.position[m.To] = b.position[m.From]              // mailbox board
+	b.position[m.From] = piece.Empty                   // mailbox board
 
 	// add moved piece to destination square
 	b.hash ^= zobrist.PieceSquare[m.FromPiece][m.To] // zobrist hash
 	b.friends.Set(m.To)                              // friends bitboard
-	b.bitboards[m.FromPiece].Set(m.To)               // piece bitboard
-	b.position[m.From] = piece.Empty                 // mailbox board
+	b.bitboards[m.ToPiece].Set(m.To)                 // piece bitboard
+	b.position[m.To] = m.ToPiece                     // mailbox board
 
 	// update en passant target square
 	// clear the previous square, and if current move was double a pawn
