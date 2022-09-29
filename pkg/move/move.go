@@ -8,36 +8,48 @@ import (
 )
 
 type Move struct {
-	From square.Square
-	To   square.Square
+	From    square.Square
+	To      square.Square
+	Capture square.Square
 
-	Promotion piece.Piece
+	FromPiece     piece.Piece
+	ToPiece       piece.Piece
+	CapturedPiece piece.Piece
 
-	IsEnPassant bool
+	HalfMoves int
+	CastlingRights CastlingRights
+	EnPassantSquare square.Square
 }
 
 func (m Move) String() string {
 	str := fmt.Sprintf("%s%s", m.From, m.To)
-	if m.Promotion != piece.Empty {
-		str += (m.Promotion + piece.Pawn).String()
+	if m.IsPromotion() {
+		str += (m.ToPiece + piece.Pawn).String()
 	}
 	return str
 }
 
+func (m Move) IsCapture() bool {
+	return m.CapturedPiece != piece.Empty
+}
+
+func (m Move) IsEnPassant() bool {
+	return m.FromPiece.Type() == piece.Pawn && m.To == m.EnPassantSquare
+}
+
 func (m Move) IsPromotion() bool {
-	return m.Promotion != piece.Empty
+	return m.FromPiece != m.ToPiece
 }
 
 func (m Move) IsDoublePawnPush() bool {
-	fromRank := m.From.Rank()
-	toRank := m.To.Rank()
+	if m.FromPiece != piece.Pawn {
+		return false
+	}
 
-	switch {
-	case fromRank != square.Rank2 && fromRank != square.Rank7:
-		return false
-	case toRank != square.Rank4 && toRank != square.Rank5:
-		return false
-	default:
+	switch m.From.Rank() - m.To.Rank() {
+	case 32, -32:
 		return true
+	default:
+		return false
 	}
 }

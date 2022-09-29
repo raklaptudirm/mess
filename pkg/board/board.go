@@ -59,20 +59,20 @@ func (b *Board) MakeMove(m move.Move) {
 		panic(fmt.Sprintf("invalid move: piece can't move to given square\n%s", attackSet))
 	}
 
-	isPawn := b.position[m.From].Type() == piece.Pawn
-	isCapture := b.position[m.To] != piece.Empty || m.IsEnPassant
-
-	// half-move clock stuff
+	// update the half-move clock
+	// it records the number of plys since the last pawn push or capture
+	// for positions which are drawn by the 50-move rule
 	switch {
-	case isPawn, isCapture:
-		// reset clock
+	case m.FromPiece.Type() == piece.Pawn, m.IsCapture():
+		// pawn push or capture: reset clock
 		b.halfMoves = 0
 	default:
 		b.halfMoves++
 	}
 
 	// update castling rights
-	b.hash ^= zobrist.Castling[b.castlingRights]
+	// movement of the rooks or the king, or the capture of the rooks
+	// leads to losing the right to castle: update it according to the move
 
 	// rooks or king moved
 	switch m.From {
@@ -116,48 +116,45 @@ func (b *Board) MakeMove(m move.Move) {
 		b.castlingRights &^= move.CastleBlackKingside
 	}
 
-	b.hash ^= zobrist.Castling[b.castlingRights]
+	b.hash ^= zobrist.Castling[m.CastlingRights] // remove old rights
+	b.hash ^= zobrist.Castling[b.castlingRights] // put new rights
 
-	captureSquare := m.To
+	// move the piece in the records
 
-	if m.IsEnPassant {
-		// en-passant capture, captureSquare will be different to move.To
-		captureSquare = b.enPassantTarget
-		if b.sideToMove == piece.WhiteColor {
-			captureSquare += 8
-		} else {
-			captureSquare -= 8
-		}
+	if m.IsCapture() {
+		// remove captured piece from records
+		b.hash ^= zobrist.PieceSquare[m.CapturedPiece][m.Capture] // zobrist hash
+		b.enemies.Unset(m.Capture)                                // enemy bitboard
+		b.bitboards[m.CapturedPiece].Unset(m.Capture)             // piece bitboard
+		b.position[m.Capture] = piece.Empty                       // mailbox board
 	}
 
-	if isCapture {
-		capturedPiece := b.position[captureSquare]
-		b.hash ^= zobrist.PieceSquare[capturedPiece][captureSquare]
-		b.enemies.Unset(captureSquare)
-		b.bitboards[capturedPiece].Unset(captureSquare)
-		b.position[captureSquare] = piece.Empty
-	}
+	// remove moved piece from initial square
+	b.hash ^= zobrist.PieceSquare[m.FromPiece][m.From] // zobrist hash
+	b.friends.Unset(m.From)                            // friends bitboard
+	b.bitboards[m.FromPiece].Unset(m.From)             // piece bitboard
+	b.position[m.To] = b.position[m.From]              // mailbox board
 
-	movedPiece := b.position[m.From]
+	// add moved piece to destination square
+	b.hash ^= zobrist.PieceSquare[m.FromPiece][m.To] // zobrist hash
+	b.friends.Set(m.To)                              // friends bitboard
+	b.bitboards[m.FromPiece].Set(m.To)               // piece bitboard
+	b.position[m.From] = piece.Empty                 // mailbox board
 
-	b.hash ^= zobrist.PieceSquare[movedPiece][m.From]
-	b.friends.Unset(m.From)               // friends bitboard
-	b.bitboards[movedPiece].Unset(m.From) // piece bitboard
-	b.position[m.To] = b.position[m.From] // 8x8 board
-
-	b.hash ^= zobrist.PieceSquare[movedPiece][m.To]
-	b.friends.Set(m.To)               // friends bitboard
-	b.bitboards[movedPiece].Set(m.To) // piece bitboard
-	b.position[m.From] = piece.Empty  // 8x8 board
+	// update en passant target square
+	// clear the previous square, and if current move was double a pawn
+	// push, add set the en passant target to the new square
 
 	if b.enPassantTarget != square.None {
+		// remove previous square from zobrist hash
 		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
 	}
 
 	// reset en passant target
 	b.enPassantTarget = square.None
 
-	if isPawn && m.IsDoublePawnPush() {
+	if m.IsDoublePawnPush() {
+		// double pawn push; set new en passant target
 		b.enPassantTarget = m.From
 		if b.sideToMove == piece.WhiteColor {
 			b.enPassantTarget += 8
@@ -165,13 +162,13 @@ func (b *Board) MakeMove(m move.Move) {
 			b.enPassantTarget -= 8
 		}
 
+		// and new square to zobrist hash
 		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
 	}
 
-	b.switchTurn()
-}
+	// switch turn
 
-func (b *Board) switchTurn() {
+	// update side to move
 	switch b.sideToMove {
 	case piece.WhiteColor:
 		b.sideToMove = piece.BlackColor
@@ -183,6 +180,7 @@ func (b *Board) switchTurn() {
 	// switch bitboards
 	b.friends, b.enemies = b.enemies, b.friends
 
+	// switch zobrist hash
 	b.hash ^= zobrist.SideToMove
 }
 
@@ -203,8 +201,17 @@ func (b *Board) GenerateMoves() []move.Move {
 				}
 
 				m := move.Move{
-					From: from,
-					To:   to,
+					From:    from,
+					To:      to,
+					Capture: to,
+
+					FromPiece:     b.position[from],
+					ToPiece:       b.position[from],
+					CapturedPiece: b.position[to],
+
+					HalfMoves: b.halfMoves,
+					CastlingRights: b.castlingRights,
+					EnPassantSquare: b.enPassantTarget,
 				}
 
 				switch {
@@ -214,15 +221,19 @@ func (b *Board) GenerateMoves() []move.Move {
 				case b.sideToMove == piece.BlackColor && to.Rank() == square.Rank1:
 					// evaluate all possible promotions
 					for _, promotion := range piece.Promotions {
-						m.Promotion = promotion
+						m.ToPiece = promotion
 						moves = append(moves, m)
 					}
 
 				// en passant capture
 				case to == b.enPassantTarget:
-					// check for en passant
-					m.IsEnPassant = true
-					fallthrough
+					m.Capture = to
+					if b.sideToMove == piece.WhiteColor {
+						m.Capture += 8
+					} else {
+						m.Capture -= 8
+					}
+					m.CapturedPiece = b.position[m.Capture]
 
 				// simple push or capture
 				default:
@@ -240,6 +251,14 @@ func (b *Board) GenerateMoves() []move.Move {
 					m := move.Move{
 						From: from,
 						To:   to,
+
+						FromPiece:     b.position[from],
+						ToPiece:       b.position[from],
+						CapturedPiece: b.position[to],
+
+						HalfMoves: b.halfMoves,
+						CastlingRights: b.castlingRights,
+						EnPassantSquare: b.enPassantTarget,
 					}
 					moves = append(moves, m)
 				}
