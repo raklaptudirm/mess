@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"strings"
 
-	"laptudirm.com/x/mess/pkg/move"
+	"laptudirm.com/x/mess/pkg/castling"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
 	"laptudirm.com/x/mess/pkg/zobrist"
@@ -74,7 +74,7 @@ func New(fen string) *Board {
 	}
 
 	// castling rights
-	board.castlingRights = move.CastlingRightsFrom(parts[2])
+	board.castlingRights = castling.NewRights(parts[2])
 	board.hash ^= zobrist.Castling[board.castlingRights]
 
 	// en-passant target square

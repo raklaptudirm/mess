@@ -3,6 +3,7 @@ package move
 import (
 	"fmt"
 
+	"laptudirm.com/x/mess/pkg/castling"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
 )
@@ -17,7 +18,7 @@ type Move struct {
 	CapturedPiece piece.Piece
 
 	HalfMoves       int
-	CastlingRights  CastlingRights
+	CastlingRights  castling.Rights
 	EnPassantSquare square.Square
 }
 

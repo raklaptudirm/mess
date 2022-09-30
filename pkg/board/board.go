@@ -21,6 +21,7 @@ import (
 	"laptudirm.com/x/mess/pkg/attacks"
 	"laptudirm.com/x/mess/pkg/board/bitboard"
 	"laptudirm.com/x/mess/pkg/board/mailbox"
+	"laptudirm.com/x/mess/pkg/castling"
 	"laptudirm.com/x/mess/pkg/move"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
@@ -40,7 +41,7 @@ type Board struct {
 
 	sideToMove      piece.Color
 	enPassantTarget square.Square
-	castlingRights  move.CastlingRights
+	castlingRights  castling.Rights
 
 	// move counters
 	halfMoves int
@@ -79,41 +80,41 @@ func (b *Board) MakeMove(m move.Move) {
 	// white rights
 	case square.H1:
 		// kingside rook moved
-		b.castlingRights &^= move.CastleWhiteKingside
+		b.castlingRights &^= castling.WhiteKingside
 	case square.A1:
 		// queenside rook moved
-		b.castlingRights &^= move.CastleWhiteQueenside
+		b.castlingRights &^= castling.WhiteQueenside
 	case square.E1:
 		// king moved
-		b.castlingRights &^= move.CastleWhiteKingside
-		b.castlingRights &^= move.CastleWhiteQueenside
+		b.castlingRights &^= castling.WhiteKingside
+		b.castlingRights &^= castling.WhiteQueenside
 
 	// black rights
 	case square.H8:
 		// kingside rook moved
-		b.castlingRights &^= move.CastleBlackKingside
+		b.castlingRights &^= castling.BlackKingside
 	case square.A8:
 		// queenside rook moved
-		b.castlingRights &^= move.CastleBlackQueenside
+		b.castlingRights &^= castling.BlackQueenside
 	case square.E8:
 		// king moved
-		b.castlingRights &^= move.CastleBlackKingside
-		b.castlingRights &^= move.CastleBlackQueenside
+		b.castlingRights &^= castling.BlackKingside
+		b.castlingRights &^= castling.BlackQueenside
 	}
 
 	// rooks captured
 	switch m.To {
 	// white rooks
 	case square.H1:
-		b.castlingRights &^= move.CastleWhiteKingside
+		b.castlingRights &^= castling.WhiteKingside
 	case square.A1:
-		b.castlingRights &^= move.CastleWhiteQueenside
+		b.castlingRights &^= castling.WhiteQueenside
 
 	// black rooks
 	case square.H8:
-		b.castlingRights &^= move.CastleBlackKingside
+		b.castlingRights &^= castling.BlackKingside
 	case square.A8:
-		b.castlingRights &^= move.CastleBlackKingside
+		b.castlingRights &^= castling.BlackKingside
 	}
 
 	b.hash ^= zobrist.Castling[m.CastlingRights] // remove old rights

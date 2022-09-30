@@ -1,16 +1,16 @@
 package zobrist
 
 import (
-	"laptudirm.com/x/mess/pkg/move"
+	"laptudirm.com/x/mess/pkg/castling"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
 )
 
 type Key uint64
 
-var PieceSquare [2 * piece.N][square.N]Key
+var PieceSquare [piece.N][square.N]Key
 var EnPassant [square.FileN]Key
-var Castling [16]Key
+var Castling [castling.N]Key
 var SideToMove Key
 
 func init() {
@@ -30,7 +30,7 @@ func init() {
 	}
 
 	// castling right numbers
-	for r := move.CastleNone; r <= move.CastleAll; r++ {
+	for r := castling.None; r <= castling.All; r++ {
 		Castling[r] = Key(rng.Uint64())
 	}
 
