@@ -5,6 +5,10 @@ type CastlingRights byte
 func CastlingRightsFrom(r string) CastlingRights {
 	var rights CastlingRights
 
+	if r == "-" {
+		return CastleNone
+	}
+
 	if r != "" && r[0] == 'K' {
 		r = r[1:]
 		rights |= CastleWhiteKingside
@@ -61,6 +65,10 @@ func (c CastlingRights) String() string {
 
 	if c&CastleBlackQueenside != 0 {
 		str += "q"
+	}
+
+	if str == "" {
+		str = "-"
 	}
 
 	return str

@@ -92,12 +92,6 @@ func New(fen string) *Board {
 
 // FEN returns the fen string of the current Board position.
 func (b *Board) FEN() string {
-	// castling rights
-	var castling string
-	if castling = b.castlingRights.String(); castling != "" {
-		castling += " "
-	}
-
 	// <position> <side to move> <castling rights> <en passant target> <half move count> <full move count>
-	return fmt.Sprintf("%s %s %s%s %d %d", b.position.FEN(), b.sideToMove, castling, b.enPassantTarget, b.halfMoves, b.fullMoves)
+	return fmt.Sprintf("%s %s %s %s %d %d", b.position.FEN(), b.sideToMove, b.castlingRights.String(), b.enPassantTarget, b.halfMoves, b.fullMoves)
 }
