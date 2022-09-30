@@ -30,6 +30,17 @@ func (m Move) String() string {
 	return str
 }
 
+func (m Move) IsCastle() bool {
+	switch m.FromPiece {
+	case piece.WhiteKing:
+		return m.From == square.E1 && (m.To == square.G1 || m.To == square.C1)
+	case piece.BlackKing:
+		return m.From == square.E8 && (m.To == square.G8 || m.To == square.C8)
+	default:
+		return false
+	}
+}
+
 func (m Move) IsCapture() bool {
 	return m.CapturedPiece != piece.NoPiece
 }
