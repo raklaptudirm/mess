@@ -88,6 +88,23 @@ func (b *Board) MakeMove(m move.Move) {
 	b.ClearSquare(m.From)
 	b.FillSquare(m.To, m.ToPiece)
 
+	if m.IsCastle() {
+		switch m.To {
+		case square.G1:
+			b.ClearSquare(square.H1)
+			b.FillSquare(square.F1, piece.WhiteRook)
+		case square.C1:
+			b.ClearSquare(square.A1)
+			b.FillSquare(square.D1, piece.WhiteRook)
+		case square.G8:
+			b.ClearSquare(square.H8)
+			b.FillSquare(square.F8, piece.BlackRook)
+		case square.C8:
+			b.ClearSquare(square.A8)
+			b.FillSquare(square.D8, piece.BlackRook)
+		}
+	}
+
 	// update en passant target square
 	// clear the previous square, and if current move was double a pawn
 	// push, add set the en passant target to the new square
@@ -143,6 +160,23 @@ func (b *Board) Unmove(m move.Move) {
 
 	if m.IsCapture() {
 		b.FillSquare(m.Capture, m.CapturedPiece)
+	}
+
+	if m.IsCastle() {
+		switch m.To {
+		case square.G1:
+			b.ClearSquare(square.F1)
+			b.FillSquare(square.H1, piece.WhiteRook)
+		case square.C1:
+			b.ClearSquare(square.D1)
+			b.FillSquare(square.A1, piece.WhiteRook)
+		case square.G8:
+			b.ClearSquare(square.F8)
+			b.FillSquare(square.H8, piece.BlackRook)
+		case square.C8:
+			b.ClearSquare(square.D8)
+			b.FillSquare(square.A8, piece.BlackRook)
+		}
 	}
 
 	b.hash ^= zobrist.Castling[b.castlingRights]
