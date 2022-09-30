@@ -18,7 +18,7 @@ func init() {
 	rng.Seed(1070372)
 
 	// piece square numbers
-	for p := 0; p < 2*piece.N; p++ {
+	for p := 0; p < piece.N; p++ {
 		for s := square.A8; s <= square.H1; s++ {
 			PieceSquare[p][s] = Key(rng.Uint64())
 		}
