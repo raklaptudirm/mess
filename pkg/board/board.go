@@ -292,8 +292,8 @@ func (b *Board) Unmove(m move.Move) {
 	b.position[m.To] = piece.NoPiece                 // mailbox board
 
 	b.hash ^= zobrist.PieceSquare[m.FromPiece][m.From] // zobrist hash
-	b.friends.Unset(m.From)                            // friends bitboard
-	b.bitboards[m.FromPiece].Unset(m.From)             // piece bitboard
+	b.friends.Set(m.From)                              // friends bitboard
+	b.bitboards[m.FromPiece].Set(m.From)               // piece bitboard
 	b.position[m.From] = m.FromPiece                   // mailbox board
 
 	if m.IsCapture() {
