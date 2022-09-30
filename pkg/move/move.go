@@ -16,21 +16,21 @@ type Move struct {
 	ToPiece       piece.Piece
 	CapturedPiece piece.Piece
 
-	HalfMoves int
-	CastlingRights CastlingRights
+	HalfMoves       int
+	CastlingRights  CastlingRights
 	EnPassantSquare square.Square
 }
 
 func (m Move) String() string {
 	str := fmt.Sprintf("%s%s", m.From, m.To)
 	if m.IsPromotion() {
-		str += (m.ToPiece + piece.Pawn).String()
+		str += m.ToPiece.Type().String()
 	}
 	return str
 }
 
 func (m Move) IsCapture() bool {
-	return m.CapturedPiece != piece.Empty
+	return m.CapturedPiece != piece.NoPiece
 }
 
 func (m Move) IsEnPassant() bool {
@@ -42,7 +42,7 @@ func (m Move) IsPromotion() bool {
 }
 
 func (m Move) IsDoublePawnPush() bool {
-	if m.FromPiece != piece.Pawn {
+	if m.FromPiece.Type() != piece.Pawn {
 		return false
 	}
 

@@ -33,7 +33,7 @@ func New(fen string) *Board {
 
 	// side to move
 	board.sideToMove = piece.NewColor(parts[1])
-	if board.sideToMove == piece.BlackColor {
+	if board.sideToMove == piece.Black {
 		board.hash ^= zobrist.SideToMove
 	}
 
@@ -51,9 +51,9 @@ func New(fen string) *Board {
 			}
 
 			// piece string to piece
-			p := piece.New(string(id))
+			p := piece.NewFromString(string(id))
 
-			if p.Type() != piece.Empty {
+			if p.Type() != piece.NoType {
 				// update hash
 				board.hash ^= zobrist.PieceSquare[p][s]
 

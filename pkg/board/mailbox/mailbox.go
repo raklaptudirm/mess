@@ -23,7 +23,7 @@ import (
 )
 
 // Board represents a 8x8 chessboard consisting of pieces.
-type Board [8 * 8]piece.Piece
+type Board [square.N]piece.Piece
 
 // String converts a Board into it's human readable string representation.
 func (b Board) String() string {
@@ -56,7 +56,7 @@ func (b *Board) FEN() string {
 	for i, p := range b {
 		currSquare := square.Square(i)
 
-		if p == piece.Empty {
+		if p == piece.NoPiece {
 			// increase empty square count
 			empty++
 		} else {
