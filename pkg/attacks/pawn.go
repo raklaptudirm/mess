@@ -58,10 +58,14 @@ func PawnAll(s, ep square.Square, c piece.Color, occupied, enemies bitboard.Boar
 
 	switch c {
 	case piece.White:
-		attackSet |= (attackSet >> 8) &^ occupied // 2 squares ahead
+		if s.Rank() == square.Rank2 {
+			attackSet |= (attackSet >> 8) &^ occupied // 2 squares ahead
+		}
 
 	case piece.Black:
-		attackSet |= (attackSet << 8) &^ occupied // 2 squares ahead
+		if s.Rank() == square.Rank7 {
+			attackSet |= (attackSet << 8) &^ occupied // 2 squares ahead
+		}
 
 	default:
 		panic("pawn attacks: invalid color")
