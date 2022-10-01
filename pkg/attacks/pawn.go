@@ -49,26 +49,25 @@ func blackPawnAttacksFrom(s square.Square) bitboard.Board {
 	return b.board
 }
 
-func Pawn(s, ep square.Square, c piece.Color, friends, enemies bitboard.Board) bitboard.Board {
-	var occupied = friends | enemies
+func PawnAll(s, ep square.Square, c piece.Color, occupied, enemies bitboard.Board) bitboard.Board {
 	var attackSet bitboard.Board
 
 	enemies.Set(ep)
 
+	attackSet = PawnMoves[c][s] &^ occupied // 1 square ahead
+
 	switch c {
 	case piece.White:
-		attackSet = whitePawnMoves[s] &^ occupied  // 1 square ahead
-		attackSet |= (attackSet >> 8) &^ occupied  // 2 squares ahead
-		attackSet |= whitePawnAttacks[s] & enemies // diagonal attacks
+		attackSet |= (attackSet >> 8) &^ occupied // 2 squares ahead
 
 	case piece.Black:
-		attackSet = blackPawnMoves[s] &^ occupied  // 1 square ahead
-		attackSet |= (attackSet << 8) &^ occupied  // 2 squares ahead
-		attackSet |= blackPawnAttacks[s] & enemies // diagonal attacks
+		attackSet |= (attackSet << 8) &^ occupied // 2 squares ahead
 
 	default:
 		panic("pawn attacks: invalid color")
 	}
+
+	attackSet |= Pawn[c][s] & enemies // diagonal attacks
 
 	return attackSet
 }

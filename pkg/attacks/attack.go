@@ -15,17 +15,16 @@ package attacks
 
 import (
 	"laptudirm.com/x/mess/pkg/board/bitboard"
+	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
 )
 
 // lookup tables for precalculated attack boards of non-sliding pieces
 var (
-	kingAttacks      [64]bitboard.Board
-	knightAttacks    [64]bitboard.Board
-	whitePawnMoves   [64]bitboard.Board
-	blackPawnMoves   [64]bitboard.Board
-	whitePawnAttacks [64]bitboard.Board
-	blackPawnAttacks [64]bitboard.Board
+	King             [square.N]bitboard.Board
+	Knight           [square.N]bitboard.Board
+	PawnMoves   [piece.NColor][square.N]bitboard.Board
+	Pawn [piece.NColor][square.N]bitboard.Board
 )
 
 // init initializes the attack bitboard lookup tables for non-sliding
@@ -33,12 +32,12 @@ var (
 func init() {
 	for s := square.A8; s <= square.H1; s++ {
 		// compute attack bitboards for current square
-		kingAttacks[s] = kingAttacksFrom(s)
-		knightAttacks[s] = knightAttacksFrom(s)
-		whitePawnMoves[s] = whitePawnMovesFrom(s)
-		blackPawnMoves[s] = blackPawnMovesFrom(s)
-		whitePawnAttacks[s] = whitePawnAttacksFrom(s)
-		blackPawnAttacks[s] = blackPawnAttacksFrom(s)
+		King[s] = kingAttacksFrom(s)
+		Knight[s] = knightAttacksFrom(s)
+		PawnMoves[piece.White][s] = whitePawnMovesFrom(s)
+		PawnMoves[piece.Black][s] = blackPawnMovesFrom(s)
+		Pawn[piece.White][s] = whitePawnAttacksFrom(s)
+		Pawn[piece.Black][s] = blackPawnAttacksFrom(s)
 	}
 }
 

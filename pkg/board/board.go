@@ -18,6 +18,7 @@ package board
 import (
 	"fmt"
 
+	"laptudirm.com/x/mess/pkg/attacks"
 	"laptudirm.com/x/mess/pkg/board/bitboard"
 	"laptudirm.com/x/mess/pkg/board/mailbox"
 	"laptudirm.com/x/mess/pkg/castling"
@@ -75,4 +76,33 @@ func (b *Board) FillSquare(s square.Square, p piece.Piece) {
 	b.bitboards[p].Set(s)               // piece bitboard
 	b.position[s] = p                   // mailbox board
 	b.hash ^= zobrist.PieceSquare[p][s] // zobrist hash
+}
+
+func (b *Board) IsAttacked(s square.Square, them piece.Color) bool {
+	occ := b.friends | b.enemies
+
+	pawns := b.bitboards[piece.New(piece.Pawn, them)]
+	if attacks.Pawn[them.Other()][s]&pawns != bitboard.Empty {
+		return true
+	}
+
+	knights := b.bitboards[piece.New(piece.Knight, them)]
+	if attacks.Knight[s]&knights != bitboard.Empty {
+		return true
+	}
+
+	king := b.bitboards[piece.New(piece.King, them)]
+	if attacks.King[s]&king != bitboard.Empty {
+		return true
+	}
+
+	queens := b.bitboards[piece.New(piece.Queen, them)]
+
+	bishops := b.bitboards[piece.New(piece.Bishop, them)]
+	if attacks.Bishop(s, occ)&(bishops|queens) != bitboard.Empty {
+		return true
+	}
+
+	rooks := b.bitboards[piece.New(piece.Rook, them)]
+	return attacks.Rook(s, occ)&(rooks|queens) != bitboard.Empty
 }
