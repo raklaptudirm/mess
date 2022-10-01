@@ -46,7 +46,7 @@ const (
 var Ranks = [...]Board{
 	square.Rank1: Rank1,
 	square.Rank2: Rank2,
-	square.Rank3: Rank1,
+	square.Rank3: Rank3,
 	square.Rank4: Rank4,
 	square.Rank5: Rank5,
 	square.Rank6: Rank6,
