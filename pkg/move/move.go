@@ -58,8 +58,12 @@ func (m Move) IsDoublePawnPush() bool {
 		return false
 	}
 
-	switch m.From.Rank() - m.To.Rank() {
-	case 32, -32:
+	fromRank := m.From.Rank()
+	toRank := m.To.Rank()
+
+	switch {
+	case fromRank == square.Rank2 && toRank == square.Rank4,
+	fromRank == square.Rank7 && toRank == square.Rank5:
 		return true
 	default:
 		return false
