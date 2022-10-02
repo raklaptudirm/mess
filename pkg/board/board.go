@@ -38,6 +38,8 @@ type Board struct {
 	friends bitboard.Board
 	enemies bitboard.Board
 
+	kings [piece.NColor]square.Square
+
 	sideToMove      piece.Color
 	enPassantTarget square.Square
 	castlingRights  castling.Rights
@@ -67,10 +69,16 @@ func (b *Board) ClearSquare(s square.Square) {
 }
 
 func (b *Board) FillSquare(s square.Square, p piece.Piece) {
-	if p.Color() == b.sideToMove {
+	c := p.Color()
+
+	if c == b.sideToMove {
 		b.friends.Set(s) // friends bitboard
 	} else {
 		b.enemies.Set(s) // enemies bitboard
+	}
+
+	if p.Type() == piece.King {
+		b.kings[c] = s
 	}
 
 	b.bitboards[p].Set(s)               // piece bitboard
