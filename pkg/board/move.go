@@ -260,8 +260,9 @@ func (b *Board) GenerateMoves() []move.Move {
 				to := square.Square(j)
 				if moveSet.IsSet(to) {
 					m := move.Move{
-						From: from,
-						To:   to,
+						From:    from,
+						To:      to,
+						Capture: to,
 
 						FromPiece:     b.position[from],
 						ToPiece:       b.position[from],
