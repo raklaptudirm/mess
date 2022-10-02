@@ -284,7 +284,7 @@ func (b *Board) GenerateMoves() []move.Move {
 
 func (b *Board) MovesOf(index square.Square) bitboard.Board {
 	p := b.position[index]
-	if p.Color() != b.sideToMove {
+	if p == piece.NoPiece || p.Color() != b.sideToMove {
 		// other side has no moves
 		return bitboard.Empty
 	}
