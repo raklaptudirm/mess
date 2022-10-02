@@ -12,5 +12,5 @@ func Bishop(s square.Square, occ bitboard.Board) bitboard.Board {
 	antiDiagonalMask := bitboard.AntiDiagonals[s.AntiDiagonal()]
 	antiDiagonalAttack := hyperbola(s, occ, antiDiagonalMask)
 
-	return (diagonalAttack | antiDiagonalAttack)
+	return diagonalAttack | antiDiagonalAttack
 }

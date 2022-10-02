@@ -12,5 +12,5 @@ func Rook(s square.Square, occ bitboard.Board) bitboard.Board {
 	rankMask := bitboard.Ranks[s.Rank()]
 	rankAttacks := hyperbola(s, occ, rankMask)
 
-	return (fileAttacks | rankAttacks)
+	return fileAttacks | rankAttacks
 }

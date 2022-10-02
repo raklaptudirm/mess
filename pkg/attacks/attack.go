@@ -52,12 +52,11 @@ func (b *board) addAttack(fileOffset square.File, rankOffset square.Rank) {
 	attackFile := b.origin.File() + fileOffset
 	attackRank := b.origin.Rank() + rankOffset
 
-	attackSquare := square.From(attackFile, attackRank)
-
 	switch {
 	case attackFile < 0, attackFile > square.FileH, attackRank < 0, attackRank > square.Rank1:
 		return
 	}
 
+	attackSquare := square.From(attackFile, attackRank)
 	b.board.Set(attackSquare)
 }
