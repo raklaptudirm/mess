@@ -294,7 +294,54 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 
 	switch p.Type() {
 	case piece.King:
-		a = attacks.KingAll(index, occ, b.castlingRights)
+		cr := b.castlingRights
+
+		// even if the king and rooks haven't moved, the king can still
+		// be prevented from castling with checks on it's path
+		switch them := b.sideToMove.Other(); b.sideToMove {
+		case piece.White:
+			// return early
+			if index != square.E1 {
+				break
+			}
+
+			// king is in check
+			if b.IsAttacked(square.E1, them) {
+				cr = castling.None
+				break
+			}
+
+			// can't castle through check
+			if b.IsAttacked(square.F1, them) {
+				cr &^= castling.WhiteKingside
+			}
+
+			if b.IsAttacked(square.D1, them) {
+				cr &^= castling.WhiteQueenside
+			}
+		case piece.Black:
+			// return early
+			if index != square.E8 {
+				break
+			}
+
+			// king is in check
+			if b.IsAttacked(square.E8, them) {
+				cr = castling.None
+				break
+			}
+
+			// can't castle through check
+			if b.IsAttacked(square.F8, them) {
+				cr &^= castling.BlackKingside
+			}
+
+			if b.IsAttacked(square.D8, them) {
+				cr &^= castling.BlackQueenside
+			}
+		}
+
+		a = attacks.KingAll(index, occ, cr)
 	case piece.Queen:
 		a = attacks.Queen(index, occ)
 	case piece.Rook:
