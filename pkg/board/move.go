@@ -121,9 +121,9 @@ func (b *Board) MakeMove(m move.Move) {
 		// double pawn push; set new en passant target
 		b.enPassantTarget = m.From
 		if b.sideToMove == piece.White {
-			b.enPassantTarget += 8
-		} else {
 			b.enPassantTarget -= 8
+		} else {
+			b.enPassantTarget += 8
 		}
 
 		// and new square to zobrist hash
