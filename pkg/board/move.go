@@ -119,15 +119,19 @@ func (b *Board) MakeMove(m move.Move) {
 
 	if m.IsDoublePawnPush() {
 		// double pawn push; set new en passant target
-		b.enPassantTarget = m.From
+		target := m.From
 		if b.sideToMove == piece.White {
-			b.enPassantTarget -= 8
+			target -= 8
 		} else {
-			b.enPassantTarget += 8
+			target += 8
 		}
 
-		// and new square to zobrist hash
-		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
+		// only set en passant square if an enemy pawn can capture it
+		if b.bitboards[piece.New(piece.Pawn, b.sideToMove.Other())]&attacks.Pawn[b.sideToMove][target] != 0 {
+			b.enPassantTarget = target
+			// and new square to zobrist hash
+			b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
+		}
 	}
 
 	// switch turn
