@@ -227,9 +227,8 @@ func (b *Board) GenerateMoves() []move.Move {
 
 				switch {
 				// pawn will promote
-				case b.sideToMove == piece.White && to.Rank() == square.Rank8:
-					fallthrough
-				case b.sideToMove == piece.Black && to.Rank() == square.Rank1:
+				case b.sideToMove == piece.White && to.Rank() == square.Rank8,
+					b.sideToMove == piece.Black && to.Rank() == square.Rank1:
 					// evaluate all possible promotions
 					for _, promotion := range piece.Promotions {
 						m.ToPiece = piece.New(promotion, b.sideToMove)
@@ -245,6 +244,7 @@ func (b *Board) GenerateMoves() []move.Move {
 						m.Capture -= 8
 					}
 					m.CapturedPiece = b.position[m.Capture]
+					fallthrough
 
 				// simple push or capture
 				default:
