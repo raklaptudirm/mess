@@ -41,20 +41,9 @@ func (b *Board) MakeMove(m move.Move) {
 	b.FillSquare(m.To, m.ToPiece)
 
 	if m.IsCastle() {
-		switch m.To {
-		case square.G1:
-			b.ClearSquare(square.H1)
-			b.FillSquare(square.F1, piece.WhiteRook)
-		case square.C1:
-			b.ClearSquare(square.A1)
-			b.FillSquare(square.D1, piece.WhiteRook)
-		case square.G8:
-			b.ClearSquare(square.H8)
-			b.FillSquare(square.F8, piece.BlackRook)
-		case square.C8:
-			b.ClearSquare(square.A8)
-			b.FillSquare(square.D8, piece.BlackRook)
-		}
+		rookInfo := castling.Rooks[m.To]
+		b.ClearSquare(rookInfo.From)
+		b.FillSquare(rookInfo.To, rookInfo.RookType)
 	}
 
 	// update en passant target square
@@ -117,20 +106,9 @@ func (b *Board) Unmove(m move.Move) {
 	}
 
 	if m.IsCastle() {
-		switch m.To {
-		case square.G1:
-			b.ClearSquare(square.F1)
-			b.FillSquare(square.H1, piece.WhiteRook)
-		case square.C1:
-			b.ClearSquare(square.D1)
-			b.FillSquare(square.A1, piece.WhiteRook)
-		case square.G8:
-			b.ClearSquare(square.F8)
-			b.FillSquare(square.H8, piece.BlackRook)
-		case square.C8:
-			b.ClearSquare(square.D8)
-			b.FillSquare(square.A8, piece.BlackRook)
-		}
+		rookInfo := castling.Rooks[m.To]
+		b.ClearSquare(rookInfo.To)
+		b.FillSquare(rookInfo.From, rookInfo.RookType)
 	}
 
 	b.hash ^= zobrist.Castling[b.castlingRights]
