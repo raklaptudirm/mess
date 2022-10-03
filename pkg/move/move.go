@@ -30,6 +30,56 @@ func (m Move) String() string {
 	return str
 }
 
+func (m Move) CastlingRightUpdates() castling.Rights {
+	toRemove := castling.None // castling rights to remove
+
+	// update castling rights
+	// movement of the rooks or the king, or the capture of the rooks
+	// leads to losing the right to castle: update it according to the move
+
+	// rooks or king moved
+	switch m.From {
+	// white rights
+	case square.H1:
+		// kingside rook moved
+		toRemove |= castling.WhiteKingside
+	case square.A1:
+		// queenside rook moved
+		toRemove |= castling.WhiteQueenside
+	case square.E1:
+		// king moved
+		toRemove |= castling.White
+
+	// black rights
+	case square.H8:
+		// kingside rook moved
+		toRemove |= castling.BlackKingside
+	case square.A8:
+		// queenside rook moved
+		toRemove |= castling.BlackQueenside
+	case square.E8:
+		// king moved
+		toRemove |= castling.Black
+	}
+
+	// rooks captured
+	switch m.To {
+	// white rooks
+	case square.H1:
+		toRemove |= castling.WhiteKingside
+	case square.A1:
+		toRemove |= castling.WhiteQueenside
+
+	// black rooks
+	case square.H8:
+		toRemove |= castling.BlackKingside
+	case square.A8:
+		toRemove |= castling.BlackKingside
+	}
+
+	return toRemove
+}
+
 func (m Move) IsCastle() bool {
 	switch m.FromPiece {
 	case piece.WhiteKing:
@@ -63,7 +113,7 @@ func (m Move) IsDoublePawnPush() bool {
 
 	switch {
 	case fromRank == square.Rank2 && toRank == square.Rank4,
-	fromRank == square.Rank7 && toRank == square.Rank5:
+		fromRank == square.Rank7 && toRank == square.Rank5:
 		return true
 	default:
 		return false

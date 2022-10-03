@@ -30,49 +30,7 @@ func (b *Board) MakeMove(m move.Move) {
 		b.halfMoves++
 	}
 
-	// update castling rights
-	// movement of the rooks or the king, or the capture of the rooks
-	// leads to losing the right to castle: update it according to the move
-
-	// rooks or king moved
-	switch m.From {
-	// white rights
-	case square.H1:
-		// kingside rook moved
-		b.castlingRights &^= castling.WhiteKingside
-	case square.A1:
-		// queenside rook moved
-		b.castlingRights &^= castling.WhiteQueenside
-	case square.E1:
-		// king moved
-		b.castlingRights &^= castling.White
-
-	// black rights
-	case square.H8:
-		// kingside rook moved
-		b.castlingRights &^= castling.BlackKingside
-	case square.A8:
-		// queenside rook moved
-		b.castlingRights &^= castling.BlackQueenside
-	case square.E8:
-		// king moved
-		b.castlingRights &^= castling.Black
-	}
-
-	// rooks captured
-	switch m.To {
-	// white rooks
-	case square.H1:
-		b.castlingRights &^= castling.WhiteKingside
-	case square.A1:
-		b.castlingRights &^= castling.WhiteQueenside
-
-	// black rooks
-	case square.H8:
-		b.castlingRights &^= castling.BlackKingside
-	case square.A8:
-		b.castlingRights &^= castling.BlackKingside
-	}
+	b.castlingRights &^= m.CastlingRightUpdates()
 
 	b.hash ^= zobrist.Castling[m.CastlingRights] // remove old rights
 	b.hash ^= zobrist.Castling[b.castlingRights] // put new rights
