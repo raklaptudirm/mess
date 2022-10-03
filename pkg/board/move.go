@@ -45,8 +45,7 @@ func (b *Board) MakeMove(m move.Move) {
 		b.castlingRights &^= castling.WhiteQueenside
 	case square.E1:
 		// king moved
-		b.castlingRights &^= castling.WhiteKingside
-		b.castlingRights &^= castling.WhiteQueenside
+		b.castlingRights &^= castling.White
 
 	// black rights
 	case square.H8:
@@ -57,8 +56,7 @@ func (b *Board) MakeMove(m move.Move) {
 		b.castlingRights &^= castling.BlackQueenside
 	case square.E8:
 		// king moved
-		b.castlingRights &^= castling.BlackKingside
-		b.castlingRights &^= castling.BlackQueenside
+		b.castlingRights &^= castling.Black
 	}
 
 	// rooks captured
