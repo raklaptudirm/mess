@@ -80,6 +80,10 @@ func (m Move) CastlingRightUpdates() castling.Rights {
 	return toRemove
 }
 
+func (m Move) IsReversible() bool {
+	return !m.IsCapture() && m.FromPiece.Type() != piece.Pawn
+}
+
 func (m Move) IsCastle() bool {
 	switch m.FromPiece {
 	case piece.WhiteKing:

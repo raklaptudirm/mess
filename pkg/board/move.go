@@ -22,12 +22,8 @@ func (b *Board) MakeMove(m move.Move) {
 	// update the half-move clock
 	// it records the number of plys since the last pawn push or capture
 	// for positions which are drawn by the 50-move rule
-	switch {
-	case m.FromPiece.Type() == piece.Pawn, m.IsCapture():
-		// pawn push or capture: reset clock
+	if b.halfMoves++; !m.IsReversible() {
 		b.halfMoves = 0
-	default:
-		b.halfMoves++
 	}
 
 	b.castlingRights &^= m.CastlingRightUpdates()
