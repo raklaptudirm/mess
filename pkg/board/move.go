@@ -200,33 +200,30 @@ func (b *Board) Unmove(m move.Move) {
 func (b *Board) GenerateMoves() []move.Move {
 	var moves []move.Move
 
-	for i := 0; i < square.N; i++ {
-		from := square.Square(i)
+	for from := square.A8; from <= square.H1; from++ {
 		moveSet := b.MovesOf(from)
 
-		switch b.position[from].Type() {
-		// handle pawns separately for en passant and promotions
-		case piece.Pawn:
-			for j := 0; j < square.N && moveSet != bitboard.Empty; j++ {
-				to := square.Square(j)
-				if !moveSet.IsSet(to) {
-					continue
-				}
+		for to := square.A8; to <= square.H1 && moveSet != bitboard.Empty; to++ {
+			if !moveSet.IsSet(to) {
+				continue
+			}
 
-				m := move.Move{
-					From:    from,
-					To:      to,
-					Capture: to,
+			m := move.Move{
+				From:    from,
+				To:      to,
+				Capture: to,
 
-					FromPiece:     b.position[from],
-					ToPiece:       b.position[from],
-					CapturedPiece: b.position[to],
+				FromPiece:     b.position[from],
+				ToPiece:       b.position[from],
+				CapturedPiece: b.position[to],
 
-					HalfMoves:       b.halfMoves,
-					CastlingRights:  b.castlingRights,
-					EnPassantSquare: b.enPassantTarget,
-				}
+				HalfMoves:       b.halfMoves,
+				CastlingRights:  b.castlingRights,
+				EnPassantSquare: b.enPassantTarget,
+			}
 
+			// handle pawns separately for en passant and promotions
+			if b.position[from].Type() == piece.Pawn {
 				switch {
 				// pawn will promote
 				case b.sideToMove == piece.White && to.Rank() == square.Rank8,
@@ -237,6 +234,9 @@ func (b *Board) GenerateMoves() []move.Move {
 						moves = append(moves, m)
 					}
 
+					moveSet.Unset(to)
+					continue
+
 				// en passant capture
 				case to == b.enPassantTarget:
 					m.Capture = to
@@ -246,38 +246,11 @@ func (b *Board) GenerateMoves() []move.Move {
 						m.Capture -= 8
 					}
 					m.CapturedPiece = b.position[m.Capture]
-					fallthrough
-
-				// simple push or capture
-				default:
-					moves = append(moves, m)
 				}
-
-				moveSet.Unset(to)
 			}
 
-		// other pieces move simply
-		default:
-			for j := 0; j < square.N && moveSet != bitboard.Empty; j++ {
-				to := square.Square(j)
-				if moveSet.IsSet(to) {
-					m := move.Move{
-						From:    from,
-						To:      to,
-						Capture: to,
-
-						FromPiece:     b.position[from],
-						ToPiece:       b.position[from],
-						CapturedPiece: b.position[to],
-
-						HalfMoves:       b.halfMoves,
-						CastlingRights:  b.castlingRights,
-						EnPassantSquare: b.enPassantTarget,
-					}
-					moves = append(moves, m)
-				}
-				moveSet.Unset(to)
-			}
+			moves = append(moves, m)
+			moveSet.Unset(to)
 		}
 	}
 
