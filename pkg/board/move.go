@@ -61,13 +61,11 @@ func (b *Board) MakeMove(m move.Move) {
 	// clear the previous square, and if current move was double a pawn
 	// push, add set the en passant target to the new square
 
+	// reset old en passant square
 	if b.enPassantTarget != square.None {
-		// remove previous square from zobrist hash
-		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
+		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()] // reset hash
+		b.enPassantTarget = square.None                       // reset square
 	}
-
-	// reset en passant target
-	b.enPassantTarget = square.None
 
 	if m.IsDoublePawnPush() {
 		// double pawn push; set new en passant target
