@@ -14,9 +14,9 @@ import (
 
 // MakeMove plays a legal move on the Board.
 func (b *Board) MakeMove(m move.Move) {
-	if attackSet := b.MovesOf(m.From); !attackSet.IsSet(m.To) {
+	if !b.IsPseudoLegal(m) {
 		// move not in attack board, illegal move
-		panic(fmt.Sprintf("invalid move: piece can't move to given square\n%s", attackSet))
+		panic(fmt.Sprintf("invalid move: %s can't move to %s", m.FromPiece, m.To))
 	}
 
 	// update the half-move clock
@@ -185,6 +185,10 @@ func (b *Board) GenerateMoves() []move.Move {
 	}
 
 	return moves
+}
+
+func (b *Board) IsPseudoLegal(m move.Move) bool {
+	return b.MovesOf(m.From).IsSet(m.To)
 }
 
 func (b *Board) MovesOf(index square.Square) bitboard.Board {
