@@ -79,12 +79,8 @@ func (b *Board) MakeMove(m move.Move) {
 	if b.sideToMove = b.sideToMove.Other(); b.sideToMove == piece.White {
 		b.fullMoves++
 	}
-
-	// switch bitboards
-	b.friends, b.enemies = b.enemies, b.friends
-
-	// switch zobrist hash
-	b.hash ^= zobrist.SideToMove
+	b.friends, b.enemies = b.enemies, b.friends // switch in bitboards
+	b.hash ^= zobrist.SideToMove                // switch in zobrist hash
 }
 
 func (b *Board) Unmove(m move.Move) {
@@ -117,11 +113,10 @@ func (b *Board) Unmove(m move.Move) {
 
 	b.halfMoves = m.HalfMoves
 
-	b.hash ^= zobrist.SideToMove
-
-	b.friends, b.enemies = b.enemies, b.friends
-
 	// update side to move
+
+	b.hash ^= zobrist.SideToMove
+	b.friends, b.enemies = b.enemies, b.friends
 	if b.sideToMove = b.sideToMove.Other(); b.sideToMove == piece.Black {
 		b.fullMoves--
 	}
