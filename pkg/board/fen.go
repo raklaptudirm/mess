@@ -32,9 +32,9 @@ func New(fen string) *Board {
 	parts := strings.Split(fen, " ")
 
 	// side to move
-	board.sideToMove = piece.NewColor(parts[1])
-	if board.sideToMove == piece.Black {
-		board.hash ^= zobrist.SideToMove
+	board.SideToMove = piece.NewColor(parts[1])
+	if board.SideToMove == piece.Black {
+		board.Hash ^= zobrist.SideToMove
 	}
 
 	// generate position
@@ -55,23 +55,23 @@ func New(fen string) *Board {
 
 			if t := p.Type(); t != piece.NoType {
 				// update hash
-				board.hash ^= zobrist.PieceSquare[p][s]
+				board.Hash ^= zobrist.PieceSquare[p][s]
 
 				// update board
-				board.position[s] = p     // 8x8
-				board.bitboards[p].Set(s) // bitboard
+				board.Position[s] = p     // 8x8
+				board.Bitboards[p].Set(s) // bitboard
 
 				c := p.Color()
 
 				// update friend and enemy bitboards
-				if c == board.sideToMove {
-					board.friends.Set(s)
+				if c == board.SideToMove {
+					board.Friends.Set(s)
 				} else {
-					board.enemies.Set(s)
+					board.Enemies.Set(s)
 				}
 
 				if t == piece.King {
-					board.kings[c] = s
+					board.Kings[c] = s
 				}
 			}
 
@@ -80,18 +80,18 @@ func New(fen string) *Board {
 	}
 
 	// castling rights
-	board.castlingRights = castling.NewRights(parts[2])
-	board.hash ^= zobrist.Castling[board.castlingRights]
+	board.CastlingRights = castling.NewRights(parts[2])
+	board.Hash ^= zobrist.Castling[board.CastlingRights]
 
 	// en-passant target square
-	board.enPassantTarget = square.New(parts[3])
-	if board.enPassantTarget != square.None {
-		board.hash ^= zobrist.EnPassant[board.enPassantTarget.File()]
+	board.EnPassantTarget = square.New(parts[3])
+	if board.EnPassantTarget != square.None {
+		board.Hash ^= zobrist.EnPassant[board.EnPassantTarget.File()]
 	}
 
 	// move counters
-	board.halfMoves, _ = strconv.Atoi(parts[4])
-	board.fullMoves, _ = strconv.Atoi(parts[5])
+	board.HalfMoves, _ = strconv.Atoi(parts[4])
+	board.FullMoves, _ = strconv.Atoi(parts[5])
 
 	return &board
 }
@@ -99,5 +99,5 @@ func New(fen string) *Board {
 // FEN returns the fen string of the current Board position.
 func (b *Board) FEN() string {
 	// <position> <side to move> <castling rights> <en passant target> <half move count> <full move count>
-	return fmt.Sprintf("%s %s %s %s %d %d", b.position.FEN(), b.sideToMove, b.castlingRights.String(), b.enPassantTarget, b.halfMoves, b.fullMoves)
+	return fmt.Sprintf("%s %s %s %s %d %d", b.Position.FEN(), b.SideToMove, b.CastlingRights.String(), b.EnPassantTarget, b.HalfMoves, b.FullMoves)
 }

@@ -22,14 +22,14 @@ func (b *Board) MakeMove(m move.Move) {
 	// update the half-move clock
 	// it records the number of plys since the last pawn push or capture
 	// for positions which are drawn by the 50-move rule
-	if b.halfMoves++; !m.IsReversible() {
-		b.halfMoves = 0
+	if b.HalfMoves++; !m.IsReversible() {
+		b.HalfMoves = 0
 	}
 
-	b.castlingRights &^= m.CastlingRightUpdates()
+	b.CastlingRights &^= m.CastlingRightUpdates()
 
-	b.hash ^= zobrist.Castling[m.CastlingRights] // remove old rights
-	b.hash ^= zobrist.Castling[b.castlingRights] // put new rights
+	b.Hash ^= zobrist.Castling[m.CastlingRights] // remove old rights
+	b.Hash ^= zobrist.Castling[b.CastlingRights] // put new rights
 
 	// move the piece in the records
 
@@ -51,47 +51,47 @@ func (b *Board) MakeMove(m move.Move) {
 	// push, add set the en passant target to the new square
 
 	// reset old en passant square
-	if b.enPassantTarget != square.None {
-		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()] // reset hash
-		b.enPassantTarget = square.None                       // reset square
+	if b.EnPassantTarget != square.None {
+		b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()] // reset hash
+		b.EnPassantTarget = square.None                       // reset square
 	}
 
 	if m.IsDoublePawnPush() {
 		// double pawn push; set new en passant target
 		target := m.From
-		if b.sideToMove == piece.White {
+		if b.SideToMove == piece.White {
 			target -= 8
 		} else {
 			target += 8
 		}
 
 		// only set en passant square if an enemy pawn can capture it
-		if b.bitboards[piece.New(piece.Pawn, b.sideToMove.Other())]&attacks.Pawn[b.sideToMove][target] != 0 {
-			b.enPassantTarget = target
+		if b.Bitboards[piece.New(piece.Pawn, b.SideToMove.Other())]&attacks.Pawn[b.SideToMove][target] != 0 {
+			b.EnPassantTarget = target
 			// and new square to zobrist hash
-			b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
+			b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()]
 		}
 	}
 
 	// switch turn
 
 	// update side to move
-	if b.sideToMove = b.sideToMove.Other(); b.sideToMove == piece.White {
-		b.fullMoves++
+	if b.SideToMove = b.SideToMove.Other(); b.SideToMove == piece.White {
+		b.FullMoves++
 	}
-	b.friends, b.enemies = b.enemies, b.friends // switch in bitboards
-	b.hash ^= zobrist.SideToMove                // switch in zobrist hash
+	b.Friends, b.Enemies = b.Enemies, b.Friends // switch in bitboards
+	b.Hash ^= zobrist.SideToMove                // switch in zobrist hash
 }
 
 func (b *Board) Unmove(m move.Move) {
-	if b.enPassantTarget != square.None {
-		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
-		b.enPassantTarget = square.None
+	if b.EnPassantTarget != square.None {
+		b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()]
+		b.EnPassantTarget = square.None
 	}
 
 	if m.EnPassantSquare != square.None {
-		b.enPassantTarget = m.EnPassantSquare
-		b.hash ^= zobrist.EnPassant[b.enPassantTarget.File()]
+		b.EnPassantTarget = m.EnPassantSquare
+		b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()]
 	}
 
 	b.ClearSquare(m.To)
@@ -107,18 +107,18 @@ func (b *Board) Unmove(m move.Move) {
 		b.FillSquare(rookInfo.From, rookInfo.RookType)
 	}
 
-	b.hash ^= zobrist.Castling[b.castlingRights]
-	b.hash ^= zobrist.Castling[m.CastlingRights]
-	b.castlingRights = m.CastlingRights
+	b.Hash ^= zobrist.Castling[b.CastlingRights]
+	b.Hash ^= zobrist.Castling[m.CastlingRights]
+	b.CastlingRights = m.CastlingRights
 
-	b.halfMoves = m.HalfMoves
+	b.HalfMoves = m.HalfMoves
 
 	// update side to move
 
-	b.hash ^= zobrist.SideToMove
-	b.friends, b.enemies = b.enemies, b.friends
-	if b.sideToMove = b.sideToMove.Other(); b.sideToMove == piece.Black {
-		b.fullMoves--
+	b.Hash ^= zobrist.SideToMove
+	b.Friends, b.Enemies = b.Enemies, b.Friends
+	if b.SideToMove = b.SideToMove.Other(); b.SideToMove == piece.Black {
+		b.FullMoves--
 	}
 }
 
@@ -138,24 +138,24 @@ func (b *Board) GenerateMoves() []move.Move {
 				To:      to,
 				Capture: to,
 
-				FromPiece:     b.position[from],
-				ToPiece:       b.position[from],
-				CapturedPiece: b.position[to],
+				FromPiece:     b.Position[from],
+				ToPiece:       b.Position[from],
+				CapturedPiece: b.Position[to],
 
-				HalfMoves:       b.halfMoves,
-				CastlingRights:  b.castlingRights,
-				EnPassantSquare: b.enPassantTarget,
+				HalfMoves:       b.HalfMoves,
+				CastlingRights:  b.CastlingRights,
+				EnPassantSquare: b.EnPassantTarget,
 			}
 
 			// handle pawns separately for en passant and promotions
-			if b.position[from].Type() == piece.Pawn {
+			if b.Position[from].Type() == piece.Pawn {
 				switch {
 				// pawn will promote
-				case b.sideToMove == piece.White && to.Rank() == square.Rank8,
-					b.sideToMove == piece.Black && to.Rank() == square.Rank1:
+				case b.SideToMove == piece.White && to.Rank() == square.Rank8,
+					b.SideToMove == piece.Black && to.Rank() == square.Rank1:
 					// evaluate all possible promotions
 					for _, promotion := range piece.Promotions {
-						m.ToPiece = piece.New(promotion, b.sideToMove)
+						m.ToPiece = piece.New(promotion, b.SideToMove)
 						moves = append(moves, m)
 					}
 
@@ -163,14 +163,14 @@ func (b *Board) GenerateMoves() []move.Move {
 					continue
 
 				// en passant capture
-				case to == b.enPassantTarget:
+				case to == b.EnPassantTarget:
 					m.Capture = to
-					if b.sideToMove == piece.White {
+					if b.SideToMove == piece.White {
 						m.Capture += 8
 					} else {
 						m.Capture -= 8
 					}
-					m.CapturedPiece = b.position[m.Capture]
+					m.CapturedPiece = b.Position[m.Capture]
 				}
 			}
 
@@ -187,22 +187,22 @@ func (b *Board) IsPseudoLegal(m move.Move) bool {
 }
 
 func (b *Board) MovesOf(index square.Square) bitboard.Board {
-	p := b.position[index]
-	if p == piece.NoPiece || p.Color() != b.sideToMove {
+	p := b.Position[index]
+	if p == piece.NoPiece || p.Color() != b.SideToMove {
 		// other side has no moves
 		return bitboard.Empty
 	}
 
 	var a bitboard.Board
-	occ := b.friends | b.enemies
+	occ := b.Friends | b.Enemies
 
 	switch p.Type() {
 	case piece.King:
-		cr := b.castlingRights
+		cr := b.CastlingRights
 
 		// even if the king and rooks haven't moved, the king can still
 		// be prevented from castling with checks on it's path
-		switch them := b.sideToMove.Other(); b.sideToMove {
+		switch them := b.SideToMove.Other(); b.SideToMove {
 		case piece.White:
 			// return early
 			if index != square.E1 {
@@ -255,10 +255,10 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 	case piece.Bishop:
 		a = attacks.Bishop(index, occ)
 	case piece.Pawn:
-		a = attacks.PawnAll(index, b.enPassantTarget, b.sideToMove, occ, b.enemies)
+		a = attacks.PawnAll(index, b.EnPassantTarget, b.SideToMove, occ, b.Enemies)
 	default:
 		a = bitboard.Empty
 	}
 
-	return a &^ b.friends
+	return a &^ b.Friends
 }
