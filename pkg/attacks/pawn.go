@@ -50,11 +50,9 @@ func blackPawnAttacksFrom(s square.Square) bitboard.Board {
 }
 
 func PawnAll(s, ep square.Square, c piece.Color, occupied, enemies bitboard.Board) bitboard.Board {
-	var attackSet bitboard.Board
-
 	enemies.Set(ep)
 
-	attackSet = PawnMoves[c][s] &^ occupied // 1 square ahead
+	attackSet := PawnMoves[c][s] &^ occupied // 1 square ahead
 
 	switch c {
 	case piece.White:

@@ -62,7 +62,7 @@ func (c Color) String() string {
 }
 
 func New(t Type, c Color) Piece {
-	return Piece(c << 3) + Piece(t)
+	return Piece(c<<3) + Piece(t)
 }
 
 // NewFromString creates an instance of Piece from the given piece id.
@@ -139,7 +139,7 @@ const (
 	N = 16
 )
 
-var Promotions = []Type{
+var Promotions = [...]Type{
 	Queen, Rook, Bishop, Knight,
 }
 
