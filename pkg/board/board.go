@@ -86,6 +86,10 @@ func (b *Board) FillSquare(s square.Square, p piece.Piece) {
 	b.Hash ^= zobrist.PieceSquare[p][s] // zobrist hash
 }
 
+func (b *Board) IsInCheck(c piece.Color) bool {
+	return b.IsAttacked(b.Kings[c], c.Other())
+}
+
 func (b *Board) IsAttacked(s square.Square, them piece.Color) bool {
 	occ := b.Friends | b.Enemies
 
