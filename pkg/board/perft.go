@@ -1,7 +1,5 @@
 package board
 
-import "fmt"
-
 func Perft(fen string, depth int) int {
 	if depth == 0 {
 		return 1
@@ -15,13 +13,12 @@ func Perft(fen string, depth int) int {
 	for _, move := range moves {
 		b.MakeMove(move)
 
-		if !b.IsAttacked(b.kings[b.sideToMove.Other()], b.sideToMove) {
+		if !b.IsInCheck(b.SideToMove.Other()) {
 			newNodes := perft(b, depth-1)
-			fmt.Printf("%s: %d\n", move, newNodes)
 			nodes += newNodes
 		}
 
-		b.Unmove(move)
+		b.UnmakeMove(move)
 	}
 
 	return nodes
@@ -38,11 +35,11 @@ func perft(b *Board, depth int) int {
 	for _, move := range moves {
 		b.MakeMove(move)
 
-		if !b.IsAttacked(b.kings[b.sideToMove.Other()], b.sideToMove) {
+		if !b.IsInCheck(b.SideToMove.Other()) {
 			nodes += perft(b, depth-1)
 		}
 
-		b.Unmove(move)
+		b.UnmakeMove(move)
 	}
 
 	return nodes

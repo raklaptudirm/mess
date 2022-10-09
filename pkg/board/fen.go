@@ -53,26 +53,8 @@ func New(fen string) *Board {
 			// piece string to piece
 			p := piece.NewFromString(string(id))
 
-			if t := p.Type(); t != piece.NoType {
-				// update hash
-				board.Hash ^= zobrist.PieceSquare[p][s]
-
-				// update board
-				board.Position[s] = p     // 8x8
-				board.Bitboards[p].Set(s) // bitboard
-
-				c := p.Color()
-
-				// update friend and enemy bitboards
-				if c == board.SideToMove {
-					board.Friends.Set(s)
-				} else {
-					board.Enemies.Set(s)
-				}
-
-				if t == piece.King {
-					board.Kings[c] = s
-				}
+			if p.Type() != piece.NoType {
+				board.FillSquare(s, p)
 			}
 
 			fileId++

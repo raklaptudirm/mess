@@ -30,13 +30,10 @@ import (
 // Board represents the state of a chessboard at a given position.
 type Board struct {
 	// position data
-	Hash      zobrist.Key
-	Position  mailbox.Board           // 8x8 for fast lookup
-	Bitboards [piece.N]bitboard.Board // bitboards for eval
-
-	// useful bitboards
-	Friends bitboard.Board
-	Enemies bitboard.Board
+	Hash     zobrist.Key
+	Position mailbox.Board // 8x8 for fast lookup
+	PieceBBs [piece.NType]bitboard.Board
+	ColorBBs [piece.NColor]bitboard.Board
 
 	Kings [piece.NColor]square.Square
 
@@ -54,34 +51,32 @@ func (b Board) String() string {
 	return fmt.Sprintf("%s\nFen: %s\nKey: %X\n", b.Position, b.FEN(), b.Hash)
 }
 
+func (b *Board) Occupied() bitboard.Board {
+	return b.ColorBBs[piece.White] | b.ColorBBs[piece.Black]
+}
+
 func (b *Board) ClearSquare(s square.Square) {
 	p := b.Position[s]
 
-	// the piece can only be in one of the bitboards, so
-	// a conditional is unnecessary and both can be unset
-	b.Friends.Unset(s) // friends bitboard
-	b.Enemies.Unset(s) // enemies bitboard
+	b.ColorBBs[p.Color()].Unset(s)
 
 	// remove piece from other records
-	b.Bitboards[p].Unset(s)             // piece bitboard
+	b.PieceBBs[p.Type()].Unset(s)       // piece bitboard
 	b.Position[s] = piece.NoPiece       // mailbox board
 	b.Hash ^= zobrist.PieceSquare[p][s] // zobrist hash
 }
 
 func (b *Board) FillSquare(s square.Square, p piece.Piece) {
 	c := p.Color()
+	t := p.Type()
 
-	if c == b.SideToMove {
-		b.Friends.Set(s) // friends bitboard
-	} else {
-		b.Enemies.Set(s) // enemies bitboard
-	}
+	b.ColorBBs[c].Set(s)
 
-	if p.Type() == piece.King {
+	if t == piece.King {
 		b.Kings[c] = s
 	}
 
-	b.Bitboards[p].Set(s)               // piece bitboard
+	b.PieceBBs[t].Set(s)                // piece bitboard
 	b.Position[s] = p                   // mailbox board
 	b.Hash ^= zobrist.PieceSquare[p][s] // zobrist hash
 }
@@ -91,30 +86,30 @@ func (b *Board) IsInCheck(c piece.Color) bool {
 }
 
 func (b *Board) IsAttacked(s square.Square, them piece.Color) bool {
-	occ := b.Friends | b.Enemies
+	occ := b.Occupied()
 
-	pawns := b.Bitboards[piece.New(piece.Pawn, them)]
+	pawns := b.PieceBBs[piece.Pawn] & b.ColorBBs[them]
 	if attacks.Pawn[them.Other()][s]&pawns != bitboard.Empty {
 		return true
 	}
 
-	knights := b.Bitboards[piece.New(piece.Knight, them)]
+	knights := b.PieceBBs[piece.Knight] & b.ColorBBs[them]
 	if attacks.Knight[s]&knights != bitboard.Empty {
 		return true
 	}
 
-	king := b.Bitboards[piece.New(piece.King, them)]
+	king := b.PieceBBs[piece.King] & b.ColorBBs[them]
 	if attacks.King[s]&king != bitboard.Empty {
 		return true
 	}
 
-	queens := b.Bitboards[piece.New(piece.Queen, them)]
+	queens := b.PieceBBs[piece.Queen] & b.ColorBBs[them]
 
-	bishops := b.Bitboards[piece.New(piece.Bishop, them)]
+	bishops := b.PieceBBs[piece.Bishop] & b.ColorBBs[them]
 	if attacks.Bishop(s, occ)&(bishops|queens) != bitboard.Empty {
 		return true
 	}
 
-	rooks := b.Bitboards[piece.New(piece.Rook, them)]
+	rooks := b.PieceBBs[piece.Rook] & b.ColorBBs[them]
 	return attacks.Rook(s, occ)&(rooks|queens) != bitboard.Empty
 }

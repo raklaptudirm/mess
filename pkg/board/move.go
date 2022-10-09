@@ -66,7 +66,7 @@ func (b *Board) MakeMove(m move.Move) {
 		}
 
 		// only set en passant square if an enemy pawn can capture it
-		if b.Bitboards[piece.New(piece.Pawn, b.SideToMove.Other())]&attacks.Pawn[b.SideToMove][target] != 0 {
+		if b.PieceBBs[piece.Pawn]&b.ColorBBs[b.SideToMove.Other()]&attacks.Pawn[b.SideToMove][target] != 0 {
 			b.EnPassantTarget = target
 			// and new square to zobrist hash
 			b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()]
@@ -79,11 +79,10 @@ func (b *Board) MakeMove(m move.Move) {
 	if b.SideToMove = b.SideToMove.Other(); b.SideToMove == piece.White {
 		b.FullMoves++
 	}
-	b.Friends, b.Enemies = b.Enemies, b.Friends // switch in bitboards
-	b.Hash ^= zobrist.SideToMove                // switch in zobrist hash
+	b.Hash ^= zobrist.SideToMove // switch in zobrist hash
 }
 
-func (b *Board) Unmove(m move.Move) {
+func (b *Board) UnmakeMove(m move.Move) {
 	if b.EnPassantTarget != square.None {
 		b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()]
 		b.EnPassantTarget = square.None
@@ -116,7 +115,6 @@ func (b *Board) Unmove(m move.Move) {
 	// update side to move
 
 	b.Hash ^= zobrist.SideToMove
-	b.Friends, b.Enemies = b.Enemies, b.Friends
 	if b.SideToMove = b.SideToMove.Other(); b.SideToMove == piece.Black {
 		b.FullMoves--
 	}
@@ -194,7 +192,9 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 	}
 
 	var a bitboard.Board
-	occ := b.Friends | b.Enemies
+	occ := b.Occupied()
+	friends := b.ColorBBs[b.SideToMove]
+	enemies := b.ColorBBs[b.SideToMove.Other()]
 
 	switch p.Type() {
 	case piece.King:
@@ -255,10 +255,10 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 	case piece.Bishop:
 		a = attacks.Bishop(index, occ)
 	case piece.Pawn:
-		a = attacks.PawnAll(index, b.EnPassantTarget, b.SideToMove, occ, b.Enemies)
+		a = attacks.PawnAll(index, b.EnPassantTarget, b.SideToMove, occ, enemies)
 	default:
 		a = bitboard.Empty
 	}
 
-	return a &^ b.Friends
+	return a &^ friends
 }
