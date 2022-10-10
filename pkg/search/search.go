@@ -5,7 +5,6 @@ package search
 
 import (
 	"errors"
-	"fmt"
 
 	"laptudirm.com/x/mess/pkg/board"
 	"laptudirm.com/x/mess/pkg/evaluation"
@@ -66,10 +65,6 @@ func Search(fen string, depth int) (move.Move, evaluation.Abs, error) {
 		// one move has been made so ply 1 from root
 		curr := -c.Negamax(1, depth-1, -beta, -alpha)
 		c.board.UnmakeMove(m)
-
-		if curr != -evaluation.Inf {
-			fmt.Printf("%s %s\n", m, curr.Abs(c.board.SideToMove))
-		}
 
 		if curr > score {
 			// better move found
