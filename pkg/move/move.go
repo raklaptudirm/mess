@@ -74,7 +74,7 @@ func (m Move) CastlingRightUpdates() castling.Rights {
 	case square.H8:
 		toRemove |= castling.BlackKingside
 	case square.A8:
-		toRemove |= castling.BlackKingside
+		toRemove |= castling.BlackQueenside
 	}
 
 	return toRemove
