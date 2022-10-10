@@ -16,7 +16,7 @@ import (
 func (b *Board) MakeMove(m move.Move) {
 	if !b.IsPseudoLegal(m) {
 		// move not in attack board, illegal move
-		panic(fmt.Sprintf("invalid move: %s can't move to %s", m.FromPiece, m.To))
+		panic(fmt.Sprintf("invalid move: %s can't move to %s\n%s\n%v", m.FromPiece, m.To, b, b.MoveList))
 	}
 
 	// update the half-move clock
@@ -80,6 +80,8 @@ func (b *Board) MakeMove(m move.Move) {
 		b.FullMoves++
 	}
 	b.Hash ^= zobrist.SideToMove // switch in zobrist hash
+
+	b.MoveList = append(b.MoveList, m)
 }
 
 func (b *Board) UnmakeMove(m move.Move) {
@@ -118,6 +120,8 @@ func (b *Board) UnmakeMove(m move.Move) {
 	if b.SideToMove = b.SideToMove.Other(); b.SideToMove == piece.Black {
 		b.FullMoves--
 	}
+
+	b.MoveList = b.MoveList[:len(b.MoveList)-1]
 }
 
 func (b *Board) GenerateMoves() []move.Move {
@@ -131,48 +135,7 @@ func (b *Board) GenerateMoves() []move.Move {
 				continue
 			}
 
-			m := move.Move{
-				From:    from,
-				To:      to,
-				Capture: to,
-
-				FromPiece:     b.Position[from],
-				ToPiece:       b.Position[from],
-				CapturedPiece: b.Position[to],
-
-				HalfMoves:       b.HalfMoves,
-				CastlingRights:  b.CastlingRights,
-				EnPassantSquare: b.EnPassantTarget,
-			}
-
-			// handle pawns separately for en passant and promotions
-			if b.Position[from].Type() == piece.Pawn {
-				switch {
-				// pawn will promote
-				case b.SideToMove == piece.White && to.Rank() == square.Rank8,
-					b.SideToMove == piece.Black && to.Rank() == square.Rank1:
-					// evaluate all possible promotions
-					for _, promotion := range piece.Promotions {
-						m.ToPiece = piece.New(promotion, b.SideToMove)
-						moves = append(moves, m)
-					}
-
-					moveSet.Unset(to)
-					continue
-
-				// en passant capture
-				case to == b.EnPassantTarget:
-					m.Capture = to
-					if b.SideToMove == piece.White {
-						m.Capture += 8
-					} else {
-						m.Capture -= 8
-					}
-					m.CapturedPiece = b.Position[m.Capture]
-				}
-			}
-
-			moves = append(moves, m)
+			moves = append(moves, b.Moves(from, to)...)
 			moveSet.Unset(to)
 		}
 	}
@@ -261,4 +224,50 @@ func (b *Board) MovesOf(index square.Square) bitboard.Board {
 	}
 
 	return a &^ friends
+}
+
+func (b *Board) Moves(from, to square.Square) []move.Move {
+	var moves []move.Move
+
+	m := move.Move{
+		From:    from,
+		To:      to,
+		Capture: to,
+
+		FromPiece:     b.Position[from],
+		ToPiece:       b.Position[from],
+		CapturedPiece: b.Position[to],
+
+		HalfMoves:       b.HalfMoves,
+		CastlingRights:  b.CastlingRights,
+		EnPassantSquare: b.EnPassantTarget,
+	}
+
+	// handle pawns separately for en passant and promotions
+	if b.Position[from].Type() == piece.Pawn {
+		switch {
+		// pawn will promote
+		case b.SideToMove == piece.White && to.Rank() == square.Rank8,
+			b.SideToMove == piece.Black && to.Rank() == square.Rank1:
+			// evaluate all possible promotions
+			for _, promotion := range piece.Promotions {
+				m.ToPiece = piece.New(promotion, b.SideToMove)
+				moves = append(moves, m)
+			}
+
+			return moves
+
+		// en passant capture
+		case to == b.EnPassantTarget:
+			m.Capture = to
+			if b.SideToMove == piece.White {
+				m.Capture += 8
+			} else {
+				m.Capture -= 8
+			}
+			m.CapturedPiece = b.Position[m.Capture]
+		}
+	}
+
+	return []move.Move{m}
 }
