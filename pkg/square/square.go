@@ -134,12 +134,12 @@ func (s Square) String() string {
 
 // File returns the file of the given square.
 func (s Square) File() File {
-	return File(s % 8)
+	return File(s & 7)
 }
 
 // Rank returns the rank of the given square.
 func (s Square) Rank() Rank {
-	return Rank(s / 8)
+	return Rank(s >> 3)
 }
 
 func (s Square) Diagonal() Diagonal {
