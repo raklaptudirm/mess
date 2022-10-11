@@ -15,9 +15,7 @@
 // functions for manipulating them.
 package bitboard
 
-import (
-	"laptudirm.com/x/mess/pkg/square"
-)
+import "laptudirm.com/x/mess/pkg/square"
 
 // Board is a 64-bit bitboard
 type Board uint64
@@ -41,22 +39,63 @@ func (b Board) String() string {
 	return str
 }
 
+func (b Board) Up() Board {
+	return b << 8
+}
+
+func (b Board) Down() Board {
+	return b >> 8
+}
+
+func (b Board) Right() Board {
+	return (b &^ FileH) << 1
+}
+
+func (b Board) Left() Board {
+	return (b &^ FileA) >> 1
+}
+
+func (b *Board) Pop() square.Square {
+	sq := b.FirstOne()
+	*b &= *b - 1
+	return sq
+}
+
+var index = [square.N]square.Square{
+	0, 47, 1, 56, 48, 27, 2, 60,
+	57, 49, 41, 37, 28, 16, 3, 61,
+	54, 58, 35, 52, 50, 42, 21, 44,
+	38, 32, 29, 23, 17, 11, 4, 62,
+	46, 55, 26, 59, 40, 36, 15, 53,
+	34, 51, 20, 43, 31, 22, 10, 45,
+	25, 39, 14, 33, 19, 30, 9, 24,
+	13, 18, 8, 12, 7, 6, 5, 63,
+}
+
+func (b Board) FirstOne() square.Square {
+	const deBruijn = 0x03f79d71b4cb0a89
+	return index[((b^(b-1))*deBruijn)>>58]
+}
+
 // IsSet checks whether the given Square is set in the bitboard.
 func (b Board) IsSet(index square.Square) bool {
-	return (b>>index)&1 == 1
+	return b&Squares[index] != 0
 }
 
 // Set sets the given Square in the bitboard.
 func (b *Board) Set(index square.Square) {
-	*b |= buffer(index)
+	if index == square.None {
+		return
+	}
+
+	*b |= Squares[index]
 }
 
 // Unset clears the given Square in the bitboard.
 func (b *Board) Unset(index square.Square) {
-	*b &^= buffer(index)
-}
+	if index == square.None {
+		return
+	}
 
-// buffer creates a utility bitboard in which only the given square is set.
-func buffer(index square.Square) Board {
-	return 1 << Board(index)
+	*b &^= Squares[index]
 }

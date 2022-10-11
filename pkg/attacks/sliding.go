@@ -6,9 +6,7 @@ import (
 )
 
 func hyperbola(s square.Square, occ, mask bitboard.Board) bitboard.Board {
-	var r bitboard.Board
-	r.Set(s)
-
+	r := bitboard.Squares[s]
 	o := occ & mask // masked occupancy
 	return ((o - 2*r) ^ reverse(reverse(o)-2*reverse(r))) & mask
 }

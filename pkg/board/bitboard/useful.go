@@ -135,3 +135,13 @@ var AntiDiagonals = [...]Board{
 	square.DiagonalG8H7: DiagonalG8H7,
 	square.DiagonalH8H8: DiagonalH8H8,
 }
+
+var Squares [square.N]Board
+
+func init() {
+	mask := Board(1)
+	for s := square.A8; s <= square.H1; s++ {
+		Squares[s] = mask
+		mask <<= 1
+	}
+}
