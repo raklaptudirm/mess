@@ -125,9 +125,29 @@ func (b *Board) GenerateMoves() []move.Move {
 		EnPassantSquare: b.EnPassantTarget,
 	}
 
+	if b.EnPassantTarget != square.None {
+		pawns := b.PieceBBs[piece.Pawn] & b.ColorBBs[b.SideToMove]
+		pawn := piece.New(piece.Pawn, b.SideToMove)
+		otherPawn := piece.New(piece.Pawn, b.SideToMove.Other())
+		for fromBB := attacks.Pawn[b.SideToMove.Other()][b.EnPassantTarget] & pawns; fromBB != bitboard.Empty; {
+			from := fromBB.Pop()
+			move.From = from
+			move.To = b.EnPassantTarget
+			move.FromPiece = pawn
+			move.ToPiece = pawn
+			move.CapturedPiece = otherPawn
+			move.Capture = b.EnPassantTarget
+			if b.SideToMove == piece.White {
+				move.Capture += 8
+			} else {
+				move.Capture -= 8
+			}
+			moves = append(moves, move)
+		}
+	}
+
 	{
 		pawns := b.PieceBBs[piece.Pawn] & friends
-		enemies.Set(b.EnPassantTarget)
 
 		switch b.SideToMove {
 		case piece.White:
@@ -188,9 +208,6 @@ func (b *Board) GenerateMoves() []move.Move {
 
 				if to := from - 7; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
 					move.To = to
-					if to == b.EnPassantTarget {
-						to += 8
-					}
 					move.Capture = to
 					move.CapturedPiece = b.Position[to]
 					moves = append(moves, move)
@@ -198,9 +215,6 @@ func (b *Board) GenerateMoves() []move.Move {
 
 				if to := from - 9; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
 					move.To = to
-					if to == b.EnPassantTarget {
-						to += 8
-					}
 					move.Capture = to
 					move.CapturedPiece = b.Position[to]
 					move := b.NewMove(from, to)
@@ -263,9 +277,6 @@ func (b *Board) GenerateMoves() []move.Move {
 
 				if to := from + 9; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
 					move.To = to
-					if to == b.EnPassantTarget {
-						to -= 8
-					}
 					move.Capture = to
 					move.CapturedPiece = b.Position[to]
 					moves = append(moves, move)
@@ -273,9 +284,6 @@ func (b *Board) GenerateMoves() []move.Move {
 
 				if to := from + 7; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
 					move.To = to
-					if to == b.EnPassantTarget {
-						to -= 8
-					}
 					move.Capture = to
 					move.CapturedPiece = b.Position[to]
 					moves = append(moves, move)
