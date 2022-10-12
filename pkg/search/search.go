@@ -51,7 +51,7 @@ func Search(fen string, depth int) (move.Move, evaluation.Abs, error) {
 
 	// king can be captured; illegal position
 	if c.board.IsInCheck(c.board.SideToMove.Other()) {
-		return move.Move{}, evaluation.Inf, ErrIllegal // king is captured
+		return 0, evaluation.Inf, ErrIllegal // king is captured
 	}
 
 	// keep track of the best move
@@ -64,7 +64,7 @@ func Search(fen string, depth int) (move.Move, evaluation.Abs, error) {
 		// one side's win is other side's loss
 		// one move has been made so ply 1 from root
 		curr := -c.Negamax(1, depth-1, -beta, -alpha)
-		c.board.UnmakeMove(m)
+		c.board.UnmakeMove()
 
 		if curr > score {
 			// better move found
@@ -77,7 +77,7 @@ func Search(fen string, depth int) (move.Move, evaluation.Abs, error) {
 
 	// position is mate; no legal moves
 	if score == -evaluation.Inf {
-		return move.Move{}, score.Abs(c.board.SideToMove), ErrMate
+		return 0, score.Abs(c.board.SideToMove), ErrMate
 	}
 
 	return bestMove, score.Abs(c.board.SideToMove), nil
@@ -133,7 +133,7 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 	for _, m := range moves {
 		c.board.MakeMove(m)
 		curr := -c.Negamax(plys+1, depth-1, -beta, -alpha)
-		c.board.UnmakeMove(m)
+		c.board.UnmakeMove()
 
 		// update score and bounds
 

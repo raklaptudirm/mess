@@ -23,24 +23,13 @@ const (
 func Of(b *board.Board) Rel {
 	var eval Abs
 
-	var material = [...]Abs{
-		piece.NoPiece:     0,
-		piece.WhitePawn:   100,
-		piece.WhiteKnight: 300,
-		piece.WhiteBishop: 300,
-		piece.WhiteRook:   500,
-		piece.WhiteQueen:  900,
-		piece.WhiteKing:   0,
-		piece.BlackPawn:   -100,
-		piece.BlackKnight: -300,
-		piece.BlackBishop: -300,
-		piece.BlackRook:   -500,
-		piece.BlackQueen:  -900,
-		piece.BlackKing:   0,
-	}
-
 	for s := square.A8; s <= square.H1; s++ {
-		eval += material[b.Position[s]]
+		p := b.Position[s]
+		if p == piece.NoPiece {
+			continue
+		}
+
+		eval += material[p] + squareBonuses[p][s].Abs(p.Color())
 	}
 
 	return eval.Rel(b.SideToMove)
