@@ -72,7 +72,7 @@ func New(fen string) *Board {
 	}
 
 	// move counters
-	board.HalfMoves, _ = strconv.Atoi(parts[4])
+	board.DrawClock, _ = strconv.Atoi(parts[4])
 	board.FullMoves, _ = strconv.Atoi(parts[5])
 
 	return &board
@@ -81,5 +81,5 @@ func New(fen string) *Board {
 // FEN returns the fen string of the current Board position.
 func (b *Board) FEN() string {
 	// <position> <side to move> <castling rights> <en passant target> <half move count> <full move count>
-	return fmt.Sprintf("%s %s %s %s %d %d", b.Position.FEN(), b.SideToMove, b.CastlingRights.String(), b.EnPassantTarget, b.HalfMoves, b.FullMoves)
+	return fmt.Sprintf("%s %s %s %s %d %d", b.Position.FEN(), b.SideToMove, b.CastlingRights.String(), b.EnPassantTarget, b.DrawClock, b.FullMoves)
 }

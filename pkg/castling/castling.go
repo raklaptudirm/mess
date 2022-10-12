@@ -1,71 +1,84 @@
 package castling
 
+import "laptudirm.com/x/mess/pkg/square"
+
 type Rights byte
 
 func NewRights(r string) Rights {
 	var rights Rights
 
 	if r == "-" {
-		return None
+		return NoCasl
 	}
 
 	if r != "" && r[0] == 'K' {
 		r = r[1:]
-		rights |= WhiteKingside
+		rights |= WhiteK
 	}
 
 	if r != "" && r[0] == 'Q' {
 		r = r[1:]
-		rights |= WhiteQueenside
+		rights |= WhiteQ
 	}
 
 	if r != "" && r[0] == 'k' {
 		r = r[1:]
-		rights |= BlackKingside
+		rights |= BlackK
 	}
 
 	if r != "" && r[0] == 'q' {
-		rights |= BlackQueenside
+		rights |= BlackQ
 	}
 
 	return rights
 }
 
 const (
-	WhiteKingside  Rights = 1 << 0
-	WhiteQueenside Rights = 1 << 1
-	BlackKingside  Rights = 1 << 2
-	BlackQueenside Rights = 1 << 3
+	WhiteK Rights = 1 << 0
+	WhiteQ Rights = 1 << 1
+	BlackK Rights = 1 << 2
+	BlackQ Rights = 1 << 3
 
-	None Rights = 0
+	NoCasl Rights = 0
 
-	White Rights = WhiteKingside | WhiteQueenside
-	Black Rights = BlackKingside | BlackQueenside
+	WhiteA Rights = WhiteK | WhiteQ
+	BlackA Rights = BlackK | BlackQ
 
-	Kingside  Rights = WhiteKingside | BlackKingside
-	Queenside Rights = WhiteQueenside | BlackQueenside
+	Kingside  Rights = WhiteK | BlackK
+	Queenside Rights = WhiteQ | BlackQ
 
-	All Rights = White | Black
+	All Rights = WhiteA | BlackA
 
 	N = 16
 )
 
+var RightUpdates = [square.N]Rights{
+	BlackQ, NoCasl, NoCasl, NoCasl, BlackA, NoCasl, NoCasl, BlackK,
+	NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl,
+	NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl,
+	NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl,
+	NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl,
+	NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl,
+	NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl,
+	WhiteQ, NoCasl, NoCasl, NoCasl, WhiteA, NoCasl, NoCasl, WhiteK,
+}
+
 func (c Rights) String() string {
 	var str string
 
-	if c&WhiteKingside != 0 {
+	if c&WhiteK != 0 {
 		str += "K"
 	}
 
-	if c&WhiteQueenside != 0 {
+	if c&WhiteQ != 0 {
 		str += "Q"
 	}
 
-	if c&BlackKingside != 0 {
+	if c&BlackK != 0 {
 		str += "k"
 	}
 
-	if c&BlackQueenside != 0 {
+	if c&BlackQ != 0 {
 		str += "q"
 	}
 

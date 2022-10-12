@@ -7,51 +7,53 @@ import (
 	"laptudirm.com/x/mess/pkg/move"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
+	"laptudirm.com/x/mess/pkg/util"
 	"laptudirm.com/x/mess/pkg/zobrist"
 )
 
 // MakeMove plays a legal move on the Board.
 func (b *Board) MakeMove(m move.Move) {
+	// add current state to history
+	b.History[b.Plys].Move = m
+	b.History[b.Plys].CastlingRights = b.CastlingRights
+	b.History[b.Plys].CapturedPiece = piece.NoPiece
+	b.History[b.Plys].EnPassantTarget = b.EnPassantTarget
+	b.History[b.Plys].DrawClock = b.DrawClock
+	b.History[b.Plys].Hash = b.Hash
+
 	// update the half-move clock
 	// it records the number of plys since the last pawn push or capture
 	// for positions which are drawn by the 50-move rule
-	if b.HalfMoves++; !m.IsReversible() {
-		b.HalfMoves = 0
-	}
+	b.DrawClock++
 
-	b.CastlingRights &^= m.CastlingRightUpdates()
+	// parse move
 
-	b.Hash ^= zobrist.Castling[m.CastlingRights] // remove old rights
-	b.Hash ^= zobrist.Castling[b.CastlingRights] // put new rights
+	sourceSq := m.Source()
+	targetSq := m.Target()
+	captureSq := targetSq
+	fromPiece := m.FromPiece()
+	pieceType := fromPiece.Type()
+	toPiece := m.ToPiece()
 
-	// move the piece in the records
+	isDoublePush := pieceType == piece.Pawn && util.Abs(targetSq-sourceSq) == 16
+	isCastling := pieceType == piece.King && util.Abs(targetSq-sourceSq) == 2
+	isEnPassant := pieceType == piece.Pawn && targetSq == b.EnPassantTarget
+	isCapture := m.IsCapture()
 
-	if m.IsCapture() {
-		b.ClearSquare(m.Capture)
-	}
-
-	b.ClearSquare(m.From)
-	b.FillSquare(m.To, m.ToPiece)
-
-	if m.IsCastle() {
-		rookInfo := castling.Rooks[m.To]
-		b.ClearSquare(rookInfo.From)
-		b.FillSquare(rookInfo.To, rookInfo.RookType)
+	if pieceType == piece.Pawn {
+		b.DrawClock = 0
 	}
 
 	// update en passant target square
-	// clear the previous square, and if current move was double a pawn
-	// push, add set the en passant target to the new square
-
-	// reset old en passant square
 	if b.EnPassantTarget != square.None {
 		b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()] // reset hash
-		b.EnPassantTarget = square.None                       // reset square
 	}
+	b.EnPassantTarget = square.None // reset square
 
-	if m.IsDoublePawnPush() {
+	switch {
+	case isDoublePush:
 		// double pawn push; set new en passant target
-		target := m.From
+		target := sourceSq
 		if b.SideToMove == piece.White {
 			target -= 8
 		} else {
@@ -64,9 +66,37 @@ func (b *Board) MakeMove(m move.Move) {
 			// and new square to zobrist hash
 			b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()]
 		}
+
+	case isCastling:
+		rookInfo := castling.Rooks[targetSq]
+		b.ClearSquare(rookInfo.From)
+		b.FillSquare(rookInfo.To, rookInfo.RookType)
+
+	case isEnPassant:
+		if b.SideToMove == piece.White {
+			captureSq += 8
+		} else {
+			captureSq -= 8
+		}
+		fallthrough
+
+	case isCapture:
+		b.DrawClock = 0
+		b.History[b.Plys].CapturedPiece = b.Position[captureSq]
+		b.ClearSquare(captureSq)
 	}
 
+	// move the piece in the records
+	b.ClearSquare(sourceSq)
+	b.FillSquare(targetSq, toPiece)
+
+	b.Hash ^= zobrist.Castling[b.CastlingRights] // remove old rights
+	b.CastlingRights &^= castling.RightUpdates[sourceSq]
+	b.CastlingRights &^= castling.RightUpdates[targetSq]
+	b.Hash ^= zobrist.Castling[b.CastlingRights] // put new rights
+
 	// switch turn
+	b.Plys++
 
 	// update side to move
 	if b.SideToMove = b.SideToMove.Other(); b.SideToMove == piece.White {
@@ -75,74 +105,69 @@ func (b *Board) MakeMove(m move.Move) {
 	b.Hash ^= zobrist.SideToMove // switch in zobrist hash
 }
 
-func (b *Board) UnmakeMove(m move.Move) {
-	if b.EnPassantTarget != square.None {
-		b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()]
-		b.EnPassantTarget = square.None
-	}
-
-	if m.EnPassantSquare != square.None {
-		b.EnPassantTarget = m.EnPassantSquare
-		b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()]
-	}
-
-	b.ClearSquare(m.To)
-	b.FillSquare(m.From, m.FromPiece)
-
-	if m.IsCapture() {
-		b.FillSquare(m.Capture, m.CapturedPiece)
-	}
-
-	if m.IsCastle() {
-		rookInfo := castling.Rooks[m.To]
-		b.ClearSquare(rookInfo.To)
-		b.FillSquare(rookInfo.From, rookInfo.RookType)
-	}
-
-	b.Hash ^= zobrist.Castling[b.CastlingRights]
-	b.Hash ^= zobrist.Castling[m.CastlingRights]
-	b.CastlingRights = m.CastlingRights
-
-	b.HalfMoves = m.HalfMoves
-
-	// update side to move
-
-	b.Hash ^= zobrist.SideToMove
+func (b *Board) UnmakeMove() {
 	if b.SideToMove = b.SideToMove.Other(); b.SideToMove == piece.Black {
 		b.FullMoves--
 	}
+
+	b.Plys--
+
+	b.EnPassantTarget = b.History[b.Plys].EnPassantTarget
+	b.DrawClock = b.History[b.Plys].DrawClock
+	b.CastlingRights = b.History[b.Plys].CastlingRights
+
+	m := b.History[b.Plys].Move
+
+	// parse move
+
+	sourceSq := m.Source()
+	targetSq := m.Target()
+	captureSq := targetSq
+	fromPiece := m.FromPiece()
+	pieceType := fromPiece.Type()
+	capturedPiece := b.History[b.Plys].CapturedPiece
+
+	isCastling := pieceType == piece.King && util.Abs(targetSq-sourceSq) == 2
+	isEnPassant := pieceType == piece.Pawn && targetSq == b.EnPassantTarget
+	isCapture := m.IsCapture()
+
+	b.ClearSquare(targetSq)
+	b.FillSquare(sourceSq, fromPiece)
+
+	switch {
+	case isCastling:
+		rookInfo := castling.Rooks[targetSq]
+		b.ClearSquare(rookInfo.To)
+		b.FillSquare(rookInfo.From, rookInfo.RookType)
+
+	case isEnPassant:
+		if b.SideToMove == piece.White {
+			captureSq += 8
+		} else {
+			captureSq -= 8
+		}
+		fallthrough
+
+	case isCapture:
+		b.FillSquare(captureSq, capturedPiece)
+	}
+
+	b.Hash = b.History[b.Plys].Hash
 }
 
 func (b *Board) GenerateMoves() []move.Move {
-	moves := make([]move.Move, 0, 20)
+	moves := make([]move.Move, 0, 30)
 	occ := b.Occupied()
 	friends := b.ColorBBs[b.SideToMove]
 	enemies := b.ColorBBs[b.SideToMove.Other()]
 
-	move := move.Move{
-		HalfMoves:       b.HalfMoves,
-		CastlingRights:  b.CastlingRights,
-		EnPassantSquare: b.EnPassantTarget,
-	}
-
 	if b.EnPassantTarget != square.None {
 		pawns := b.PieceBBs[piece.Pawn] & b.ColorBBs[b.SideToMove]
 		pawn := piece.New(piece.Pawn, b.SideToMove)
-		otherPawn := piece.New(piece.Pawn, b.SideToMove.Other())
+
 		for fromBB := attacks.Pawn[b.SideToMove.Other()][b.EnPassantTarget] & pawns; fromBB != bitboard.Empty; {
 			from := fromBB.Pop()
-			move.From = from
-			move.To = b.EnPassantTarget
-			move.FromPiece = pawn
-			move.ToPiece = pawn
-			move.CapturedPiece = otherPawn
-			move.Capture = b.EnPassantTarget
-			if b.SideToMove == piece.White {
-				move.Capture += 8
-			} else {
-				move.Capture -= 8
-			}
-			moves = append(moves, move)
+			moves = append(moves, move.New(from, b.EnPassantTarget, pawn, true))
 		}
 	}
 
@@ -151,271 +176,168 @@ func (b *Board) GenerateMoves() []move.Move {
 
 		switch b.SideToMove {
 		case piece.White:
-			move.FromPiece = piece.WhitePawn
-
 			for fromBB := pawns & bitboard.Rank7; fromBB != bitboard.Empty; {
 				from := fromBB.Pop()
-				move.From = from
-				move.CapturedPiece = piece.NoPiece
 
 				if to := from - 8; bitboard.Squares[to]&occ == 0 {
-					move.To = to
-					for _, promotion := range piece.Promotions {
-						move.ToPiece = piece.New(promotion, piece.White)
-						moves = append(moves, move)
-					}
+					addPromotions(&moves, move.New(from, to, piece.WhitePawn, false), piece.White)
 				}
 
 				if to := from - 7; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
-					move.To = to
-					move.Capture = to
-					move.CapturedPiece = b.Position[to]
-
-					for _, promotion := range piece.Promotions {
-						move.ToPiece = piece.New(promotion, piece.White)
-						moves = append(moves, move)
-					}
+					addPromotions(&moves, move.New(from, to, piece.WhitePawn, true), piece.White)
 				}
 
 				if to := from - 9; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
-					move.To = to
-					move.Capture = to
-					move.CapturedPiece = b.Position[to]
-
-					for _, promotion := range piece.Promotions {
-						move.ToPiece = piece.New(promotion, piece.White)
-						moves = append(moves, move)
-					}
+					addPromotions(&moves, move.New(from, to, piece.WhitePawn, true), piece.White)
 				}
 			}
-
-			move.ToPiece = piece.WhitePawn
 
 			for fromBB := pawns &^ bitboard.Rank7; fromBB != bitboard.Empty; {
 				from := fromBB.Pop()
-				move.From = from
-				move.CapturedPiece = piece.NoPiece
 
 				if to := from - 8; bitboard.Squares[to]&occ == 0 {
-					move.To = to
-					moves = append(moves, move)
+					moves = append(moves, move.New(from, to, piece.WhitePawn, false))
 
 					if to := from - 16; from.Rank() == square.Rank2 && bitboard.Squares[to]&occ == 0 {
-						move.To = to
-						moves = append(moves, move)
+						moves = append(moves, move.New(from, to, piece.WhitePawn, false))
 					}
 				}
 
 				if to := from - 7; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
-					move.To = to
-					move.Capture = to
-					move.CapturedPiece = b.Position[to]
-					moves = append(moves, move)
+					moves = append(moves, move.New(from, to, piece.WhitePawn, true))
 				}
 
 				if to := from - 9; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
-					move.To = to
-					move.Capture = to
-					move.CapturedPiece = b.Position[to]
-					move := b.NewMove(from, to)
-					moves = append(moves, move)
+					moves = append(moves, move.New(from, to, piece.WhitePawn, true))
 				}
 			}
 		case piece.Black:
-			move.FromPiece = piece.BlackPawn
-
 			for fromBB := pawns & bitboard.Rank2; fromBB != bitboard.Empty; {
 				from := fromBB.Pop()
-				move.From = from
-				move.CapturedPiece = piece.NoPiece
 
 				if to := from + 8; bitboard.Squares[to]&occ == 0 {
-					move.To = to
-					for _, promotion := range piece.Promotions {
-						move.ToPiece = piece.New(promotion, piece.Black)
-						moves = append(moves, move)
-					}
+					addPromotions(&moves, move.New(from, to, piece.BlackPawn, false), piece.Black)
 				}
 
 				if to := from + 9; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
-					move.To = to
-					move.Capture = to
-					move.CapturedPiece = b.Position[to]
-					for _, promotion := range piece.Promotions {
-						move.ToPiece = piece.New(promotion, piece.Black)
-						moves = append(moves, move)
-					}
+					addPromotions(&moves, move.New(from, to, piece.BlackPawn, true), piece.Black)
 				}
 
 				if to := from + 7; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
-					move.To = to
-					move.Capture = to
-					move.CapturedPiece = b.Position[to]
-					for _, promotion := range piece.Promotions {
-						move.ToPiece = piece.New(promotion, piece.Black)
-						moves = append(moves, move)
-					}
+					addPromotions(&moves, move.New(from, to, piece.BlackPawn, true), piece.Black)
 				}
 			}
 
-			move.ToPiece = piece.BlackPawn
-
 			for fromBB := pawns &^ bitboard.Rank2; fromBB != bitboard.Empty; {
 				from := fromBB.Pop()
-				move.From = from
-				move.CapturedPiece = piece.NoPiece
 
 				if to := from + 8; bitboard.Squares[to]&occ == 0 {
-					move.To = to
-					moves = append(moves, move)
+					moves = append(moves, move.New(from, to, piece.BlackPawn, false))
 
 					if to := from + 16; from.Rank() == square.Rank7 && bitboard.Squares[to]&occ == 0 {
-						move.To = to
-						moves = append(moves, move)
+						moves = append(moves, move.New(from, to, piece.BlackPawn, false))
 					}
 				}
 
 				if to := from + 9; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
-					move.To = to
-					move.Capture = to
-					move.CapturedPiece = b.Position[to]
-					moves = append(moves, move)
+					moves = append(moves, move.New(from, to, piece.BlackPawn, true))
 				}
 
 				if to := from + 7; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
-					move.To = to
-					move.Capture = to
-					move.CapturedPiece = b.Position[to]
-					moves = append(moves, move)
+					moves = append(moves, move.New(from, to, piece.BlackPawn, true))
 				}
 			}
 		}
 	}
 
 	p := piece.New(piece.Knight, b.SideToMove)
-	move.FromPiece = p
-	move.ToPiece = p
 	for fromBB := b.PieceBBs[piece.Knight] & friends; fromBB != bitboard.Empty; {
 		from := fromBB.Pop()
-		move.From = from
 
 		for toBB := attacks.Knight[from] &^ friends; toBB != bitboard.Empty; {
 			to := toBB.Pop()
-			move.To = to
-			move.Capture = to
-			move.CapturedPiece = b.Position[to]
-
-			moves = append(moves, move)
+			isCap := b.Position[to] != piece.NoPiece
+			moves = append(moves, move.New(from, to, p, isCap))
 		}
 	}
 
 	p = piece.New(piece.Bishop, b.SideToMove)
-	move.FromPiece = p
-	move.ToPiece = p
 	for fromBB := b.PieceBBs[piece.Bishop] & friends; fromBB != bitboard.Empty; {
 		from := fromBB.Pop()
-		move.From = from
 
 		for toBB := attacks.Bishop(from, occ) &^ friends; toBB != bitboard.Empty; {
 			to := toBB.Pop()
-			move.To = to
-			move.Capture = to
-			move.CapturedPiece = b.Position[to]
-
-			moves = append(moves, move)
+			isCap := b.Position[to] != piece.NoPiece
+			moves = append(moves, move.New(from, to, p, isCap))
 		}
 	}
 
 	p = piece.New(piece.Rook, b.SideToMove)
-	move.FromPiece = p
-	move.ToPiece = p
 	for fromBB := b.PieceBBs[piece.Rook] & friends; fromBB != bitboard.Empty; {
 		from := fromBB.Pop()
-		move.From = from
 
 		for toBB := attacks.Rook(from, occ) &^ friends; toBB != bitboard.Empty; {
 			to := toBB.Pop()
-			move.To = to
-			move.Capture = to
-			move.CapturedPiece = b.Position[to]
-
-			moves = append(moves, move)
+			isCap := b.Position[to] != piece.NoPiece
+			moves = append(moves, move.New(from, to, p, isCap))
 		}
 	}
 
 	p = piece.New(piece.Queen, b.SideToMove)
-	move.FromPiece = p
-	move.ToPiece = p
 	for fromBB := b.PieceBBs[piece.Queen] & friends; fromBB != bitboard.Empty; {
 		from := fromBB.Pop()
-		move.From = from
 
 		for toBB := attacks.Queen(from, occ) &^ friends; toBB != bitboard.Empty; {
 			to := toBB.Pop()
-			move.To = to
-			move.Capture = to
-			move.CapturedPiece = b.Position[to]
-
-			moves = append(moves, move)
+			isCap := b.Position[to] != piece.NoPiece
+			moves = append(moves, move.New(from, to, p, isCap))
 		}
 	}
 
 	{
 		p = piece.New(piece.King, b.SideToMove)
-		move.FromPiece = p
-		move.ToPiece = p
 
 		from := b.Kings[b.SideToMove]
-		move.From = from
 		for toBB := attacks.King[from] &^ friends; toBB != bitboard.Empty; {
 			to := toBB.Pop()
-			move.To = to
-			move.Capture = to
-			move.CapturedPiece = b.Position[to]
-
-			moves = append(moves, move)
+			isCap := b.Position[to] != piece.NoPiece
+			moves = append(moves, move.New(from, to, p, isCap))
 		}
-
-		move.CapturedPiece = piece.NoPiece
 
 		switch b.SideToMove {
 		case piece.White:
-			if b.CastlingRights&castling.White == castling.None ||
+			if b.CastlingRights&castling.WhiteA == castling.NoCasl ||
 				b.IsAttacked(square.E1, piece.Black) {
 				break
 			}
 
-			if b.CastlingRights&castling.WhiteKingside != 0 &&
+			if b.CastlingRights&castling.WhiteK != 0 &&
 				occ&0x6000000000000000 == bitboard.Empty &&
 				!b.IsAttacked(square.F1, piece.Black) {
-				move.To = square.G1
-				moves = append(moves, move)
+				moves = append(moves, move.New(from, square.G1, p, false))
 			}
 
-			if b.CastlingRights&castling.WhiteQueenside != 0 &&
+			if b.CastlingRights&castling.WhiteQ != 0 &&
 				occ&0xe00000000000000 == bitboard.Empty &&
 				!b.IsAttacked(square.D1, piece.Black) {
-				move.To = square.C1
-				moves = append(moves, move)
+				moves = append(moves, move.New(from, square.C1, p, false))
 			}
 		case piece.Black:
-			if b.CastlingRights&castling.Black == castling.None ||
+			if b.CastlingRights&castling.BlackA == castling.NoCasl ||
 				b.IsAttacked(square.E8, piece.White) {
 				break
 			}
 
-			if b.CastlingRights&castling.BlackKingside != 0 &&
+			if b.CastlingRights&castling.BlackK != 0 &&
 				occ&0x60 == bitboard.Empty &&
 				!b.IsAttacked(square.F8, piece.White) {
-				move.To = square.G8
-				moves = append(moves, move)
+				moves = append(moves, move.New(from, square.G8, p, false))
 			}
 
-			if b.CastlingRights&castling.BlackQueenside != 0 &&
+			if b.CastlingRights&castling.BlackQ != 0 &&
 				occ&0xe == bitboard.Empty &&
 				!b.IsAttacked(square.D8, piece.White) {
-				move.To = square.C8
-				moves = append(moves, move)
+				moves = append(moves, move.New(from, square.C8, p, false))
 			}
 		}
 	}
@@ -423,33 +345,16 @@ func (b *Board) GenerateMoves() []move.Move {
 	return moves
 }
 
+func addPromotions(moveList *[]move.Move, m move.Move, c piece.Color) {
+	*moveList = append(*moveList,
+		m.SetPromotion(piece.New(piece.Queen, c)),
+		m.SetPromotion(piece.New(piece.Rook, c)),
+		m.SetPromotion(piece.New(piece.Bishop, c)),
+		m.SetPromotion(piece.New(piece.Knight, c)),
+	)
+}
+
 func (b *Board) NewMove(from, to square.Square) move.Move {
 	p := b.Position[from]
-	m := move.Move{
-		From:    from,
-		To:      to,
-		Capture: to,
-
-		FromPiece:     p,
-		ToPiece:       p,
-		CapturedPiece: b.Position[to],
-
-		HalfMoves:       b.HalfMoves,
-		CastlingRights:  b.CastlingRights,
-		EnPassantSquare: b.EnPassantTarget,
-	}
-
-	// handle pawns separately for en passant
-	if b.Position[from].Type() == piece.Pawn &&
-		to == b.EnPassantTarget {
-		m.Capture = to
-		if b.SideToMove == piece.White {
-			m.Capture += 8
-		} else {
-			m.Capture -= 8
-		}
-		m.CapturedPiece = b.Position[m.Capture]
-	}
-
-	return m
+	return move.New(from, to, p, b.Position[to] != piece.NoPiece)
 }

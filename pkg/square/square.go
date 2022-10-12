@@ -42,8 +42,6 @@ func From(file File, rank Rank) Square {
 // Square represents a square on a chessboard.
 type Square int
 
-const None Square = -1
-
 // constants representing various squares.
 const (
 	A8 Square = iota
@@ -117,6 +115,8 @@ const (
 	F1
 	G1
 	H1
+
+	None
 )
 
 // Number of squares

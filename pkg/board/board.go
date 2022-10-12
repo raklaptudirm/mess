@@ -22,6 +22,7 @@ import (
 	"laptudirm.com/x/mess/pkg/board/bitboard"
 	"laptudirm.com/x/mess/pkg/board/mailbox"
 	"laptudirm.com/x/mess/pkg/castling"
+	"laptudirm.com/x/mess/pkg/move"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
 	"laptudirm.com/x/mess/pkg/zobrist"
@@ -42,8 +43,21 @@ type Board struct {
 	CastlingRights  castling.Rights
 
 	// move counters
-	HalfMoves int
+	Plys      int
 	FullMoves int
+	DrawClock int
+
+	// game data
+	History [256]Undo
+}
+
+type Undo struct {
+	Move            move.Move
+	CastlingRights  castling.Rights
+	CapturedPiece   piece.Piece
+	EnPassantTarget square.Square
+	DrawClock       int
+	Hash            zobrist.Key
 }
 
 // String converts a Board into a human readable string.

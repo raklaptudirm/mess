@@ -48,22 +48,22 @@ func castle(s square.Square, occupied bitboard.Board, cr castling.Rights) bitboa
 		kingsideMask := bitboard.Board(0x6000000000000000)
 		queensideMask := bitboard.Board(0xe00000000000000)
 
-		if cr&castling.WhiteKingside != 0 && occupied&kingsideMask == 0 {
+		if cr&castling.WhiteK != 0 && occupied&kingsideMask == 0 {
 			base.Set(square.G1)
 		}
 
-		if cr&castling.WhiteQueenside != 0 && occupied&queensideMask == 0 {
+		if cr&castling.WhiteQ != 0 && occupied&queensideMask == 0 {
 			base.Set(square.C1)
 		}
 	case square.E8:
 		kingsideMask := bitboard.Board(0x60)
 		queensideMask := bitboard.Board(0xe)
 
-		if cr&castling.BlackKingside != 0 && occupied&kingsideMask == 0 {
+		if cr&castling.BlackK != 0 && occupied&kingsideMask == 0 {
 			base.Set(square.G8)
 		}
 
-		if cr&castling.BlackQueenside != 0 && occupied&queensideMask == 0 {
+		if cr&castling.BlackQ != 0 && occupied&queensideMask == 0 {
 			base.Set(square.C8)
 		}
 	}

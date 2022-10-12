@@ -30,7 +30,7 @@ func init() {
 	}
 
 	// castling right numbers
-	for r := castling.None; r <= castling.All; r++ {
+	for r := castling.NoCasl; r <= castling.All; r++ {
 		Castling[r] = Key(rng.Uint64())
 	}
 
