@@ -65,6 +65,10 @@ func (b *Board) Pop() square.Square {
 	return sq
 }
 
+func (b Board) CountBits() int {
+	return bits.OnesCount64(uint64(b))
+}
+
 func (b Board) FirstOne() square.Square {
 	return square.Square(bits.TrailingZeros64(uint64(b)))
 }

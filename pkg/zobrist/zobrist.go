@@ -4,6 +4,7 @@ import (
 	"laptudirm.com/x/mess/pkg/castling"
 	"laptudirm.com/x/mess/pkg/piece"
 	"laptudirm.com/x/mess/pkg/square"
+	"laptudirm.com/x/mess/pkg/util"
 )
 
 type Key uint64
@@ -14,7 +15,7 @@ var Castling [castling.N]Key
 var SideToMove Key
 
 func init() {
-	var rng PRNG
+	var rng util.PRNG
 	rng.Seed(1070372)
 
 	// piece square numbers

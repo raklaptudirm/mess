@@ -1,4 +1,4 @@
-package zobrist
+package util
 
 // xorshift64star Pseudo-Random Number Generator
 // This struct is based on original code written and dedicated
@@ -30,4 +30,8 @@ func (p *PRNG) Uint64() uint64 {
 
 	// scramble result with non-linear function
 	return p.seed * 2685821657736338717
+}
+
+func (p *PRNG) SparseUint64() uint64 {
+	return p.Uint64() & p.Uint64() & p.Uint64()
 }
