@@ -102,28 +102,47 @@ func (b *Board) IsInCheck(c piece.Color) bool {
 func (b *Board) IsAttacked(s square.Square, them piece.Color) bool {
 	occ := b.Occupied()
 
-	pawns := b.PieceBBs[piece.Pawn] & b.ColorBBs[them]
-	if attacks.Pawn[them.Other()][s]&pawns != bitboard.Empty {
+	if attacks.Pawn[them.Other()][s]&b.Pawns(them) != bitboard.Empty {
 		return true
 	}
 
-	knights := b.PieceBBs[piece.Knight] & b.ColorBBs[them]
-	if attacks.Knight[s]&knights != bitboard.Empty {
+	if attacks.Knight[s]&b.Knights(them) != bitboard.Empty {
 		return true
 	}
 
-	king := b.PieceBBs[piece.King] & b.ColorBBs[them]
-	if attacks.King[s]&king != bitboard.Empty {
+	if attacks.King[s]&b.King(them) != bitboard.Empty {
 		return true
 	}
 
-	queens := b.PieceBBs[piece.Queen] & b.ColorBBs[them]
+	queens := b.Queens(them)
 
-	bishops := b.PieceBBs[piece.Bishop] & b.ColorBBs[them]
-	if attacks.Bishop(s, occ)&(bishops|queens) != bitboard.Empty {
+	if attacks.Bishop(s, occ)&(b.Bishops(them)|queens) != bitboard.Empty {
 		return true
 	}
 
-	rooks := b.PieceBBs[piece.Rook] & b.ColorBBs[them]
-	return attacks.Rook(s, occ)&(rooks|queens) != bitboard.Empty
+	return attacks.Rook(s, occ)&(b.Rooks(them)|queens) != bitboard.Empty
+}
+
+func (b *Board) Pawns(c piece.Color) bitboard.Board {
+	return b.PieceBBs[piece.Pawn] & b.ColorBBs[c]
+}
+
+func (b *Board) Knights(c piece.Color) bitboard.Board {
+	return b.PieceBBs[piece.Knight] & b.ColorBBs[c]
+}
+
+func (b *Board) Bishops(c piece.Color) bitboard.Board {
+	return b.PieceBBs[piece.Bishop] & b.ColorBBs[c]
+}
+
+func (b *Board) Rooks(c piece.Color) bitboard.Board {
+	return b.PieceBBs[piece.Rook] & b.ColorBBs[c]
+}
+
+func (b *Board) Queens(c piece.Color) bitboard.Board {
+	return b.PieceBBs[piece.Queen] & b.ColorBBs[c]
+}
+
+func (b *Board) King(c piece.Color) bitboard.Board {
+	return b.PieceBBs[piece.King] & b.ColorBBs[c]
 }
