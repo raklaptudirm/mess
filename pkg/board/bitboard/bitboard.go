@@ -43,19 +43,19 @@ func (b Board) String() string {
 	return str
 }
 
-func (b Board) Up() Board {
-	return b << 8
-}
-
-func (b Board) Down() Board {
+func (b Board) North() Board {
 	return b >> 8
 }
 
-func (b Board) Right() Board {
+func (b Board) South() Board {
+	return b << 8
+}
+
+func (b Board) East() Board {
 	return (b &^ FileH) << 1
 }
 
-func (b Board) Left() Board {
+func (b Board) West() Board {
 	return (b &^ FileA) >> 1
 }
 

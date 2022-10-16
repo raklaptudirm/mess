@@ -158,94 +158,70 @@ func (b *Board) UnmakeMove() {
 func (b *Board) GenerateMoves() []move.Move {
 	moves := make([]move.Move, 0, 30)
 	occ := b.Occupied()
+
 	friends := b.ColorBBs[b.SideToMove]
-	enemies := b.ColorBBs[b.SideToMove.Other()]
-
-	if b.EnPassantTarget != square.None {
-		pawns := b.PieceBBs[piece.Pawn] & b.ColorBBs[b.SideToMove]
-		pawn := piece.New(piece.Pawn, b.SideToMove)
-
-		for fromBB := attacks.Pawn[b.SideToMove.Other()][b.EnPassantTarget] & pawns; fromBB != bitboard.Empty; {
-			from := fromBB.Pop()
-			moves = append(moves, move.New(from, b.EnPassantTarget, pawn, true))
-		}
-	}
 
 	{
+		enemies := b.ColorBBs[b.SideToMove.Other()]
+		enemies.Set(b.EnPassantTarget)
+
+		up := square.Square(-8)
+		down := square.Square(8)
+		left := square.Square(-1)
+		right := square.Square(1)
+		promotionRank := bitboard.Rank7
+		if b.SideToMove == piece.Black {
+			up, down = down, up
+			promotionRank = bitboard.Rank2
+		}
+
+		p := piece.New(piece.Pawn, b.SideToMove)
+
 		pawns := b.PieceBBs[piece.Pawn] & friends
+		normalPawns := pawns &^ promotionRank
+		promotionPawns := pawns & promotionRank
 
-		switch b.SideToMove {
-		case piece.White:
-			for fromBB := pawns & bitboard.Rank7; fromBB != bitboard.Empty; {
-				from := fromBB.Pop()
+		singlePush, doublePush := attacks.PawnPush(normalPawns, occ, b.SideToMove)
+		leftAttacks := attacks.PawnLeft(normalPawns, enemies, b.SideToMove)
+		rightAttacks := attacks.PawnRight(normalPawns, enemies, b.SideToMove)
 
-				if to := from - 8; bitboard.Squares[to]&occ == 0 {
-					addPromotions(&moves, move.New(from, to, piece.WhitePawn, false), piece.White)
-				}
+		for singlePush != bitboard.Empty {
+			to := singlePush.Pop()
+			from := to + down
+			moves = append(moves, move.New(from, to, p, false))
+		}
 
-				if to := from - 7; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
-					addPromotions(&moves, move.New(from, to, piece.WhitePawn, true), piece.White)
-				}
+		for doublePush != bitboard.Empty {
+			to := doublePush.Pop()
+			from := to + down + down
+			moves = append(moves, move.New(from, to, p, false))
+		}
 
-				if to := from - 9; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
-					addPromotions(&moves, move.New(from, to, piece.WhitePawn, true), piece.White)
-				}
+		for leftAttacks != bitboard.Empty {
+			to := leftAttacks.Pop()
+			from := to + right + down
+			moves = append(moves, move.New(from, to, p, true))
+		}
+
+		for rightAttacks != bitboard.Empty {
+			to := rightAttacks.Pop()
+			from := to + left + down
+			moves = append(moves, move.New(from, to, p, true))
+		}
+
+		for promotionPawns != bitboard.Empty {
+			from := promotionPawns.Pop()
+
+			if to := from + up; bitboard.Squares[to]&occ == 0 {
+				addPromotions(&moves, move.New(from, to, p, false), b.SideToMove)
 			}
 
-			for fromBB := pawns &^ bitboard.Rank7; fromBB != bitboard.Empty; {
-				from := fromBB.Pop()
-
-				if to := from - 8; bitboard.Squares[to]&occ == 0 {
-					moves = append(moves, move.New(from, to, piece.WhitePawn, false))
-
-					if to := from - 16; from.Rank() == square.Rank2 && bitboard.Squares[to]&occ == 0 {
-						moves = append(moves, move.New(from, to, piece.WhitePawn, false))
-					}
-				}
-
-				if to := from - 7; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
-					moves = append(moves, move.New(from, to, piece.WhitePawn, true))
-				}
-
-				if to := from - 9; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
-					moves = append(moves, move.New(from, to, piece.WhitePawn, true))
-				}
-			}
-		case piece.Black:
-			for fromBB := pawns & bitboard.Rank2; fromBB != bitboard.Empty; {
-				from := fromBB.Pop()
-
-				if to := from + 8; bitboard.Squares[to]&occ == 0 {
-					addPromotions(&moves, move.New(from, to, piece.BlackPawn, false), piece.Black)
-				}
-
-				if to := from + 9; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
-					addPromotions(&moves, move.New(from, to, piece.BlackPawn, true), piece.Black)
-				}
-
-				if to := from + 7; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
-					addPromotions(&moves, move.New(from, to, piece.BlackPawn, true), piece.Black)
-				}
+			if to := from + up + right; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
+				addPromotions(&moves, move.New(from, to, p, true), b.SideToMove)
 			}
 
-			for fromBB := pawns &^ bitboard.Rank2; fromBB != bitboard.Empty; {
-				from := fromBB.Pop()
-
-				if to := from + 8; bitboard.Squares[to]&occ == 0 {
-					moves = append(moves, move.New(from, to, piece.BlackPawn, false))
-
-					if to := from + 16; from.Rank() == square.Rank7 && bitboard.Squares[to]&occ == 0 {
-						moves = append(moves, move.New(from, to, piece.BlackPawn, false))
-					}
-				}
-
-				if to := from + 9; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
-					moves = append(moves, move.New(from, to, piece.BlackPawn, true))
-				}
-
-				if to := from + 7; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
-					moves = append(moves, move.New(from, to, piece.BlackPawn, true))
-				}
+			if to := from + up + left; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
+				addPromotions(&moves, move.New(from, to, p, true), b.SideToMove)
 			}
 		}
 	}
