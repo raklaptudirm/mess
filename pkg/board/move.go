@@ -238,45 +238,40 @@ func (b *Board) GenerateMoves() []move.Move {
 		}
 	}
 
-	{
-		p := piece.New(piece.King, b.SideToMove)
-		from := b.Kings[b.SideToMove]
+	switch b.SideToMove {
+	case piece.White:
+		if b.CastlingRights&castling.WhiteA == castling.NoCasl ||
+			b.IsAttacked(square.E1, piece.Black) {
+			break
+		}
 
-		switch b.SideToMove {
-		case piece.White:
-			if b.CastlingRights&castling.WhiteA == castling.NoCasl ||
-				b.IsAttacked(square.E1, piece.Black) {
-				break
-			}
+		if b.CastlingRights&castling.WhiteK != 0 &&
+			occ&bitboard.F1G1 == bitboard.Empty &&
+			!b.IsAttacked(square.F1, piece.Black) {
+			moves = append(moves, move.New(square.E1, square.G1, piece.WhiteKing, false))
+		}
 
-			if b.CastlingRights&castling.WhiteK != 0 &&
-				occ&0x6000000000000000 == bitboard.Empty &&
-				!b.IsAttacked(square.F1, piece.Black) {
-				moves = append(moves, move.New(from, square.G1, p, false))
-			}
+		if b.CastlingRights&castling.WhiteQ != 0 &&
+			occ&bitboard.B1C1D1 == bitboard.Empty &&
+			!b.IsAttacked(square.D1, piece.Black) {
+			moves = append(moves, move.New(square.E1, square.C1, piece.WhiteKing, false))
+		}
+	case piece.Black:
+		if b.CastlingRights&castling.BlackA == castling.NoCasl ||
+			b.IsAttacked(square.E8, piece.White) {
+			break
+		}
 
-			if b.CastlingRights&castling.WhiteQ != 0 &&
-				occ&0xe00000000000000 == bitboard.Empty &&
-				!b.IsAttacked(square.D1, piece.Black) {
-				moves = append(moves, move.New(from, square.C1, p, false))
-			}
-		case piece.Black:
-			if b.CastlingRights&castling.BlackA == castling.NoCasl ||
-				b.IsAttacked(square.E8, piece.White) {
-				break
-			}
+		if b.CastlingRights&castling.BlackK != 0 &&
+			occ&bitboard.F8G8 == bitboard.Empty &&
+			!b.IsAttacked(square.F8, piece.White) {
+			moves = append(moves, move.New(square.E8, square.G8, piece.BlackKing, false))
+		}
 
-			if b.CastlingRights&castling.BlackK != 0 &&
-				occ&0x60 == bitboard.Empty &&
-				!b.IsAttacked(square.F8, piece.White) {
-				moves = append(moves, move.New(from, square.G8, p, false))
-			}
-
-			if b.CastlingRights&castling.BlackQ != 0 &&
-				occ&0xe == bitboard.Empty &&
-				!b.IsAttacked(square.D8, piece.White) {
-				moves = append(moves, move.New(from, square.C8, p, false))
-			}
+		if b.CastlingRights&castling.BlackQ != 0 &&
+			occ&bitboard.B8C8D8 == bitboard.Empty &&
+			!b.IsAttacked(square.D8, piece.White) {
+			moves = append(moves, move.New(square.E8, square.C8, piece.BlackKing, false))
 		}
 	}
 

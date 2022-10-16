@@ -116,6 +116,13 @@ const (
 	DiagonalH8H8 Board = 0x0000000000000080
 )
 
+const (
+	F1G1   Board = 0x6000000000000000
+	F8G8   Board = 0x0000000000000060
+	B1C1D1 Board = 0x0e00000000000000
+	B8C8D8 Board = 0x000000000000000e
+)
+
 var AntiDiagonals = [...]Board{
 	square.DiagonalA1A1: DiagonalA1A1,
 	square.DiagonalA2B1: DiagonalA2B1,
