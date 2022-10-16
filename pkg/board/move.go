@@ -226,59 +226,21 @@ func (b *Board) GenerateMoves() []move.Move {
 		}
 	}
 
-	p := piece.New(piece.Knight, b.SideToMove)
-	for fromBB := b.PieceBBs[piece.Knight] & friends; fromBB != bitboard.Empty; {
-		from := fromBB.Pop()
+	for pType := piece.Knight; pType <= piece.King; pType++ {
+		p := piece.New(pType, b.SideToMove)
+		for fromBB := b.PieceBBs[pType] & friends; fromBB != bitboard.Empty; {
+			from := fromBB.Pop()
 
-		for toBB := attacks.Knight[from] &^ friends; toBB != bitboard.Empty; {
-			to := toBB.Pop()
-			isCap := b.Position[to] != piece.NoPiece
-			moves = append(moves, move.New(from, to, p, isCap))
-		}
-	}
-
-	p = piece.New(piece.Bishop, b.SideToMove)
-	for fromBB := b.PieceBBs[piece.Bishop] & friends; fromBB != bitboard.Empty; {
-		from := fromBB.Pop()
-
-		for toBB := attacks.Bishop(from, occ) &^ friends; toBB != bitboard.Empty; {
-			to := toBB.Pop()
-			isCap := b.Position[to] != piece.NoPiece
-			moves = append(moves, move.New(from, to, p, isCap))
-		}
-	}
-
-	p = piece.New(piece.Rook, b.SideToMove)
-	for fromBB := b.PieceBBs[piece.Rook] & friends; fromBB != bitboard.Empty; {
-		from := fromBB.Pop()
-
-		for toBB := attacks.Rook(from, occ) &^ friends; toBB != bitboard.Empty; {
-			to := toBB.Pop()
-			isCap := b.Position[to] != piece.NoPiece
-			moves = append(moves, move.New(from, to, p, isCap))
-		}
-	}
-
-	p = piece.New(piece.Queen, b.SideToMove)
-	for fromBB := b.PieceBBs[piece.Queen] & friends; fromBB != bitboard.Empty; {
-		from := fromBB.Pop()
-
-		for toBB := attacks.Queen(from, occ) &^ friends; toBB != bitboard.Empty; {
-			to := toBB.Pop()
-			isCap := b.Position[to] != piece.NoPiece
-			moves = append(moves, move.New(from, to, p, isCap))
+			for toBB := b.MovesOf(pType, from, occ) &^ friends; toBB != bitboard.Empty; {
+				to := toBB.Pop()
+				moves = append(moves, move.New(from, to, p, occ.IsSet(to)))
+			}
 		}
 	}
 
 	{
-		p = piece.New(piece.King, b.SideToMove)
-
+		p := piece.New(piece.King, b.SideToMove)
 		from := b.Kings[b.SideToMove]
-		for toBB := attacks.King[from] &^ friends; toBB != bitboard.Empty; {
-			to := toBB.Pop()
-			isCap := b.Position[to] != piece.NoPiece
-			moves = append(moves, move.New(from, to, p, isCap))
-		}
 
 		switch b.SideToMove {
 		case piece.White:
@@ -319,6 +281,23 @@ func (b *Board) GenerateMoves() []move.Move {
 	}
 
 	return moves
+}
+
+func (b *Board) MovesOf(p piece.Type, s square.Square, blockers bitboard.Board) bitboard.Board {
+	switch p {
+	case piece.Knight:
+		return attacks.Knight[s]
+	case piece.Bishop:
+		return attacks.Bishop(s, blockers)
+	case piece.Rook:
+		return attacks.Rook(s, blockers)
+	case piece.Queen:
+		return attacks.Queen(s, blockers)
+	case piece.King:
+		return attacks.King[s]
+	default:
+		panic("bad piece type")
+	}
 }
 
 func addPromotions(moveList *[]move.Move, m move.Move, c piece.Color) {
