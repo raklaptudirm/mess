@@ -160,74 +160,7 @@ func (b *Board) GenerateMoves() []move.Move {
 	occ := b.Occupied()
 
 	us := b.SideToMove
-	them := us.Other()
-
-	friends := b.ColorBBs[b.SideToMove]
-
-	{
-		enemies := b.ColorBBs[them]
-		enemies.Set(b.EnPassantTarget)
-
-		up := square.Square(-8)
-		down := square.Square(8)
-		left := square.Square(-1)
-		right := square.Square(1)
-		promotionRank := bitboard.Rank7
-		p := piece.WhitePawn
-		if us == piece.Black {
-			up, down = down, up
-			promotionRank = bitboard.Rank2
-			p = piece.BlackPawn
-		}
-
-		pawns := b.Pawns(us)
-		normalPawns := pawns &^ promotionRank
-		promotionPawns := pawns & promotionRank
-
-		singlePush, doublePush := attacks.PawnPush(normalPawns, occ, us)
-		leftAttacks := attacks.PawnLeft(normalPawns, enemies, us)
-		rightAttacks := attacks.PawnRight(normalPawns, enemies, us)
-
-		for singlePush != bitboard.Empty {
-			to := singlePush.Pop()
-			from := to + down
-			moves = append(moves, move.New(from, to, p, false))
-		}
-
-		for doublePush != bitboard.Empty {
-			to := doublePush.Pop()
-			from := to + down + down
-			moves = append(moves, move.New(from, to, p, false))
-		}
-
-		for leftAttacks != bitboard.Empty {
-			to := leftAttacks.Pop()
-			from := to + right + down
-			moves = append(moves, move.New(from, to, p, true))
-		}
-
-		for rightAttacks != bitboard.Empty {
-			to := rightAttacks.Pop()
-			from := to + left + down
-			moves = append(moves, move.New(from, to, p, true))
-		}
-
-		for promotionPawns != bitboard.Empty {
-			from := promotionPawns.Pop()
-
-			if to := from + up; bitboard.Squares[to]&occ == 0 {
-				addPromotions(&moves, move.New(from, to, p, false), us)
-			}
-
-			if to := from + up + right; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
-				addPromotions(&moves, move.New(from, to, p, true), us)
-			}
-
-			if to := from + up + left; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
-				addPromotions(&moves, move.New(from, to, p, true), us)
-			}
-		}
-	}
+	friends := b.ColorBBs[us]
 
 	for pType := piece.Knight; pType <= piece.King; pType++ {
 		p := piece.New(pType, us)
@@ -241,6 +174,84 @@ func (b *Board) GenerateMoves() []move.Move {
 		}
 	}
 
+	b.genPawnMoves(&moves)
+	b.genCastlingMoves(&moves)
+
+	return moves
+}
+
+func (b *Board) genPawnMoves(moveList *[]move.Move) {
+	us := b.SideToMove
+
+	occ := b.Occupied()
+
+	enemies := b.ColorBBs[us.Other()]
+	enemies.Set(b.EnPassantTarget)
+
+	up := square.Square(-8)
+	down := square.Square(8)
+	left := square.Square(-1)
+	right := square.Square(1)
+	promotionRank := bitboard.Rank7
+	p := piece.WhitePawn
+	if us == piece.Black {
+		up, down = down, up
+		promotionRank = bitboard.Rank2
+		p = piece.BlackPawn
+	}
+
+	pawns := b.Pawns(us)
+	normalPawns := pawns &^ promotionRank
+	promotionPawns := pawns & promotionRank
+
+	singlePush, doublePush := attacks.PawnPush(normalPawns, occ, us)
+	leftAttacks := attacks.PawnLeft(normalPawns, enemies, us)
+	rightAttacks := attacks.PawnRight(normalPawns, enemies, us)
+
+	for singlePush != bitboard.Empty {
+		to := singlePush.Pop()
+		from := to + down
+		*moveList = append(*moveList, move.New(from, to, p, false))
+	}
+
+	for doublePush != bitboard.Empty {
+		to := doublePush.Pop()
+		from := to + down + down
+		*moveList = append(*moveList, move.New(from, to, p, false))
+	}
+
+	for leftAttacks != bitboard.Empty {
+		to := leftAttacks.Pop()
+		from := to + right + down
+		*moveList = append(*moveList, move.New(from, to, p, true))
+	}
+
+	for rightAttacks != bitboard.Empty {
+		to := rightAttacks.Pop()
+		from := to + left + down
+		*moveList = append(*moveList, move.New(from, to, p, true))
+	}
+
+	for promotionPawns != bitboard.Empty {
+		from := promotionPawns.Pop()
+
+		if to := from + up; bitboard.Squares[to]&occ == 0 {
+			addPromotions(moveList, move.New(from, to, p, false), us)
+		}
+
+		if to := from + up + right; from.File() < square.FileH && bitboard.Squares[to]&enemies != 0 {
+			addPromotions(moveList, move.New(from, to, p, true), us)
+		}
+
+		if to := from + up + left; from.File() > square.FileA && bitboard.Squares[to]&enemies != 0 {
+			addPromotions(moveList, move.New(from, to, p, true), us)
+		}
+	}
+}
+
+func (b *Board) genCastlingMoves(moveList *[]move.Move) {
+	occ := b.Occupied()
+
 	switch b.SideToMove {
 	case piece.White:
 		if b.CastlingRights&castling.WhiteA == castling.NoCasl ||
@@ -251,13 +262,13 @@ func (b *Board) GenerateMoves() []move.Move {
 		if b.CastlingRights&castling.WhiteK != 0 &&
 			occ&bitboard.F1G1 == bitboard.Empty &&
 			!b.IsAttacked(square.F1, piece.Black) {
-			moves = append(moves, move.New(square.E1, square.G1, piece.WhiteKing, false))
+			*moveList = append(*moveList, move.New(square.E1, square.G1, piece.WhiteKing, false))
 		}
 
 		if b.CastlingRights&castling.WhiteQ != 0 &&
 			occ&bitboard.B1C1D1 == bitboard.Empty &&
 			!b.IsAttacked(square.D1, piece.Black) {
-			moves = append(moves, move.New(square.E1, square.C1, piece.WhiteKing, false))
+			*moveList = append(*moveList, move.New(square.E1, square.C1, piece.WhiteKing, false))
 		}
 	case piece.Black:
 		if b.CastlingRights&castling.BlackA == castling.NoCasl ||
@@ -268,17 +279,15 @@ func (b *Board) GenerateMoves() []move.Move {
 		if b.CastlingRights&castling.BlackK != 0 &&
 			occ&bitboard.F8G8 == bitboard.Empty &&
 			!b.IsAttacked(square.F8, piece.White) {
-			moves = append(moves, move.New(square.E8, square.G8, piece.BlackKing, false))
+			*moveList = append(*moveList, move.New(square.E8, square.G8, piece.BlackKing, false))
 		}
 
 		if b.CastlingRights&castling.BlackQ != 0 &&
 			occ&bitboard.B8C8D8 == bitboard.Empty &&
 			!b.IsAttacked(square.D8, piece.White) {
-			moves = append(moves, move.New(square.E8, square.C8, piece.BlackKing, false))
+			*moveList = append(*moveList, move.New(square.E8, square.C8, piece.BlackKing, false))
 		}
 	}
-
-	return moves
 }
 
 func (b *Board) MovesOf(p piece.Type, s square.Square, blockers bitboard.Board) bitboard.Board {
