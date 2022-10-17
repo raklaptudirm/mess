@@ -21,11 +21,13 @@ import (
 
 // lookup tables for precalculated attack boards of non-sliding pieces
 var (
-	King             [square.N]bitboard.Board
-	Knight           [square.N]bitboard.Board
-	PawnMoves   [piece.NColor][square.N]bitboard.Board
-	Pawn [piece.NColor][square.N]bitboard.Board
+	King      [square.N]bitboard.Board
+	Knight    [square.N]bitboard.Board
+	PawnMoves [piece.NColor][square.N]bitboard.Board
+	Pawn      [piece.NColor][square.N]bitboard.Board
 )
+
+var Between [square.N][square.N]bitboard.Board
 
 // init initializes the attack bitboard lookup tables for non-sliding
 // pieces by computing the bitboards for each square.
@@ -38,6 +40,22 @@ func init() {
 		PawnMoves[piece.Black][s] = blackPawnMovesFrom(s)
 		Pawn[piece.White][s] = whitePawnAttacksFrom(s)
 		Pawn[piece.Black][s] = blackPawnAttacksFrom(s)
+	}
+
+	for s1 := square.A8; s1 <= square.H1; s1++ {
+		for s2 := square.A8; s2 <= square.H1; s2++ {
+			sqs := bitboard.Squares[s1] | bitboard.Squares[s2]
+
+			switch {
+			case s1.File() == s2.File(),
+				s1.Rank() == s2.Rank():
+				Between[s1][s2] = Rook(s1, sqs) & Rook(s2, sqs)
+
+			case s1.Diagonal() == s2.Diagonal(),
+				s1.AntiDiagonal() == s2.AntiDiagonal():
+				Between[s1][s2] = Bishop(s1, sqs) & Bishop(s2, sqs)
+			}
+		}
 	}
 }
 
