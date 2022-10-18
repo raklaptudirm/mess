@@ -166,8 +166,8 @@ func (b *Board) CalculateCheckmask() {
 
 	pawns := b.Pawns(them) & attacks.Pawn[us][kingSq]
 	knights := b.Knights(them) & attacks.Knight[kingSq]
-	bishops := (b.Bishops(them) & b.Queens(them)) & attacks.Bishop(kingSq, occ)
-	rooks := (b.Rooks(them) & b.Queens(them)) & attacks.Rook(kingSq, occ)
+	bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, occ)
+	rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, occ)
 
 	switch {
 	case pawns != bitboard.Empty:
