@@ -157,6 +157,7 @@ func (b *Board) UnmakeMove() {
 
 func (b *Board) GenerateMoves() []move.Move {
 	b.CalculateCheckmask()
+	b.CalculatePinmask()
 
 	moves := make([]move.Move, 0, 30)
 	occ := b.Occupied()
@@ -219,7 +220,7 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 		up = -8
 		down = 8
 
-		promotionRank = bitboard.Rank7
+		promotionRank = bitboard.Rank8
 
 		p = piece.WhitePawn
 
@@ -227,7 +228,7 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 		up = 8
 		down = -8
 
-		promotionRank = bitboard.Rank2
+		promotionRank = bitboard.Rank1
 
 		p = piece.BlackPawn
 	}
@@ -236,52 +237,77 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 	captureTarget := enemies & b.CheckMask
 
 	pawns := b.Pawns(us)
-	normalPawns := pawns &^ promotionRank
-	promotionPawns := pawns & promotionRank
 
-	singlePush, doublePush := attacks.PawnPush(normalPawns, occ, us)
-	singlePush &= pushTarget
-	doublePush &= pushTarget
+	pawnsThatAttack := pawns &^ b.PinnedHV
 
-	leftAttacks := attacks.PawnLeft(normalPawns, captureTarget, us)
-	rightAttacks := attacks.PawnRight(normalPawns, captureTarget, us)
+	unpinnedPawnsThatAttack := pawnsThatAttack &^ b.PinnedD
+	pinnedPawnsThatAttack := pawnsThatAttack & b.PinnedD
 
-	for singlePush != bitboard.Empty {
-		to := singlePush.Pop()
+	pawnAttacksL := attacks.PawnsLeft(unpinnedPawnsThatAttack, us) & captureTarget
+	pawnAttacksL |= attacks.PawnsLeft(pinnedPawnsThatAttack, us) & captureTarget & b.PinnedD
+
+	pawnAttacksR := attacks.PawnsRight(unpinnedPawnsThatAttack, us) & captureTarget
+	pawnAttacksR |= attacks.PawnsRight(pinnedPawnsThatAttack, us) & captureTarget & b.PinnedD
+
+	simplePawnAttacksL := pawnAttacksL &^ promotionRank
+	simplePawnAttacksR := pawnAttacksR &^ promotionRank
+
+	for simplePawnAttacksL != bitboard.Empty {
+		to := simplePawnAttacksL.Pop()
+		from := to + down + right
+		*moveList = append(*moveList, move.New(from, to, p, true))
+	}
+
+	for simplePawnAttacksR != bitboard.Empty {
+		to := simplePawnAttacksR.Pop()
+		from := to + down + left
+		*moveList = append(*moveList, move.New(from, to, p, true))
+	}
+
+	promotionPawnAttacksL := pawnAttacksL & promotionRank
+	promotionPawnAttacksR := pawnAttacksR & promotionRank
+
+	for promotionPawnAttacksL != bitboard.Empty {
+		to := promotionPawnAttacksL.Pop()
+		from := to + down + right
+		addPromotions(moveList, move.New(from, to, p, true), us)
+	}
+
+	for promotionPawnAttacksR != bitboard.Empty {
+		to := promotionPawnAttacksR.Pop()
+		from := to + down + left
+		addPromotions(moveList, move.New(from, to, p, true), us)
+	}
+
+	pawnsThatPush := pawns &^ b.PinnedD
+
+	unpinnedPawnsThatPush := pawnsThatPush &^ b.PinnedHV
+	pinnedPawnsThatPush := pawnsThatPush & b.PinnedHV
+
+	pawnPushesSingle := attacks.PawnPushSingle(unpinnedPawnsThatPush, us) & pushTarget
+	pawnPushesSingle |= attacks.PawnPushSingle(pinnedPawnsThatPush, us) & pushTarget & b.PinnedHV
+
+	pawnPushesDouble := attacks.PawnPushDouble(unpinnedPawnsThatPush, us) & pushTarget
+	pawnPushesDouble |= attacks.PawnPushDouble(pinnedPawnsThatPush, us) & pushTarget & b.PinnedHV
+
+	simplePawnPushes := pawnPushesSingle &^ promotionRank
+
+	for simplePawnPushes != bitboard.Empty {
+		to := simplePawnPushes.Pop()
 		from := to + down
 		*moveList = append(*moveList, move.New(from, to, p, false))
 
-		if to += up; doublePush.IsSet(to) {
+		if to += up; pawnPushesDouble.IsSet(to) {
 			*moveList = append(*moveList, move.New(from, to, p, false))
 		}
 	}
 
-	for leftAttacks != bitboard.Empty {
-		to := leftAttacks.Pop()
-		from := to + right + down
-		*moveList = append(*moveList, move.New(from, to, p, true))
-	}
+	promotionPawnPushes := pawnPushesSingle & promotionRank
 
-	for rightAttacks != bitboard.Empty {
-		to := rightAttacks.Pop()
-		from := to + left + down
-		*moveList = append(*moveList, move.New(from, to, p, true))
-	}
-
-	for promotionPawns != bitboard.Empty {
-		from := promotionPawns.Pop()
-
-		if to := from + up; pushTarget.IsSet(to) {
-			addPromotions(moveList, move.New(from, to, p, false), us)
-		}
-
-		if to := from + up + right; from.File() < square.FileH && captureTarget.IsSet(to) {
-			addPromotions(moveList, move.New(from, to, p, true), us)
-		}
-
-		if to := from + up + left; from.File() > square.FileA && captureTarget.IsSet(to) {
-			addPromotions(moveList, move.New(from, to, p, true), us)
-		}
+	for promotionPawnPushes != bitboard.Empty {
+		to := promotionPawnPushes.Pop()
+		from := to + down
+		addPromotions(moveList, move.New(from, to, p, false), us)
 	}
 }
 

@@ -74,38 +74,45 @@ func PawnAll(s, ep square.Square, c piece.Color, occupied, enemies bitboard.Boar
 	return attackSet
 }
 
-func PawnPush(pawns, blockers bitboard.Board, color piece.Color) (bitboard.Board, bitboard.Board) {
+func PawnPushSingle(pawns bitboard.Board, color piece.Color) bitboard.Board {
 	switch color {
 	case piece.White:
-		singlePush := pawns.North() &^ blockers
-		doublePush := (singlePush.North() & bitboard.Rank4) &^ blockers
-		return singlePush, doublePush
+		return pawns.North()
 	case piece.Black:
-		singlePush := pawns.South() &^ blockers
-		doublePush := (singlePush.South() & bitboard.Rank5) &^ blockers
-		return singlePush, doublePush
+		return pawns.South()
 	default:
 		panic("bad color")
 	}
 }
 
-func PawnLeft(pawns, enemies bitboard.Board, color piece.Color) bitboard.Board {
+func PawnPushDouble(pawns bitboard.Board, color piece.Color) bitboard.Board {
 	switch color {
 	case piece.White:
-		return pawns.North().West() & enemies
+		return (pawns & bitboard.Rank2).North().North()
 	case piece.Black:
-		return pawns.South().West() & enemies
+		return (pawns & bitboard.Rank7).South().South()
 	default:
 		panic("bad color")
 	}
 }
 
-func PawnRight(pawns, enemies bitboard.Board, color piece.Color) bitboard.Board {
+func PawnsLeft(pawns bitboard.Board, color piece.Color) bitboard.Board {
 	switch color {
 	case piece.White:
-		return pawns.North().East() & enemies
+		return pawns.North().West()
 	case piece.Black:
-		return pawns.South().East() & enemies
+		return pawns.South().West()
+	default:
+		panic("bad color")
+	}
+}
+
+func PawnsRight(pawns bitboard.Board, color piece.Color) bitboard.Board {
+	switch color {
+	case piece.White:
+		return pawns.North().East()
+	case piece.Black:
+		return pawns.South().East()
 	default:
 		panic("bad color")
 	}
