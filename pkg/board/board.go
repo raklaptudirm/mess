@@ -200,7 +200,7 @@ func (b *Board) CalculateCheckmask() {
 	}
 }
 
-func (b *Board) CalcualtePinmask() {
+func (b *Board) CalculatePinmask() {
 	us := b.SideToMove
 	them := us.Other()
 
