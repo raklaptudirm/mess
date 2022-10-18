@@ -45,6 +45,9 @@ type Board struct {
 	CheckN    int
 	CheckMask bitboard.Board
 
+	PinnedD  bitboard.Board
+	PinnedHV bitboard.Board
+
 	// move counters
 	Plys      int
 	FullMoves int
@@ -194,5 +197,34 @@ func (b *Board) CalculateCheckmask() {
 
 	if b.CheckN == 0 {
 		b.CheckMask = bitboard.Universe
+	}
+}
+
+func (b *Board) CalcualtePinmask() {
+	us := b.SideToMove
+	them := us.Other()
+
+	kingSq := b.Kings[us]
+
+	friends := b.ColorBBs[us]
+	enemies := b.ColorBBs[them]
+
+	b.PinnedD = bitboard.Empty
+	b.PinnedHV = bitboard.Empty
+
+	for rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, enemies); rooks != bitboard.Empty; {
+		rook := rooks.Pop()
+		possiblePin := attacks.Between[kingSq][rook] | bitboard.Squares[rook]
+		if (possiblePin & friends).Count() == 1 {
+			b.PinnedHV |= possiblePin
+		}
+	}
+
+	for bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, enemies); bishops != bitboard.Empty; {
+		bishop := bishops.Pop()
+		possiblePin := attacks.Between[kingSq][bishop] | bitboard.Squares[bishop]
+		if (possiblePin & friends).Count() == 1 {
+			b.PinnedD |= possiblePin
+		}
 	}
 }

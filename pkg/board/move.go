@@ -187,7 +187,7 @@ func (b *Board) GenerateMoves() []move.Move {
 		for fromBB := b.PieceBBs[pType] & friends; fromBB != bitboard.Empty; {
 			from := fromBB.Pop()
 
-			for toBB := b.MovesOf(pType, from, occ) & target; toBB != bitboard.Empty; {
+			for toBB := b.MovesOf(pType, from) & target; toBB != bitboard.Empty; {
 				to := toBB.Pop()
 				moves = append(moves, move.New(from, to, p, occ.IsSet(to)))
 			}
@@ -326,21 +326,59 @@ func (b *Board) genCastlingMoves(moveList *[]move.Move) {
 	}
 }
 
-func (b *Board) MovesOf(p piece.Type, s square.Square, blockers bitboard.Board) bitboard.Board {
+func (b *Board) MovesOf(p piece.Type, s square.Square) bitboard.Board {
 	switch p {
 	case piece.Knight:
-		return attacks.Knight[s]
+		return b.knightMoves(s)
 	case piece.Bishop:
-		return attacks.Bishop(s, blockers)
+		return b.bishopMoves(s)
 	case piece.Rook:
-		return attacks.Rook(s, blockers)
+		return b.rookMoves(s)
 	case piece.Queen:
-		return attacks.Queen(s, blockers)
-	case piece.King:
-		return attacks.King[s]
+		return b.queenMoves(s)
 	default:
 		panic("bad piece type")
 	}
+}
+
+func (b *Board) knightMoves(s square.Square) bitboard.Board {
+	switch {
+	case b.PinnedD.IsSet(s),
+		b.PinnedHV.IsSet(s):
+		return bitboard.Empty
+	default:
+		return attacks.Knight[s]
+	}
+}
+
+func (b *Board) bishopMoves(s square.Square) bitboard.Board {
+	blockers := b.Occupied()
+
+	switch {
+	case b.PinnedHV.IsSet(s):
+		return bitboard.Empty
+	case b.PinnedD.IsSet(s):
+		return attacks.Bishop(s, blockers) & b.PinnedD
+	default:
+		return attacks.Bishop(s, blockers)
+	}
+}
+
+func (b *Board) rookMoves(s square.Square) bitboard.Board {
+	blockers := b.Occupied()
+
+	switch {
+	case b.PinnedD.IsSet(s):
+		return bitboard.Empty
+	case b.PinnedHV.IsSet(s):
+		return attacks.Rook(s, blockers) & b.PinnedHV
+	default:
+		return attacks.Rook(s, blockers)
+	}
+}
+
+func (b *Board) queenMoves(s square.Square) bitboard.Board {
+	return b.bishopMoves(s) | b.rookMoves(s)
 }
 
 func addPromotions(moveList *[]move.Move, m move.Move, c piece.Color) {
