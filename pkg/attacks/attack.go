@@ -42,6 +42,9 @@ func init() {
 		Pawn[piece.Black][s] = blackPawnAttacksFrom(s)
 	}
 
+	generateRookMagics()
+	generateBishopMagics()
+
 	for s1 := square.A8; s1 <= square.H1; s1++ {
 		for s2 := square.A8; s2 <= square.H1; s2++ {
 			sqs := bitboard.Squares[s1] | bitboard.Squares[s2]
