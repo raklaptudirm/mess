@@ -48,6 +48,8 @@ type Board struct {
 	PinnedD  bitboard.Board
 	PinnedHV bitboard.Board
 
+	SeenByEnemy bitboard.Board
+
 	// move counters
 	Plys      int
 	FullMoves int
@@ -227,4 +229,41 @@ func (b *Board) CalculatePinmask() {
 			b.PinnedD |= possiblePin
 		}
 	}
+}
+
+func (b *Board) SeenSquares(by piece.Color) bitboard.Board {
+	pawns := b.Pawns(by)
+	knights := b.Knights(by)
+	bishops := b.Bishops(by)
+	rooks := b.Rooks(by)
+	queens := b.Queens(by)
+	kingSq := b.Kings[by]
+
+	occ := b.Occupied() &^ b.King(by.Other())
+
+	seen := attacks.PawnsLeft(pawns, by) | attacks.PawnsRight(pawns, by)
+
+	for knights != bitboard.Empty {
+		from := knights.Pop()
+		seen |= attacks.Knight[from]
+	}
+
+	for bishops != bitboard.Empty {
+		from := bishops.Pop()
+		seen |= attacks.Bishop(from, occ)
+	}
+
+	for rooks != bitboard.Empty {
+		from := rooks.Pop()
+		seen |= attacks.Rook(from, occ)
+	}
+
+	for queens != bitboard.Empty {
+		from := queens.Pop()
+		seen |= attacks.Queen(from, occ)
+	}
+
+	seen |= attacks.King[kingSq]
+
+	return seen
 }

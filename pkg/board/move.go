@@ -158,6 +158,7 @@ func (b *Board) UnmakeMove() {
 func (b *Board) GenerateMoves() []move.Move {
 	b.CalculateCheckmask()
 	b.CalculatePinmask()
+	b.SeenByEnemy = b.SeenSquares(b.SideToMove.Other())
 
 	moves := make([]move.Move, 0, 30)
 	occ := b.Occupied()
@@ -170,7 +171,7 @@ func (b *Board) GenerateMoves() []move.Move {
 	{
 		kingSq := b.Kings[us]
 		king := piece.New(piece.King, us)
-		for toBB := attacks.King[kingSq] &^ friends; toBB != bitboard.Empty; {
+		for toBB := attacks.King[kingSq] &^ friends &^ b.SeenByEnemy; toBB != bitboard.Empty; {
 			to := toBB.Pop()
 			moves = append(moves, move.New(kingSq, to, king, occ.IsSet(to)))
 		}
