@@ -209,8 +209,9 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 	enemies := b.ColorBBs[us.Other()]
 	enemies.Set(b.EnPassantTarget)
 
-	var up, down, left, right square.Square
+	var down, left, right square.Square
 	var promotionRank bitboard.Board
+	var doublePushRank bitboard.Board
 	var p piece.Piece
 
 	left = -1
@@ -218,18 +219,18 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 
 	switch us {
 	case piece.White:
-		up = -8
 		down = 8
 
 		promotionRank = bitboard.Rank8
+		doublePushRank = bitboard.Rank3
 
 		p = piece.WhitePawn
 
 	case piece.Black:
-		up = 8
 		down = -8
 
 		promotionRank = bitboard.Rank1
+		doublePushRank = bitboard.Rank6
 
 		p = piece.BlackPawn
 	}
@@ -285,11 +286,14 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 	unpinnedPawnsThatPush := pawnsThatPush &^ b.PinnedHV
 	pinnedPawnsThatPush := pawnsThatPush & b.PinnedHV
 
-	pawnPushesSingle := attacks.PawnPushSingle(unpinnedPawnsThatPush, us) & pushTarget
-	pawnPushesSingle |= attacks.PawnPushSingle(pinnedPawnsThatPush, us) & pushTarget & b.PinnedHV
+	pawnPushesSingleUnpinned := attacks.PawnPush(unpinnedPawnsThatPush, us)
+	pawnPushesSinglePinned := attacks.PawnPush(pinnedPawnsThatPush, us) & b.PinnedHV
 
-	pawnPushesDouble := attacks.PawnPushDouble(unpinnedPawnsThatPush, us) & pushTarget
-	pawnPushesDouble |= attacks.PawnPushDouble(pinnedPawnsThatPush, us) & pushTarget & b.PinnedHV
+	pawnPushesSingle := (pawnPushesSinglePinned | pawnPushesSingleUnpinned) &^ occ
+
+	pawnPushesDouble := attacks.PawnPush(pawnPushesSingle&doublePushRank, us) & pushTarget
+
+	pawnPushesSingle &= pushTarget
 
 	simplePawnPushes := pawnPushesSingle &^ promotionRank
 
@@ -297,10 +301,12 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 		to := simplePawnPushes.Pop()
 		from := to + down
 		*moveList = append(*moveList, move.New(from, to, p, false))
+	}
 
-		if to += up; pawnPushesDouble.IsSet(to) {
-			*moveList = append(*moveList, move.New(from, to, p, false))
-		}
+	for pawnPushesDouble != bitboard.Empty {
+		to := pawnPushesDouble.Pop()
+		from := to + down + down
+		*moveList = append(*moveList, move.New(from, to, p, false))
 	}
 
 	promotionPawnPushes := pawnPushesSingle & promotionRank
