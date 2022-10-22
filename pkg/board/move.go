@@ -203,14 +203,17 @@ func (b *Board) GenerateMoves() []move.Move {
 
 func (b *Board) genPawnMoves(moveList *[]move.Move) {
 	us := b.SideToMove
+	them := us.Other()
 
 	occ := b.Occupied()
 
 	enemies := b.ColorBBs[us.Other()]
 	enemies.Set(b.EnPassantTarget)
 
+	enemyQueenRooks := b.Rooks(them) | b.Queens(them)
 	var down, left, right square.Square
 	var promotionRank bitboard.Board
+	var enPassantRank bitboard.Board
 	var doublePushRank bitboard.Board
 	var p piece.Piece
 
@@ -222,6 +225,7 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 		down = 8
 
 		promotionRank = bitboard.Rank8
+		enPassantRank = bitboard.Rank5
 		doublePushRank = bitboard.Rank3
 
 		p = piece.WhitePawn
@@ -230,6 +234,7 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 		down = -8
 
 		promotionRank = bitboard.Rank1
+		enPassantRank = bitboard.Rank4
 		doublePushRank = bitboard.Rank6
 
 		p = piece.BlackPawn
@@ -254,15 +259,37 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 	simplePawnAttacksL := pawnAttacksL &^ promotionRank
 	simplePawnAttacksR := pawnAttacksR &^ promotionRank
 
+generatingLeftAttacks:
 	for simplePawnAttacksL != bitboard.Empty {
 		to := simplePawnAttacksL.Pop()
 		from := to + down + right
+
+		if kingSq := b.Kings[us]; to == b.EnPassantTarget && kingSq.Rank() == from.Rank() {
+			pawnsMask := bitboard.Squares[from] | bitboard.Squares[from+left]
+			possiblePinners := enemyQueenRooks & enPassantRank
+
+			if attacks.Rook(kingSq, occ&^pawnsMask)&possiblePinners != 0 {
+				continue generatingLeftAttacks
+			}
+		}
+
 		*moveList = append(*moveList, move.New(from, to, p, true))
 	}
 
+generatingRightAttacks:
 	for simplePawnAttacksR != bitboard.Empty {
 		to := simplePawnAttacksR.Pop()
 		from := to + down + left
+
+		if kingSq := b.Kings[us]; to == b.EnPassantTarget && kingSq.Rank() == from.Rank() {
+			pawnsMask := bitboard.Squares[from] | bitboard.Squares[from+right]
+			possiblePinners := enemyQueenRooks & enPassantRank
+
+			if attacks.Rook(kingSq, occ&^pawnsMask)&possiblePinners != 0 {
+				continue generatingRightAttacks
+			}
+		}
+
 		*moveList = append(*moveList, move.New(from, to, p, true))
 	}
 
