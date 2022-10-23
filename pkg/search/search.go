@@ -34,6 +34,7 @@ type Context struct {
 // error values for illegal or mated positions
 var (
 	ErrMate    = errors.New("search move: position is mate")
+	ErrDraw    = errors.New("search move: position is draw")
 	ErrIllegal = errors.New("search move: position is illegal")
 )
 
@@ -60,6 +61,9 @@ func Search(fen string, depth int) (move.Move, evaluation.Rel, error) {
 	// no legal moves: position is mate
 	case len(moves) == 0:
 		return 0, evaluation.Mate, ErrMate
+
+	case c.board.IsDraw():
+		return 0, evaluation.Draw, ErrDraw
 
 	default:
 		// keep track of the best move
@@ -132,6 +136,9 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 		}
 
 		return evaluation.Draw // stalemate
+
+	case c.board.IsDraw():
+		return evaluation.Draw
 
 	// depth 0 reached
 	case depth == 0:
