@@ -43,6 +43,10 @@ func (b Board) String() string {
 	return str
 }
 
+func (b Board) Count() int {
+	return bits.OnesCount64(uint64(b))
+}
+
 func (b Board) North() Board {
 	return b >> 8
 }

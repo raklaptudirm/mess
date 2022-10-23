@@ -114,8 +114,3 @@ func generateBishopMagics() {
 		}
 	}
 }
-
-func init() {
-	generateRookMagics()
-	generateBishopMagics()
-}

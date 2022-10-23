@@ -42,6 +42,14 @@ type Board struct {
 	EnPassantTarget square.Square
 	CastlingRights  castling.Rights
 
+	CheckN    int
+	CheckMask bitboard.Board
+
+	PinnedD  bitboard.Board
+	PinnedHV bitboard.Board
+
+	SeenByEnemy bitboard.Board
+
 	// move counters
 	Plys      int
 	FullMoves int
@@ -145,4 +153,117 @@ func (b *Board) Queens(c piece.Color) bitboard.Board {
 
 func (b *Board) King(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.King] & b.ColorBBs[c]
+}
+
+func (b *Board) CalculateCheckmask() {
+	occ := b.Occupied()
+
+	us := b.SideToMove
+	them := us.Other()
+
+	b.CheckN = 0
+	b.CheckMask = bitboard.Empty
+
+	kingSq := b.Kings[us]
+
+	pawns := b.Pawns(them) & attacks.Pawn[us][kingSq]
+	knights := b.Knights(them) & attacks.Knight[kingSq]
+	bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, occ)
+	rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, occ)
+
+	switch {
+	case pawns != bitboard.Empty:
+		b.CheckMask |= pawns
+		b.CheckN++
+
+	case knights != bitboard.Empty:
+		b.CheckMask |= knights
+		b.CheckN++
+	}
+
+	if bishops != bitboard.Empty {
+		bishopSq := bishops.FirstOne()
+		b.CheckMask |= attacks.Between[kingSq][bishopSq] | bitboard.Squares[bishopSq]
+		b.CheckN++
+	}
+
+	if b.CheckN < 2 && rooks != bitboard.Empty {
+		if b.CheckN == 0 && rooks.Count() > 1 {
+			b.CheckN++
+		} else {
+			rookSq := rooks.FirstOne()
+			b.CheckMask |= attacks.Between[kingSq][rookSq] | bitboard.Squares[rookSq]
+			b.CheckN++
+		}
+	}
+
+	if b.CheckN == 0 {
+		b.CheckMask = bitboard.Universe
+	}
+}
+
+func (b *Board) CalculatePinmask() {
+	us := b.SideToMove
+	them := us.Other()
+
+	kingSq := b.Kings[us]
+
+	friends := b.ColorBBs[us]
+	enemies := b.ColorBBs[them]
+
+	b.PinnedD = bitboard.Empty
+	b.PinnedHV = bitboard.Empty
+
+	for rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, enemies); rooks != bitboard.Empty; {
+		rook := rooks.Pop()
+		possiblePin := attacks.Between[kingSq][rook] | bitboard.Squares[rook]
+		if (possiblePin & friends).Count() == 1 {
+			b.PinnedHV |= possiblePin
+		}
+	}
+
+	for bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, enemies); bishops != bitboard.Empty; {
+		bishop := bishops.Pop()
+		possiblePin := attacks.Between[kingSq][bishop] | bitboard.Squares[bishop]
+		if (possiblePin & friends).Count() == 1 {
+			b.PinnedD |= possiblePin
+		}
+	}
+}
+
+func (b *Board) SeenSquares(by piece.Color) bitboard.Board {
+	pawns := b.Pawns(by)
+	knights := b.Knights(by)
+	bishops := b.Bishops(by)
+	rooks := b.Rooks(by)
+	queens := b.Queens(by)
+	kingSq := b.Kings[by]
+
+	occ := b.Occupied() &^ b.King(by.Other())
+
+	seen := attacks.PawnsLeft(pawns, by) | attacks.PawnsRight(pawns, by)
+
+	for knights != bitboard.Empty {
+		from := knights.Pop()
+		seen |= attacks.Knight[from]
+	}
+
+	for bishops != bitboard.Empty {
+		from := bishops.Pop()
+		seen |= attacks.Bishop(from, occ)
+	}
+
+	for rooks != bitboard.Empty {
+		from := rooks.Pop()
+		seen |= attacks.Rook(from, occ)
+	}
+
+	for queens != bitboard.Empty {
+		from := queens.Pop()
+		seen |= attacks.Queen(from, occ)
+	}
+
+	seen |= attacks.King[kingSq]
+
+	return seen
 }

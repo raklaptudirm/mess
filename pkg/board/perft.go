@@ -2,25 +2,19 @@ package board
 
 import "fmt"
 
-func Perft(fen string, depth int) int {
+func Perft(b *Board, depth int) int {
 	if depth == 0 {
 		return 1
 	}
-
-	b := New(fen)
 
 	var nodes int
 	moves := b.GenerateMoves()
 
 	for _, move := range moves {
 		b.MakeMove(move)
-
-		if !b.IsInCheck(b.SideToMove.Other()) {
-			newNodes := perft(b, depth-1)
-			fmt.Printf("%s: %d\n", move, newNodes)
-			nodes += newNodes
-		}
-
+		newNodes := perft(b, depth-1)
+		fmt.Printf("%s: %d\n", move, newNodes)
+		nodes += newNodes
 		b.UnmakeMove()
 	}
 
@@ -28,22 +22,22 @@ func Perft(fen string, depth int) int {
 }
 
 func perft(b *Board, depth int) int {
-	if depth == 0 {
+
+	switch depth {
+	case 0:
 		return 1
-	}
+	case 1:
+		return len(b.GenerateMoves())
+	default:
+		var nodes int
+		moves := b.GenerateMoves()
 
-	var nodes int
-	moves := b.GenerateMoves()
-
-	for _, move := range moves {
-		b.MakeMove(move)
-
-		if !b.IsInCheck(b.SideToMove.Other()) {
+		for _, move := range moves {
+			b.MakeMove(move)
 			nodes += perft(b, depth-1)
+			b.UnmakeMove()
 		}
 
-		b.UnmakeMove()
+		return nodes
 	}
-
-	return nodes
 }
