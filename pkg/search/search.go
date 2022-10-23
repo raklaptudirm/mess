@@ -50,38 +50,40 @@ func Search(fen string, depth int) (move.Move, evaluation.Abs, error) {
 	alpha := evaluation.Rel(-evaluation.Inf)
 	beta := evaluation.Rel(evaluation.Inf)
 
-	// king can be captured; illegal position
-	if c.board.IsInCheck(c.board.SideToMove.Other()) {
-		return 0, evaluation.Inf, ErrIllegal // king is captured
-	}
-
-	// keep track of the best move
-	var bestMove move.Move
-
 	moves := c.board.GenerateMoves()
 	score := evaluation.Rel(-evaluation.Inf)
-	for _, m := range moves {
-		c.board.MakeMove(m)
-		// one side's win is other side's loss
-		// one move has been made so ply 1 from root
-		curr := -c.Negamax(1, depth-1, -beta, -alpha)
-		c.board.UnmakeMove()
 
-		if curr > score {
-			// better move found
-			score = curr
-			bestMove = m
+	switch {
+	// king can be captured: illegal position
+	case c.board.IsInCheck(c.board.SideToMove.Other()):
+		return 0, evaluation.Inf, ErrIllegal // king is captured
+
+	// no legal moves: position is mate
+	case len(moves) == 0:
+		return 0, score.Abs(c.board.SideToMove), ErrMate
+
+	default:
+		// keep track of the best move
+		var bestMove move.Move
+
+		for _, m := range moves {
+			c.board.MakeMove(m)
+			// one side's win is other side's loss
+			// one move has been made so ply 1 from root
+			curr := -c.Negamax(1, depth-1, -beta, -alpha)
+			c.board.UnmakeMove()
+
+			if curr > score {
+				// better move found
+				score = curr
+				bestMove = m
+			}
+
+			alpha = util.Max(alpha, score)
 		}
 
-		alpha = util.Max(alpha, score)
+		return bestMove, score.Abs(c.board.SideToMove), nil
 	}
-
-	// position is mate; no legal moves
-	if score == -evaluation.Inf {
-		return 0, score.Abs(c.board.SideToMove), ErrMate
-	}
-
-	return bestMove, score.Abs(c.board.SideToMove), nil
 }
 
 // Negamax determines the evaluation of a particular position after a
@@ -117,41 +119,41 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 		}
 	}
 
-	// depth == 0 or terminal node
-
-	if c.board.IsInCheck(c.board.SideToMove.Other()) {
-		return evaluation.Inf // king is captured
-	}
-
-	if depth == 0 {
-		return evaluation.Of(c.board)
-	}
-
 	// search moves
 
 	moves := c.board.GenerateMoves()
 	score := evaluation.Rel(-evaluation.Inf)
-	for _, m := range moves {
-		c.board.MakeMove(m)
-		curr := -c.Negamax(plys+1, depth-1, -beta, -alpha)
-		c.board.UnmakeMove()
 
-		// update score and bounds
-
-		score = util.Max(score, curr)
-		alpha = util.Max(alpha, score)
-
-		if alpha >= beta {
-			break
+	switch {
+	// position is mate
+	case len(moves) == 0:
+		if len(moves) == 0 {
+			score = evaluation.Draw // stalemate
+			if c.board.CheckN > 0 {
+				// prefer the longer lines if getting mated, and vice versa
+				score = evaluation.Rel(-evaluation.Mate + plys)
+			}
 		}
-	}
 
-	// check for mate
-	if score == -evaluation.Inf {
-		score = evaluation.Draw // stalemate
-		if c.board.IsInCheck(c.board.SideToMove) {
-			// prefer the longer lines if getting mated, and vice versa
-			score = evaluation.Rel(-evaluation.Mate + plys)
+	// depth 0 reached
+	case depth == 0:
+		score = evaluation.Of(c.board)
+
+	// keep searching
+	default:
+		for _, m := range moves {
+			c.board.MakeMove(m)
+			curr := -c.Negamax(plys+1, depth-1, -beta, -alpha)
+			c.board.UnmakeMove()
+
+			// update score and bounds
+
+			score = util.Max(score, curr)
+			alpha = util.Max(alpha, score)
+
+			if alpha >= beta {
+				break
+			}
 		}
 	}
 
