@@ -356,14 +356,13 @@ func (b *Board) genCastlingMoves(moveList *[]move.Move) {
 		}
 
 		if b.CastlingRights&castling.WhiteK != 0 &&
-			occ&bitboard.F1G1 == bitboard.Empty &&
-			!b.IsAttacked(square.F1, piece.Black) {
+			(occ|b.SeenByEnemy)&bitboard.F1G1 == bitboard.Empty {
 			*moveList = append(*moveList, move.New(square.E1, square.G1, piece.WhiteKing, false))
 		}
 
 		if b.CastlingRights&castling.WhiteQ != 0 &&
 			occ&bitboard.B1C1D1 == bitboard.Empty &&
-			!b.IsAttacked(square.D1, piece.Black) {
+			b.SeenByEnemy&bitboard.C1D1 == bitboard.Empty {
 			*moveList = append(*moveList, move.New(square.E1, square.C1, piece.WhiteKing, false))
 		}
 	case piece.Black:
@@ -373,14 +372,13 @@ func (b *Board) genCastlingMoves(moveList *[]move.Move) {
 		}
 
 		if b.CastlingRights&castling.BlackK != 0 &&
-			occ&bitboard.F8G8 == bitboard.Empty &&
-			!b.IsAttacked(square.F8, piece.White) {
+			(occ|b.SeenByEnemy)&bitboard.F8G8 == bitboard.Empty {
 			*moveList = append(*moveList, move.New(square.E8, square.G8, piece.BlackKing, false))
 		}
 
 		if b.CastlingRights&castling.BlackQ != 0 &&
 			occ&bitboard.B8C8D8 == bitboard.Empty &&
-			!b.IsAttacked(square.D8, piece.White) {
+			b.SeenByEnemy&bitboard.C8D8 == bitboard.Empty {
 			*moveList = append(*moveList, move.New(square.E8, square.C8, piece.BlackKing, false))
 		}
 	}
