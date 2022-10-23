@@ -16,7 +16,7 @@ func NewContext(fen string) Context {
 	return Context{
 		board:    board.New(fen),
 		evalFunc: evaluation.Of,
-		ttable:   make(transpositionTable),
+		ttable:   NewTT(40 * 1024 * 1024),
 	}
 }
 
@@ -28,7 +28,7 @@ type Context struct {
 
 	// search state
 	board  *board.Board
-	ttable transpositionTable
+	ttable *transpositionTable
 }
 
 // error values for illegal or mated positions

@@ -5,7 +5,17 @@ import (
 	"laptudirm.com/x/mess/pkg/zobrist"
 )
 
-type transpositionTable map[zobrist.Key]ttEntry
+type transpositionTable struct {
+	table []ttEntry
+	size  uint64
+}
+
+func NewTT(size int) *transpositionTable {
+	return &transpositionTable{
+		table: make([]ttEntry, size),
+		size:  uint64(size),
+	}
+}
 
 // Put puts the given data into the transposition table.
 func (tt transpositionTable) Put(hash zobrist.Key, plys, depth int, score, alpha, beta evaluation.Rel) {
@@ -19,7 +29,7 @@ func (tt transpositionTable) Put(hash zobrist.Key, plys, depth int, score, alpha
 		value -= evaluation.Rel(plys)
 	}
 
-	tt[hash] = ttEntry{
+	tt.table[uint64(hash)%tt.size] = ttEntry{
 		value: value,
 		depth: depth,
 		eType: entryType(score, alpha, beta),
@@ -29,7 +39,7 @@ func (tt transpositionTable) Put(hash zobrist.Key, plys, depth int, score, alpha
 // Get fetches the data associated with the given zobrist key from the
 // transposition table and verifies if it is usable in the given context.
 func (tt transpositionTable) Get(hash zobrist.Key, plys, depth int) (ttEntry, bool) {
-	if entry, hit := tt[hash]; hit && entry.depth >= depth {
+	if entry := tt.table[uint64(hash)%tt.size]; entry.eType != none && entry.depth >= depth {
 		// checkmate scores need to be changed from "n plys to mate from current position"
 		// to "n plys till mate from root" which is the format used during comparison
 		switch {
@@ -66,7 +76,8 @@ type tteEntryType int
 
 // constants representing various transposition table entry types
 const (
-	exact tteEntryType = iota
+	none tteEntryType = iota
+	exact
 	lowerBound
 	upperBound
 )
