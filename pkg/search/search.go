@@ -42,7 +42,7 @@ var (
 // encountered error. It is very similar to the Negamax function except
 // for the fact that it keeps track of the best move along with the
 // evaluation.
-func Search(fen string, depth int) (move.Move, evaluation.Abs, error) {
+func Search(fen string, depth int) (move.Move, evaluation.Rel, error) {
 	c := NewContext(fen)
 
 	// treat this function as the root call to Negamax
@@ -82,7 +82,7 @@ func Search(fen string, depth int) (move.Move, evaluation.Abs, error) {
 			alpha = util.Max(alpha, score)
 		}
 
-		return bestMove, score.Abs(c.board.SideToMove), nil
+		return bestMove, score, nil
 	}
 }
 
