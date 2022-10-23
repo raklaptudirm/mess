@@ -208,9 +208,7 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 	occ := b.Occupied()
 
 	enemies := b.ColorBBs[us.Other()]
-	enemies.Set(b.EnPassantTarget)
 
-	enemyQueenRooks := b.Rooks(them) | b.Queens(them)
 	var down, left, right square.Square
 	var promotionRank bitboard.Board
 	var enPassantRank bitboard.Board
@@ -259,37 +257,15 @@ func (b *Board) genPawnMoves(moveList *[]move.Move) {
 	simplePawnAttacksL := pawnAttacksL &^ promotionRank
 	simplePawnAttacksR := pawnAttacksR &^ promotionRank
 
-generatingLeftAttacks:
 	for simplePawnAttacksL != bitboard.Empty {
 		to := simplePawnAttacksL.Pop()
 		from := to + down + right
-
-		if kingSq := b.Kings[us]; to == b.EnPassantTarget && kingSq.Rank() == from.Rank() {
-			pawnsMask := bitboard.Squares[from] | bitboard.Squares[from+left]
-			possiblePinners := enemyQueenRooks & enPassantRank
-
-			if attacks.Rook(kingSq, occ&^pawnsMask)&possiblePinners != 0 {
-				continue generatingLeftAttacks
-			}
-		}
-
 		*moveList = append(*moveList, move.New(from, to, p, true))
 	}
 
-generatingRightAttacks:
 	for simplePawnAttacksR != bitboard.Empty {
 		to := simplePawnAttacksR.Pop()
 		from := to + down + left
-
-		if kingSq := b.Kings[us]; to == b.EnPassantTarget && kingSq.Rank() == from.Rank() {
-			pawnsMask := bitboard.Squares[from] | bitboard.Squares[from+right]
-			possiblePinners := enemyQueenRooks & enPassantRank
-
-			if attacks.Rook(kingSq, occ&^pawnsMask)&possiblePinners != 0 {
-				continue generatingRightAttacks
-			}
-		}
-
 		*moveList = append(*moveList, move.New(from, to, p, true))
 	}
 
@@ -342,6 +318,38 @@ generatingRightAttacks:
 		to := promotionPawnPushes.Pop()
 		from := to + down
 		addPromotions(moveList, move.New(from, to, p, false), us)
+	}
+
+	if b.EnPassantTarget != square.None {
+		epPawn := b.EnPassantTarget + down
+
+		epMask := bitboard.Squares[b.EnPassantTarget] | bitboard.Squares[epPawn]
+		if b.CheckMask&epMask == 0 {
+			return
+		}
+
+		kingSq := b.Kings[us]
+		kingMask := bitboard.Squares[kingSq] & enPassantRank
+
+		enemyRooksQueens := (b.Rooks(them) | b.Queens(them)) & enPassantRank
+
+		// king and horizontal sliding piece on ep rank
+		isPossiblePin := kingMask != bitboard.Empty && enemyRooksQueens != bitboard.Empty
+
+		for fromBB := attacks.Pawn[them][b.EnPassantTarget] & pawnsThatAttack; fromBB != bitboard.Empty; {
+			from := fromBB.Pop()
+
+			if b.PinnedD.IsSet(from) && !b.PinnedD.IsSet(b.EnPassantTarget) {
+				continue
+			}
+
+			pawnsMask := bitboard.Squares[from] | bitboard.Squares[epPawn]
+			if isPossiblePin && attacks.Rook(kingSq, occ&^pawnsMask)&enemyRooksQueens != 0 {
+				break
+			}
+
+			*moveList = append(*moveList, move.New(from, b.EnPassantTarget, p, true))
+		}
 	}
 }
 
