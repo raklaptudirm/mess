@@ -51,7 +51,6 @@ func Search(fen string, depth int) (move.Move, evaluation.Abs, error) {
 	beta := evaluation.Rel(evaluation.Inf)
 
 	moves := c.board.GenerateMoves()
-	score := evaluation.Rel(-evaluation.Inf)
 
 	switch {
 	// king can be captured: illegal position
@@ -60,11 +59,12 @@ func Search(fen string, depth int) (move.Move, evaluation.Abs, error) {
 
 	// no legal moves: position is mate
 	case len(moves) == 0:
-		return 0, score.Abs(c.board.SideToMove), ErrMate
+		return 0, evaluation.Mate, ErrMate
 
 	default:
 		// keep track of the best move
 		var bestMove move.Move
+		score := evaluation.Rel(-evaluation.Inf)
 
 		for _, m := range moves {
 			c.board.MakeMove(m)
@@ -122,25 +122,24 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 	// search moves
 
 	moves := c.board.GenerateMoves()
-	score := evaluation.Rel(-evaluation.Inf)
 
 	switch {
 	// position is mate
 	case len(moves) == 0:
-		if len(moves) == 0 {
-			score = evaluation.Draw // stalemate
-			if c.board.CheckN > 0 {
-				// prefer the longer lines if getting mated, and vice versa
-				score = evaluation.Rel(-evaluation.Mate + plys)
-			}
+		if c.board.CheckN > 0 {
+			// prefer the longer lines if getting mated, and vice versa
+			return evaluation.Rel(-evaluation.Mate + plys)
 		}
+
+		return evaluation.Draw // stalemate
 
 	// depth 0 reached
 	case depth == 0:
-		score = evaluation.Of(c.board)
+		return evaluation.Of(c.board)
 
 	// keep searching
 	default:
+		score := evaluation.Rel(-evaluation.Inf)
 		for _, m := range moves {
 			c.board.MakeMove(m)
 			curr := -c.Negamax(plys+1, depth-1, -beta, -alpha)
@@ -155,9 +154,9 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 				break
 			}
 		}
-	}
 
-	// update transposition table
-	c.ttable.Put(c.board.Hash, plys, depth, score, originalAlpha, beta)
-	return score
+		// update transposition table
+		c.ttable.Put(c.board.Hash, plys, depth, score, originalAlpha, beta)
+		return score
+	}
 }
