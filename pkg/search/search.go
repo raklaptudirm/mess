@@ -9,6 +9,7 @@ import (
 	"laptudirm.com/x/mess/pkg/board"
 	"laptudirm.com/x/mess/pkg/evaluation"
 	"laptudirm.com/x/mess/pkg/move"
+	"laptudirm.com/x/mess/pkg/util"
 )
 
 func NewContext(fen string) Context {
@@ -72,7 +73,7 @@ func Search(fen string, depth int) (move.Move, evaluation.Abs, error) {
 			bestMove = m
 		}
 
-		alpha = max(alpha, score)
+		alpha = util.Max(alpha, score)
 	}
 
 	// position is mate; no legal moves
@@ -106,9 +107,9 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 		case exact:
 			return entry.value
 		case lowerBound:
-			alpha = max(alpha, entry.value)
+			alpha = util.Max(alpha, entry.value)
 		case upperBound:
-			beta = min(beta, entry.value)
+			beta = util.Min(beta, entry.value)
 		}
 
 		if alpha >= beta {
@@ -137,8 +138,8 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 
 		// update score and bounds
 
-		score = max(score, curr)
-		alpha = max(alpha, score)
+		score = util.Max(score, curr)
+		alpha = util.Max(alpha, score)
 
 		if alpha >= beta {
 			break
