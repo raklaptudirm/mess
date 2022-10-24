@@ -22,13 +22,15 @@ func NewTable(mbs int) *Table {
 
 // Put puts the given data into the transposition table.
 func (tt *Table) Put(hash zobrist.Key, entry TableEntry) {
+	entry.Hash = hash
 	*tt.fetch(hash) = entry
 }
 
 // Get fetches the data associated with the given zobrist key from the
 // transposition table.
-func (tt *Table) Get(hash zobrist.Key) TableEntry {
-	return *tt.fetch(hash)
+func (tt *Table) Get(hash zobrist.Key) (TableEntry, bool) {
+	entry := *tt.fetch(hash)
+	return entry, entry.Type != NoEntry && entry.Hash == hash
 }
 
 func (tt *Table) fetch(hash zobrist.Key) *TableEntry {
@@ -40,6 +42,7 @@ func (tt *Table) indexOf(hash zobrist.Key) int {
 }
 
 type TableEntry struct {
+	Hash  zobrist.Key
 	Value Eval
 	Depth int
 	Type  TableEntryType

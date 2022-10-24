@@ -109,7 +109,7 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 	originalAlpha := alpha
 
 	// check for transposition table hits
-	if entry := c.ttable.Get(c.board.Hash); entry.Type != transposition.NoEntry && entry.Depth >= depth {
+	if entry, hit := c.ttable.Get(c.board.Hash); hit && entry.Depth >= depth {
 		value := entry.Value.Rel(plys)
 
 		switch entry.Type {
