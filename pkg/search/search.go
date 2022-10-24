@@ -145,7 +145,7 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 
 	// depth 0 reached
 	case depth == 0:
-		return evaluation.Of(c.board)
+		return c.Quiescence(plys, alpha, beta)
 
 	// keep searching
 	default:
