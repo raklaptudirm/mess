@@ -9,6 +9,7 @@ import (
 	"laptudirm.com/x/mess/pkg/board"
 	"laptudirm.com/x/mess/pkg/evaluation"
 	"laptudirm.com/x/mess/pkg/move"
+	"laptudirm.com/x/mess/pkg/search/transposition"
 	"laptudirm.com/x/mess/pkg/util"
 )
 
@@ -16,7 +17,7 @@ func NewContext(fen string) Context {
 	return Context{
 		board:    board.New(fen),
 		evalFunc: evaluation.Of,
-		ttable:   NewTT(40 * 1024 * 1024),
+		ttable:   transposition.NewTable(40),
 	}
 }
 
@@ -28,7 +29,7 @@ type Context struct {
 
 	// search state
 	board  *board.Board
-	ttable *transpositionTable
+	ttable *transposition.Table
 }
 
 // error values for illegal or mated positions
@@ -108,18 +109,20 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 	originalAlpha := alpha
 
 	// check for transposition table hits
-	if entry, hit := c.ttable.Get(c.board.Hash, plys, depth); hit {
-		switch entry.eType {
-		case exact:
-			return entry.value
-		case lowerBound:
-			alpha = util.Max(alpha, entry.value)
-		case upperBound:
-			beta = util.Min(beta, entry.value)
+	if entry := c.ttable.Get(c.board.Hash); entry.Type != transposition.NoEntry && entry.Depth >= depth {
+		value := entry.Value.Rel(plys)
+
+		switch entry.Type {
+		case transposition.ExactEntry:
+			return value
+		case transposition.LowerBound:
+			alpha = util.Max(alpha, value)
+		case transposition.UpperBound:
+			beta = util.Min(beta, value)
 		}
 
 		if alpha >= beta {
-			return entry.value
+			return value
 		}
 	}
 
@@ -162,8 +165,30 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 			}
 		}
 
+		var entryType transposition.TableEntryType
+		switch {
+		case score <= originalAlpha:
+			// if score <= alpha, it is a worse position for the max player than
+			// a previously explored line, since the move's exact score is at
+			// most score. Therefore, it is an upperbound on the exact score.
+			entryType = transposition.UpperBound
+		case score >= beta:
+			// if score >= beta, it is a worse position for the min player than
+			// a previously explored line, singe the move's exact score is at
+			// least score. Therefore, it is a lowerbound on the exact score.
+			entryType = transposition.LowerBound
+		default:
+			// if score is inside the bounds of alpha and beta, both the players
+			// have been able to improve their position and it is an exact score.
+			entryType = transposition.ExactEntry
+		}
+
 		// update transposition table
-		c.ttable.Put(c.board.Hash, plys, depth, score, originalAlpha, beta)
+		c.ttable.Put(c.board.Hash, transposition.TableEntry{
+			Value: transposition.EvalFrom(score, plys),
+			Depth: depth,
+			Type:  entryType,
+		})
 		return score
 	}
 }
