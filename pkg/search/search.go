@@ -15,7 +15,7 @@ import (
 
 func NewContext(fen string) Context {
 	return Context{
-		board:    board.New(fen),
+		Board:    board.New(fen),
 		evalFunc: evaluation.Of,
 		ttable:   transposition.NewTable(40),
 	}
@@ -28,7 +28,7 @@ type Context struct {
 	evalFunc evaluation.Func
 
 	// search state
-	board  *board.Board
+	Board  *board.Board
 	ttable *transposition.Table
 }
 
@@ -44,26 +44,24 @@ var (
 // encountered error. It is very similar to the Negamax function except
 // for the fact that it keeps track of the best move along with the
 // evaluation.
-func Search(fen string, depth int) (move.Move, evaluation.Rel, error) {
-	c := NewContext(fen)
-
+func (c *Context) Search(depth int) (move.Move, evaluation.Rel, error) {
 	// treat this function as the root call to Negamax
 	// Negamax(depth, -Inf, Inf)
 	alpha := evaluation.Rel(-evaluation.Inf)
 	beta := evaluation.Rel(evaluation.Inf)
 
-	moves := c.board.GenerateMoves()
+	moves := c.Board.GenerateMoves()
 
 	switch {
 	// king can be captured: illegal position
-	case c.board.IsInCheck(c.board.SideToMove.Other()):
+	case c.Board.IsInCheck(c.Board.SideToMove.Other()):
 		return 0, evaluation.Inf, ErrIllegal // king is captured
 
 	// no legal moves: position is mate
 	case len(moves) == 0:
 		return 0, evaluation.Mate, ErrMate
 
-	case c.board.IsDraw():
+	case c.Board.IsDraw():
 		return 0, evaluation.Draw, ErrDraw
 
 	default:
@@ -72,11 +70,11 @@ func Search(fen string, depth int) (move.Move, evaluation.Rel, error) {
 		score := evaluation.Rel(-evaluation.Inf)
 
 		for _, m := range moves {
-			c.board.MakeMove(m)
+			c.Board.MakeMove(m)
 			// one side's win is other side's loss
 			// one move has been made so ply 1 from root
 			curr := -c.Negamax(1, depth-1, -beta, -alpha)
-			c.board.UnmakeMove()
+			c.Board.UnmakeMove()
 
 			if curr > score {
 				// better move found
@@ -109,7 +107,7 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 	originalAlpha := alpha
 
 	// check for transposition table hits
-	if entry, hit := c.ttable.Get(c.board.Hash); hit && entry.Depth >= depth {
+	if entry, hit := c.ttable.Get(c.Board.Hash); hit && entry.Depth >= depth {
 		value := entry.Value.Rel(plys)
 
 		switch entry.Type {
@@ -128,19 +126,19 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 
 	// search moves
 
-	moves := c.board.GenerateMoves()
+	moves := c.Board.GenerateMoves()
 
 	switch {
 	// position is mate
 	case len(moves) == 0:
-		if c.board.CheckN > 0 {
+		if c.Board.CheckN > 0 {
 			// prefer the longer lines if getting mated, and vice versa
 			return evaluation.Rel(-evaluation.Mate + plys)
 		}
 
 		return evaluation.Draw // stalemate
 
-	case c.board.IsDraw():
+	case c.Board.IsDraw():
 		return evaluation.Draw
 
 	// depth 0 reached
@@ -153,9 +151,9 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 		for i := 0; i < len(moves); i++ {
 			c.orderMoves(moves, i)
 
-			c.board.MakeMove(moves[i])
+			c.Board.MakeMove(moves[i])
 			curr := -c.Negamax(plys+1, depth-1, -beta, -alpha)
-			c.board.UnmakeMove()
+			c.Board.UnmakeMove()
 
 			// update score and bounds
 
@@ -186,7 +184,7 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 		}
 
 		// update transposition table
-		c.ttable.Put(c.board.Hash, transposition.TableEntry{
+		c.ttable.Put(c.Board.Hash, transposition.TableEntry{
 			Value: transposition.EvalFrom(score, plys),
 			Depth: depth,
 			Type:  entryType,
@@ -199,7 +197,7 @@ func (c *Context) orderMoves(moveList []move.Move, index int) {
 	bestMove := evaluation.Move(-10000)
 	bestIndex := -1
 	for i, m := range moveList {
-		if eval := evaluation.OfMove(c.board, m); eval > bestMove {
+		if eval := evaluation.OfMove(c.Board, m); eval > bestMove {
 			bestMove = eval
 			bestIndex = i
 		}
