@@ -73,6 +73,25 @@ func (b Board) String() string {
 	return fmt.Sprintf("%s\nFen: %s\nKey: %X\n", b.Position, b.FEN(), b.Hash)
 }
 
+func (b *Board) IsDraw() bool {
+	return b.DrawClock >= 100 || b.IsRepetition()
+}
+
+func (b *Board) IsRepetition() bool {
+	repCount := 0
+	for i := b.Plys - 2; i >= 0 && i >= (b.Plys - b.DrawClock); i -= 2 {
+		if b.History[i].Hash == b.Hash {
+			repCount++
+		}
+
+		if repCount >= 2 {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (b *Board) Occupied() bitboard.Board {
 	return b.ColorBBs[piece.White] | b.ColorBBs[piece.Black]
 }
