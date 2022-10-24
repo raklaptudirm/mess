@@ -150,8 +150,10 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 	// keep searching
 	default:
 		score := evaluation.Rel(-evaluation.Inf)
-		for _, m := range moves {
-			c.board.MakeMove(m)
+		for i := 0; i < len(moves); i++ {
+			c.orderMoves(moves, i)
+
+			c.board.MakeMove(moves[i])
 			curr := -c.Negamax(plys+1, depth-1, -beta, -alpha)
 			c.board.UnmakeMove()
 
@@ -191,4 +193,17 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 		})
 		return score
 	}
+}
+
+func (c *Context) orderMoves(moveList []move.Move, index int) {
+	bestMove := evaluation.Move(-10000)
+	bestIndex := -1
+	for i, m := range moveList {
+		if eval := evaluation.OfMove(c.board, m); eval > bestMove {
+			bestMove = eval
+			bestIndex = i
+		}
+	}
+
+	moveList[index], moveList[bestIndex] = moveList[bestIndex], moveList[index]
 }
