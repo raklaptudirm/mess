@@ -56,7 +56,7 @@ type Board struct {
 	DrawClock int
 
 	// game data
-	History [256]Undo
+	History [1024]Undo
 }
 
 type Undo struct {
@@ -74,22 +74,18 @@ func (b Board) String() string {
 }
 
 func (b *Board) IsDraw() bool {
-	return b.DrawClock >= 100 || b.IsRepetition()
+	return b.DrawClock >= 100 || b.RepetitionCount() >= 2
 }
 
-func (b *Board) IsRepetition() bool {
+func (b *Board) RepetitionCount() int {
 	repCount := 0
-	for i := b.Plys - 2; i >= 0 && i >= (b.Plys - b.DrawClock); i -= 2 {
+	for i := b.Plys - 2; i >= 0 && i >= (b.Plys-b.DrawClock); i -= 2 {
 		if b.History[i].Hash == b.Hash {
 			repCount++
 		}
-
-		if repCount >= 2 {
-			return true
-		}
 	}
 
-	return false
+	return repCount
 }
 
 func (b *Board) Occupied() bitboard.Board {

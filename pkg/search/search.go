@@ -5,6 +5,7 @@ package search
 
 import (
 	"errors"
+	"math"
 
 	"laptudirm.com/x/mess/pkg/board"
 	"laptudirm.com/x/mess/pkg/evaluation"
@@ -102,30 +103,6 @@ func (c *Context) Search(depth int) (move.Move, evaluation.Rel, error) {
 // https://www.chessprogramming.org/Transposition_Table
 //
 func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluation.Rel {
-	// keep track of the original value of alpha for determining whether
-	// the score will act as an upper bound entry in the transposition table
-	originalAlpha := alpha
-
-	// check for transposition table hits
-	if entry, hit := c.ttable.Get(c.Board.Hash); hit && entry.Depth >= depth {
-		value := entry.Value.Rel(plys)
-
-		switch entry.Type {
-		case transposition.ExactEntry:
-			return value
-		case transposition.LowerBound:
-			alpha = util.Max(alpha, value)
-		case transposition.UpperBound:
-			beta = util.Min(beta, value)
-		}
-
-		if alpha >= beta {
-			return value
-		}
-	}
-
-	// search moves
-
 	moves := c.Board.GenerateMoves()
 
 	switch {
@@ -138,7 +115,7 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 
 		return evaluation.Draw // stalemate
 
-	case c.Board.IsDraw():
+	case c.Board.DrawClock >= 100, c.Board.RepetitionCount() >= 1:
 		return evaluation.Draw
 
 	// depth 0 reached
@@ -147,6 +124,28 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 
 	// keep searching
 	default:
+		// keep track of the original value of alpha for determining whether
+		// the score will act as an upper bound entry in the transposition table
+		originalAlpha := alpha
+
+		// check for transposition table hits
+		if entry, hit := c.ttable.Get(c.Board.Hash); hit && entry.Depth >= depth {
+			value := entry.Value.Rel(plys)
+
+			switch entry.Type {
+			case transposition.ExactEntry:
+				return value
+			case transposition.LowerBound:
+				alpha = util.Max(alpha, value)
+			case transposition.UpperBound:
+				beta = util.Min(beta, value)
+			}
+
+			if alpha >= beta {
+				return value
+			}
+		}
+
 		score := evaluation.Rel(-evaluation.Inf)
 		for i := 0; i < len(moves); i++ {
 			c.orderMoves(moves, i)
@@ -194,10 +193,12 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 }
 
 func (c *Context) orderMoves(moveList []move.Move, index int) {
-	bestMove := evaluation.Move(-10000)
+	bestMove := evaluation.Move(math.MinInt16)
 	bestIndex := -1
-	for i, m := range moveList {
-		if eval := evaluation.OfMove(c.Board, m); eval > bestMove {
+
+	length := len(moveList)
+	for i := index; i < length; i++ {
+		if eval := evaluation.OfMove(c.Board, moveList[i]); eval > bestMove {
 			bestMove = eval
 			bestIndex = i
 		}
