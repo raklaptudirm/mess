@@ -146,11 +146,12 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 			}
 		}
 
+		orderedMoves := c.orderedList(moves)
 		score := evaluation.Rel(-evaluation.Inf)
-		for i := 0; i < len(moves); i++ {
-			c.orderMoves(moves, i)
+		for i, length := 0, len(orderedMoves); i < length; i++ {
+			c.orderMoves(orderedMoves, i)
 
-			c.Board.MakeMove(moves[i])
+			c.Board.MakeMove(orderedMoves[i].Move())
 			curr := -c.Negamax(plys+1, depth-1, -beta, -alpha)
 			c.Board.UnmakeMove()
 
@@ -192,13 +193,37 @@ func (c *Context) Negamax(plys, depth int, alpha, beta evaluation.Rel) evaluatio
 	}
 }
 
-func (c *Context) orderMoves(moveList []move.Move, index int) {
+type OrderedMove uint64
+
+func NewOrdered(m move.Move, eval evaluation.Move) OrderedMove {
+	return OrderedMove(uint64(eval)<<32 | uint64(m))
+}
+
+func (m OrderedMove) Eval() evaluation.Move {
+	return evaluation.Move(m >> 32)
+}
+
+func (m OrderedMove) Move() move.Move {
+	return move.Move(m & 0xFFFFFFFF)
+}
+
+func (c *Context) orderedList(moveList []move.Move) []OrderedMove {
+	ordered := make([]OrderedMove, len(moveList))
+
+	for i, m := range moveList {
+		ordered[i] = NewOrdered(m, evaluation.OfMove(c.Board, m))
+	}
+
+	return ordered
+}
+
+func (c *Context) orderMoves(moveList []OrderedMove, index int) {
 	bestMove := evaluation.Move(math.MinInt16)
 	bestIndex := -1
 
 	length := len(moveList)
 	for i := index; i < length; i++ {
-		if eval := evaluation.OfMove(c.Board, moveList[i]); eval > bestMove {
+		if eval := moveList[i].Eval(); eval > bestMove {
 			bestMove = eval
 			bestIndex = i
 		}
