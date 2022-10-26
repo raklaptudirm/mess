@@ -7,16 +7,16 @@ import (
 	"errors"
 	"math"
 
-	"laptudirm.com/x/mess/pkg/board"
-	"laptudirm.com/x/mess/pkg/evaluation"
-	"laptudirm.com/x/mess/pkg/move"
+	"laptudirm.com/x/mess/pkg/chess"
+	"laptudirm.com/x/mess/pkg/chess/move"
+	"laptudirm.com/x/mess/pkg/search/evaluation"
 	"laptudirm.com/x/mess/pkg/search/transposition"
 	"laptudirm.com/x/mess/pkg/util"
 )
 
 func NewContext(fen string) Context {
 	return Context{
-		Board:    board.New(fen),
+		Board:    chess.NewBoard(fen),
 		evalFunc: evaluation.Of,
 		ttable:   transposition.NewTable(40),
 	}
@@ -29,7 +29,7 @@ type Context struct {
 	evalFunc evaluation.Func
 
 	// search state
-	Board  *board.Board
+	Board  *chess.Board
 	ttable *transposition.Table
 }
 

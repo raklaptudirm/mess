@@ -1,9 +1,9 @@
 package zobrist
 
 import (
-	"laptudirm.com/x/mess/pkg/castling"
-	"laptudirm.com/x/mess/pkg/piece"
-	"laptudirm.com/x/mess/pkg/square"
+	"laptudirm.com/x/mess/pkg/chess/move/castling"
+	"laptudirm.com/x/mess/pkg/chess/piece"
+	"laptudirm.com/x/mess/pkg/chess/square"
 	"laptudirm.com/x/mess/pkg/util"
 )
 

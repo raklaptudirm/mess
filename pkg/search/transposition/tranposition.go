@@ -3,7 +3,7 @@ package transposition
 import (
 	"reflect"
 
-	"laptudirm.com/x/mess/pkg/evaluation"
+	"laptudirm.com/x/mess/pkg/search/evaluation"
 	"laptudirm.com/x/mess/pkg/zobrist"
 )
 

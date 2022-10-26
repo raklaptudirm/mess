@@ -1,7 +1,7 @@
 package search
 
 import (
-	"laptudirm.com/x/mess/pkg/evaluation"
+	"laptudirm.com/x/mess/pkg/search/evaluation"
 	"laptudirm.com/x/mess/pkg/util"
 )
 
