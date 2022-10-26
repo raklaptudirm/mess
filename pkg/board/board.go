@@ -56,7 +56,7 @@ type Board struct {
 	DrawClock int
 
 	// game data
-	History [256]Undo
+	History [1024]Undo
 }
 
 type Undo struct {
@@ -71,6 +71,21 @@ type Undo struct {
 // String converts a Board into a human readable string.
 func (b Board) String() string {
 	return fmt.Sprintf("%s\nFen: %s\nKey: %X\n", b.Position, b.FEN(), b.Hash)
+}
+
+func (b *Board) IsDraw() bool {
+	return b.DrawClock >= 100 || b.RepetitionCount() >= 2
+}
+
+func (b *Board) RepetitionCount() int {
+	repCount := 0
+	for i := b.Plys - 2; i >= 0 && i >= (b.Plys-b.DrawClock); i -= 2 {
+		if b.History[i].Hash == b.Hash {
+			repCount++
+		}
+	}
+
+	return repCount
 }
 
 func (b *Board) Occupied() bitboard.Board {
