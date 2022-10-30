@@ -14,9 +14,20 @@
 package square
 
 // Rank represents a rank on the chessboard.
-type Rank int
+// Every horizontal line of squares is called a rank.
+//
+//     8 8 8 8 8 8 8 8
+//     7 7 7 7 7 7 7 7
+//     6 6 6 6 6 6 6 6
+//     5 5 5 5 5 5 5 5
+//     4 4 4 4 4 4 4 4
+//     3 3 3 3 3 3 3 3
+//     2 2 2 2 2 2 2 2
+//     1 1 1 1 1 1 1 1
+//
+type Rank int8
 
-// Constants representing every rank.
+// constants representing various ranks
 const (
 	Rank8 Rank = iota
 	Rank7
@@ -28,45 +39,16 @@ const (
 	Rank1
 )
 
-// Number of ranks
+// RankN is the number of ranks.
 const RankN = 8
 
 // String converts a Rank into it's string representation.
 func (r Rank) String() string {
-	ranks := [...]string{
-		Rank8: "8",
-		Rank7: "7",
-		Rank6: "6",
-		Rank5: "5",
-		Rank4: "4",
-		Rank3: "3",
-		Rank2: "2",
-		Rank1: "1",
-	}
-
-	return ranks[r]
+	const rankToStr = "87654321"
+	return string(rankToStr[r])
 }
 
-// rankFrom creates an instance of Rank from the given id.
-func rankFrom(id string) Rank {
-	switch id {
-	case "8":
-		return Rank8
-	case "7":
-		return Rank7
-	case "6":
-		return Rank6
-	case "5":
-		return Rank5
-	case "4":
-		return Rank4
-	case "3":
-		return Rank3
-	case "2":
-		return Rank2
-	case "1":
-		return Rank1
-	default:
-		panic("new rank: invalid rank id")
-	}
+// RankFrom creates an instance of Rank from the given id.
+func RankFrom(id string) Rank {
+	return Rank1 - Rank(id[0]-'1')
 }

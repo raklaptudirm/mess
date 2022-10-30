@@ -19,10 +19,8 @@
 // The null square is represented using the "-" symbol.
 package square
 
-import "fmt"
-
-// New creates a new instance of a Square from the given identifier.
-func New(id string) Square {
+// NewFromString creates a new instance of a Square from the given identifier.
+func NewFromString(id string) Square {
 	switch {
 	case id == "-":
 		return None
@@ -31,92 +29,29 @@ func New(id string) Square {
 	}
 
 	// ascii code to square index
-	return From(fileFrom(string(id[0])), rankFrom(string(id[1])))
+	return New(FileFrom(string(id[0])), RankFrom(string(id[1])))
 }
 
-// From creates a new instance of a Square from the given file and rank.
-func From(file File, rank Rank) Square {
-	return Square(int(rank*8) + int(file))
+// New creates a new instance of a Square from the given file and rank.
+func New(file File, rank Rank) Square {
+	return Square(int(rank)<<3 | int(file))
 }
 
 // Square represents a square on a chessboard.
-type Square int
+type Square int8
 
 // constants representing various squares.
 const (
-	A8 Square = iota
-	B8
-	C8
-	D8
-	E8
-	F8
-	G8
-	H8
+	None Square = -1
 
-	A7
-	B7
-	C7
-	D7
-	E7
-	F7
-	G7
-	H7
-
-	A6
-	B6
-	C6
-	D6
-	E6
-	F6
-	G6
-	H6
-
-	A5
-	B5
-	C5
-	D5
-	E5
-	F5
-	G5
-	H5
-
-	A4
-	B4
-	C4
-	D4
-	E4
-	F4
-	G4
-	H4
-
-	A3
-	B3
-	C3
-	D3
-	E3
-	F3
-	G3
-	H3
-
-	A2
-	B2
-	C2
-	D2
-	E2
-	F2
-	G2
-	H2
-
-	A1
-	B1
-	C1
-	D1
-	E1
-	F1
-	G1
-	H1
-
-	None
+	A8, B8, C8, D8, E8, F8, G8, H8 Square = +0, +1, +2, +3, +4, +5, +6, +7
+	A7, B7, C7, D7, E7, F7, G7, H7 Square = +8, +9, 10, 11, 12, 13, 14, 15
+	A6, B6, C6, D6, E6, F6, G6, H6 Square = 16, 17, 18, 19, 20, 21, 22, 23
+	A5, B5, C5, D5, E5, F5, G5, H5 Square = 24, 25, 26, 27, 28, 29, 30, 31
+	A4, B4, C4, D4, E4, F4, G4, H4 Square = 32, 33, 34, 35, 36, 37, 38, 39
+	A3, B3, C3, D3, E3, F3, G3, H3 Square = 40, 41, 42, 43, 44, 45, 46, 47
+	A2, B2, C2, D2, E2, F2, G2, H2 Square = 48, 49, 50, 51, 52, 53, 54, 55
+	A1, B1, C1, D1, E1, F1, G1, H1 Square = 56, 57, 58, 59, 60, 61, 62, 63
 )
 
 // Number of squares
@@ -129,23 +64,25 @@ func (s Square) String() string {
 	}
 
 	// <file><rank>
-	return fmt.Sprintf("%s%s", s.File(), s.Rank())
+	return s.File().String() + s.Rank().String()
 }
 
 // File returns the file of the given square.
 func (s Square) File() File {
-	return File(s & 7)
+	return File(s) & 7
 }
 
 // Rank returns the rank of the given square.
 func (s Square) Rank() Rank {
-	return Rank(s >> 3)
+	return Rank(s) >> 3
 }
 
+// Diagonal returns the NE-SW diagonal of the given square.
 func (s Square) Diagonal() Diagonal {
 	return 14 - Diagonal(s.Rank()) - Diagonal(s.File())
 }
 
+// AntiDiagonal returns the NW-SE anti-diagonal of the given square.
 func (s Square) AntiDiagonal() AntiDiagonal {
 	return 7 - AntiDiagonal(s.Rank()) + AntiDiagonal(s.File())
 }

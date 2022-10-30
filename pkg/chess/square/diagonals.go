@@ -13,9 +13,23 @@
 
 package square
 
+// Diagonal represents a diagonal on the chessboard.
+// Every NE-SW diagonal is called a diagonal.
+//
+//     e d c b a 9 8 7
+//     d c b a 9 8 7 6
+//     c b a 9 8 7 6 5
+//     b a 9 8 7 6 5 4
+//     a 9 8 7 6 5 4 3
+//     9 8 7 6 5 4 3 2
+//     8 7 6 5 4 3 2 1
+//     7 6 5 4 3 2 1 0
+//
 type Diagonal int
 
+// constants representing various diagonals
 const (
+	// bottom diagonals
 	DiagonalH1H1 Diagonal = iota
 	DiagonalH2G1
 	DiagonalH3F1
@@ -24,8 +38,10 @@ const (
 	DiagonalH6C1
 	DiagonalH7B1
 
+	// main diagonal
 	DiagonalH8A1
 
+	// top diagonals
 	DiagonalG8A2
 	DiagonalF8A3
 	DiagonalE8A4
@@ -35,9 +51,23 @@ const (
 	DiagonalA8A8
 )
 
+// AntiDiagonal represents an anti-diagonal on the chessboard.
+// Every NW-SE diagonal is called an anti-diagonal.
+//
+//     7 8 9 a b c d e
+//     6 7 8 9 a b c d
+//     5 6 7 8 9 a b c
+//     4 5 6 7 8 9 a b
+//     3 4 5 6 7 8 9 a
+//     2 3 4 5 6 7 8 9
+//     1 2 3 4 5 6 7 8
+//     0 1 2 3 4 5 6 7
+//
 type AntiDiagonal int
 
+// constants representing various anti-diagonals
 const (
+	// bottom anti-diagonals
 	DiagonalA1A1 AntiDiagonal = iota
 	DiagonalA2B1
 	DiagonalA3C1
@@ -46,8 +76,10 @@ const (
 	DiagonalA6F1
 	DiagonalA7G1
 
+	// main anti-diagonal
 	DiagonalA8H1
 
+	// top anti-diagonals
 	DiagonalB8H2
 	DiagonalC8H3
 	DiagonalD8H4

@@ -14,9 +14,20 @@
 package square
 
 // File represents a file on the chessboard.
-type File int
+// Every vertical line of squares is called a file.
+//
+//     a b c d e f g h
+//     a b c d e f g h
+//     a b c d e f g h
+//     a b c d e f g h
+//     a b c d e f g h
+//     a b c d e f g h
+//     a b c d e f g h
+//     a b c d e f g h
+//
+type File int8
 
-// Constants representing every file on the chessboard.
+// constants representing various files
 const (
 	FileA File = iota
 	FileB
@@ -28,45 +39,16 @@ const (
 	FileH
 )
 
-// Number of files
+// FileN is the number of files.
 const FileN = 8
 
 // String converts a File into it's string representation.
 func (f File) String() string {
-	files := [...]string{
-		FileA: "a",
-		FileB: "b",
-		FileC: "c",
-		FileD: "d",
-		FileE: "e",
-		FileF: "f",
-		FileG: "g",
-		FileH: "h",
-	}
-
-	return files[f]
+	const fileToStr = "abcdefgh"
+	return string(fileToStr[f])
 }
 
-// fileFrom creates an instance of a File from the given file id.
-func fileFrom(id string) File {
-	switch id {
-	case "a":
-		return FileA
-	case "b":
-		return FileB
-	case "c":
-		return FileC
-	case "d":
-		return FileD
-	case "e":
-		return FileE
-	case "f":
-		return FileF
-	case "g":
-		return FileG
-	case "h":
-		return FileH
-	default:
-		panic("new file: invalid file id")
-	}
+// FileFrom creates an instance of a File from the given file id.
+func FileFrom(id string) File {
+	return File(id[0] - 'a')
 }
