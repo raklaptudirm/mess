@@ -45,12 +45,6 @@ func (c Color) Other() Color {
 
 // String converts a Color to it's string representation.
 func (c Color) String() string {
-	switch c {
-	case Black:
-		return "b"
-	case White:
-		return "w"
-	default:
-		panic("new color: invalid color id")
-	}
+	const colorToStr = "wb"
+	return string(colorToStr[c])
 }

@@ -95,27 +95,12 @@ const (
 	typeMask    = (1 << colorOffset) - 1
 )
 
-var pieceToStr = [...]string{
-	NoPiece:     " ",
-	WhitePawn:   "P",
-	WhiteKnight: "N",
-	WhiteBishop: "B",
-	WhiteRook:   "R",
-	WhiteQueen:  "Q",
-	WhiteKing:   "K",
-	BlackPawn:   "p",
-	BlackKnight: "n",
-	BlackBishop: "b",
-	BlackRook:   "r",
-	BlackQueen:  "q",
-	BlackKing:   "k",
-}
-
 // String converts a Piece into it's string representation. THe pieces are
 // represented using their standard alphabets, with white pieces having
 // upper case letters and black pieces having lower case ones.
 func (p Piece) String() string {
-	return pieceToStr[p]
+	const pieceToStr = " PNBRQK  pnbrqk"
+	return string(pieceToStr[p])
 }
 
 // Type returns the piece type of the given Piece.
@@ -166,16 +151,7 @@ const (
 // NType is the number of chess piece types, including NoType.
 const NType = 7
 
-var typeToStr = [...]string{
-	NoType: "-",
-	Pawn:   "p",
-	Knight: "k",
-	Bishop: "b",
-	Rook:   "r",
-	Queen:  "q",
-	King:   "k",
-}
-
 func (t Type) String() string {
-	return typeToStr[t]
+	const typeToStr = " pkbrqk"
+	return string(typeToStr[t])
 }
