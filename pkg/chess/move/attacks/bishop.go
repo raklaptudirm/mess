@@ -34,7 +34,5 @@ func bishop(s square.Square, occ bitboard.Board, isMask bool) bitboard.Board {
 }
 
 func Bishop(s square.Square, blockers bitboard.Board) bitboard.Board {
-	magic := BishopMagics[s]
-	blockers &= magic.BlockerMask
-	return BishopMoves[s][(uint64(blockers)*magic.Number)>>magic.Shift]
+	return BishopTable.Probe(s, blockers)
 }

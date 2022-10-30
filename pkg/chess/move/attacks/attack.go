@@ -15,6 +15,7 @@ package attacks
 
 import (
 	"laptudirm.com/x/mess/pkg/chess/bitboard"
+	"laptudirm.com/x/mess/pkg/chess/move/attacks/magic"
 	"laptudirm.com/x/mess/pkg/chess/piece"
 	"laptudirm.com/x/mess/pkg/chess/square"
 )
@@ -25,6 +26,11 @@ var (
 	Knight    [square.N]bitboard.Board
 	PawnMoves [piece.NColor][square.N]bitboard.Board
 	Pawn      [piece.NColor][square.N]bitboard.Board
+)
+
+var (
+	RookTable   magic.Table
+	BishopTable magic.Table
 )
 
 var Between [square.N][square.N]bitboard.Board
@@ -42,8 +48,16 @@ func init() {
 		Pawn[piece.Black][s] = blackPawnAttacksFrom(s)
 	}
 
-	generateRookMagics()
-	generateBishopMagics()
+	RookTable = magic.Table{
+		MaxMaskN: 4096, MoveFunc: rook,
+	}
+
+	BishopTable = magic.Table{
+		MaxMaskN: 512, MoveFunc: bishop,
+	}
+
+	RookTable.Populate()
+	BishopTable.Populate()
 
 	for s1 := square.A8; s1 <= square.H1; s1++ {
 		for s2 := square.A8; s2 <= square.H1; s2++ {
@@ -78,6 +92,6 @@ func (b *board) addAttack(fileOffset square.File, rankOffset square.Rank) {
 		return
 	}
 
-	attackSquare := square.From(attackFile, attackRank)
+	attackSquare := square.New(attackFile, attackRank)
 	b.board.Set(attackSquare)
 }

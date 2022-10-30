@@ -34,7 +34,5 @@ func rook(s square.Square, occ bitboard.Board, isMask bool) bitboard.Board {
 }
 
 func Rook(s square.Square, blockers bitboard.Board) bitboard.Board {
-	magic := RookMagics[s]
-	blockers &= magic.BlockerMask
-	return RookMoves[s][(uint64(blockers)*magic.Number)>>magic.Shift]
+	return RookTable.Probe(s, blockers)
 }
