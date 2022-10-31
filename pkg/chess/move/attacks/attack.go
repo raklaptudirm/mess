@@ -28,16 +28,16 @@ var (
 	Pawn      [piece.NColor][square.N]bitboard.Board
 )
 
+// magic tables for precalculated attack boards of sliding pieces
 var (
 	RookTable   magic.Table
 	BishopTable magic.Table
 )
 
-var Between [square.N][square.N]bitboard.Board
-
 // init initializes the attack bitboard lookup tables for non-sliding
 // pieces by computing the bitboards for each square.
 func init() {
+	// initialize lookup tables
 	for s := square.A8; s <= square.H1; s++ {
 		// compute attack bitboards for current square
 		King[s] = kingAttacksFrom(s)
@@ -47,6 +47,8 @@ func init() {
 		Pawn[piece.White][s] = whitePawnAttacksFrom(s)
 		Pawn[piece.Black][s] = blackPawnAttacksFrom(s)
 	}
+
+	// initialize magic tables
 
 	RookTable = magic.Table{
 		MaxMaskN: 4096, MoveFunc: rook,
@@ -58,22 +60,6 @@ func init() {
 
 	RookTable.Populate()
 	BishopTable.Populate()
-
-	for s1 := square.A8; s1 <= square.H1; s1++ {
-		for s2 := square.A8; s2 <= square.H1; s2++ {
-			sqs := bitboard.Squares[s1] | bitboard.Squares[s2]
-
-			switch {
-			case s1.File() == s2.File(),
-				s1.Rank() == s2.Rank():
-				Between[s1][s2] = Rook(s1, sqs) & Rook(s2, sqs)
-
-			case s1.Diagonal() == s2.Diagonal(),
-				s1.AntiDiagonal() == s2.AntiDiagonal():
-				Between[s1][s2] = Bishop(s1, sqs) & Bishop(s2, sqs)
-			}
-		}
-	}
 }
 
 type board struct {

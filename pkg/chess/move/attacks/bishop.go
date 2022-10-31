@@ -20,10 +20,10 @@ import (
 
 func bishop(s square.Square, occ bitboard.Board, isMask bool) bitboard.Board {
 	diagonalMask := bitboard.Diagonals[s.Diagonal()]
-	diagonalAttack := hyperbola(s, occ, diagonalMask)
+	diagonalAttack := bitboard.Hyperbola(s, occ, diagonalMask)
 
 	antiDiagonalMask := bitboard.AntiDiagonals[s.AntiDiagonal()]
-	antiDiagonalAttack := hyperbola(s, occ, antiDiagonalMask)
+	antiDiagonalAttack := bitboard.Hyperbola(s, occ, antiDiagonalMask)
 
 	attacks := diagonalAttack | antiDiagonalAttack
 	if isMask {

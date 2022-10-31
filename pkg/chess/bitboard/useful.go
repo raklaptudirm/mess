@@ -158,12 +158,44 @@ var AntiDiagonals = [...]Board{
 	square.DiagonalH8H8: DiagonalH8H8,
 }
 
+// Squares contains bitboards for each square where only that square's bit
+// is set. Squares[square] is equivalent to Board(1 << square).
 var Squares [square.N]Board
 
+// Between contains bitboards which have the path between two squares set.
+// The definition of path is only valid for squares which lie on the same
+// file, rank, diagonal, or anti-diagonal. For all other square
+// combinations, the path is Empty.
+var Between [square.N][square.N]Board
+
 func init() {
-	mask := Board(1)
+	// initialize Squares
 	for s := square.A8; s <= square.H1; s++ {
-		Squares[s] = mask
-		mask <<= 1
+		Squares[s] = 1 << s
+	}
+
+	// initialize Between
+	for s1 := square.A8; s1 <= square.H1; s1++ {
+		for s2 := square.A8; s2 <= square.H1; s2++ {
+			sqs := Squares[s1] | Squares[s2]
+			var mask Board
+
+			switch {
+			case s1.File() == s2.File():
+				mask = Files[s1.File()]
+			case s1.Rank() == s2.Rank():
+				mask = Ranks[s1.Rank()]
+			case s1.Diagonal() == s2.Diagonal():
+				mask = Diagonals[s1.Diagonal()]
+			case s1.AntiDiagonal() == s2.AntiDiagonal():
+				mask = AntiDiagonals[s1.AntiDiagonal()]
+			default:
+				// the squares don't have their file, rank, diagonal, or
+				// anti-diagonal in common, so path is Empty (default).
+				continue
+			}
+
+			Between[s1][s2] = Hyperbola(s1, sqs, mask) & Hyperbola(s2, sqs, mask)
+		}
 	}
 }

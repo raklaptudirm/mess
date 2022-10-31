@@ -20,10 +20,10 @@ import (
 
 func rook(s square.Square, occ bitboard.Board, isMask bool) bitboard.Board {
 	fileMask := bitboard.Files[s.File()]
-	fileAttacks := hyperbola(s, occ, fileMask)
+	fileAttacks := bitboard.Hyperbola(s, occ, fileMask)
 
 	rankMask := bitboard.Ranks[s.Rank()]
-	rankAttacks := hyperbola(s, occ, rankMask)
+	rankAttacks := bitboard.Hyperbola(s, occ, rankMask)
 
 	if isMask {
 		fileAttacks &^= bitboard.Rank1 | bitboard.Rank8
