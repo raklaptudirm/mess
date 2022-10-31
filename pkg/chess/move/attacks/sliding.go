@@ -18,6 +18,25 @@ import (
 	"laptudirm.com/x/mess/pkg/chess/square"
 )
 
+func bishop(s square.Square, occ bitboard.Board, isMask bool) bitboard.Board {
+	diagonalMask := bitboard.Diagonals[s.Diagonal()]
+	diagonalAttack := bitboard.Hyperbola(s, occ, diagonalMask)
+
+	antiDiagonalMask := bitboard.AntiDiagonals[s.AntiDiagonal()]
+	antiDiagonalAttack := bitboard.Hyperbola(s, occ, antiDiagonalMask)
+
+	attacks := diagonalAttack | antiDiagonalAttack
+	if isMask {
+		attacks &^= bitboard.Rank1 | bitboard.Rank8 | bitboard.FileA | bitboard.FileH
+	}
+
+	return attacks
+}
+
+func Bishop(s square.Square, blockers bitboard.Board) bitboard.Board {
+	return BishopTable.Probe(s, blockers)
+}
+
 func rook(s square.Square, occ bitboard.Board, isMask bool) bitboard.Board {
 	fileMask := bitboard.Files[s.File()]
 	fileAttacks := bitboard.Hyperbola(s, occ, fileMask)
@@ -35,4 +54,8 @@ func rook(s square.Square, occ bitboard.Board, isMask bool) bitboard.Board {
 
 func Rook(s square.Square, blockers bitboard.Board) bitboard.Board {
 	return RookTable.Probe(s, blockers)
+}
+
+func Queen(s square.Square, occ bitboard.Board) bitboard.Board {
+	return Rook(s, occ) | Bishop(s, occ)
 }

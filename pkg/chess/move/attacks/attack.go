@@ -22,10 +22,9 @@ import (
 
 // lookup tables for precalculated attack boards of non-sliding pieces
 var (
-	King      [square.N]bitboard.Board
-	Knight    [square.N]bitboard.Board
-	PawnMoves [piece.NColor][square.N]bitboard.Board
-	Pawn      [piece.NColor][square.N]bitboard.Board
+	King   [square.N]bitboard.Board
+	Knight [square.N]bitboard.Board
+	Pawn   [piece.NColor][square.N]bitboard.Board
 )
 
 // magic tables for precalculated attack boards of sliding pieces
@@ -42,8 +41,6 @@ func init() {
 		// compute attack bitboards for current square
 		King[s] = kingAttacksFrom(s)
 		Knight[s] = knightAttacksFrom(s)
-		PawnMoves[piece.White][s] = whitePawnMovesFrom(s)
-		PawnMoves[piece.Black][s] = blackPawnMovesFrom(s)
 		Pawn[piece.White][s] = whitePawnAttacksFrom(s)
 		Pawn[piece.Black][s] = blackPawnAttacksFrom(s)
 	}
@@ -60,24 +57,4 @@ func init() {
 
 	RookTable.Populate()
 	BishopTable.Populate()
-}
-
-type board struct {
-	origin square.Square
-	board  bitboard.Board
-}
-
-// addAttack adds the given square to the provided attack bitboard, but
-// only if the square lies on the board, i.e, within A8 to H1.
-func (b *board) addAttack(fileOffset square.File, rankOffset square.Rank) {
-	attackFile := b.origin.File() + fileOffset
-	attackRank := b.origin.Rank() + rankOffset
-
-	switch {
-	case attackFile < 0, attackFile > square.FileH, attackRank < 0, attackRank > square.Rank1:
-		return
-	}
-
-	attackSquare := square.New(attackFile, attackRank)
-	b.board.Set(attackSquare)
 }

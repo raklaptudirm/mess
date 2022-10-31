@@ -19,59 +19,14 @@ import (
 	"laptudirm.com/x/mess/pkg/chess/square"
 )
 
-func whitePawnMovesFrom(s square.Square) bitboard.Board {
-	b := board{origin: s}
-	b.addAttack(0, -1)
-	return b.board
-}
-
-func blackPawnMovesFrom(s square.Square) bitboard.Board {
-	b := board{origin: s}
-	b.addAttack(0, 1)
-	return b.board
-}
-
 func whitePawnAttacksFrom(s square.Square) bitboard.Board {
-	b := board{origin: s}
-
-	b.addAttack(1, -1)  // left
-	b.addAttack(-1, -1) // right
-
-	return b.board
+	pawnUp := bitboard.Squares[s].North()
+	return pawnUp.East() | pawnUp.West()
 }
 
 func blackPawnAttacksFrom(s square.Square) bitboard.Board {
-	b := board{origin: s}
-
-	b.addAttack(1, 1)  // left
-	b.addAttack(-1, 1) // right
-
-	return b.board
-}
-
-func PawnAll(s, ep square.Square, c piece.Color, occupied, enemies bitboard.Board) bitboard.Board {
-	enemies.Set(ep)
-
-	attackSet := PawnMoves[c][s] &^ occupied // 1 square ahead
-
-	switch c {
-	case piece.White:
-		if s.Rank() == square.Rank2 {
-			attackSet |= (attackSet >> 8) &^ occupied // 2 squares ahead
-		}
-
-	case piece.Black:
-		if s.Rank() == square.Rank7 {
-			attackSet |= (attackSet << 8) &^ occupied // 2 squares ahead
-		}
-
-	default:
-		panic("pawn attacks: invalid color")
-	}
-
-	attackSet |= Pawn[c][s] & enemies // diagonal attacks
-
-	return attackSet
+	pawnUp := bitboard.Squares[s].South()
+	return pawnUp.East() | pawnUp.West()
 }
 
 func PawnPush(pawns bitboard.Board, color piece.Color) bitboard.Board {
