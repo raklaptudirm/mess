@@ -13,48 +13,55 @@
 
 package attacks
 
+//go:generate go run laptudirm.com/x/mess/pkg/generator/attack
+
 import (
 	"laptudirm.com/x/mess/pkg/chess/bitboard"
-	"laptudirm.com/x/mess/pkg/chess/move/attacks/magic"
 	"laptudirm.com/x/mess/pkg/chess/piece"
 	"laptudirm.com/x/mess/pkg/chess/square"
 )
 
-// lookup tables for precalculated attack boards of non-sliding pieces
-var (
-	King   [square.N]bitboard.Board
-	Knight [square.N]bitboard.Board
-	Pawn   [piece.NColor][square.N]bitboard.Board
-)
-
-// magic tables for precalculated attack boards of sliding pieces
-var (
-	RookTable   magic.Table
-	BishopTable magic.Table
-)
-
-// init initializes the attack bitboard lookup tables for non-sliding
-// pieces by computing the bitboards for each square.
-func init() {
-	// initialize lookup tables
-	for s := square.A8; s <= square.H1; s++ {
-		// compute attack bitboards for current square
-		King[s] = kingAttacksFrom(s)
-		Knight[s] = knightAttacksFrom(s)
-		Pawn[piece.White][s] = whitePawnAttacksFrom(s)
-		Pawn[piece.Black][s] = blackPawnAttacksFrom(s)
+func PawnPush(pawns bitboard.Board, color piece.Color) bitboard.Board {
+	switch color {
+	case piece.White:
+		return pawns.North()
+	case piece.Black:
+		return pawns.South()
+	default:
+		panic("bad color")
 	}
+}
 
-	// initialize magic tables
-
-	RookTable = magic.Table{
-		MaxMaskN: 4096, MoveFunc: rook,
+func PawnsLeft(pawns bitboard.Board, color piece.Color) bitboard.Board {
+	switch color {
+	case piece.White:
+		return pawns.North().West()
+	case piece.Black:
+		return pawns.South().West()
+	default:
+		panic("bad color")
 	}
+}
 
-	BishopTable = magic.Table{
-		MaxMaskN: 512, MoveFunc: bishop,
+func PawnsRight(pawns bitboard.Board, color piece.Color) bitboard.Board {
+	switch color {
+	case piece.White:
+		return pawns.North().East()
+	case piece.Black:
+		return pawns.South().East()
+	default:
+		panic("bad color")
 	}
+}
 
-	RookTable.Populate()
-	BishopTable.Populate()
+func Bishop(s square.Square, blockers bitboard.Board) bitboard.Board {
+	return bishopTable.Probe(s, blockers)
+}
+
+func Rook(s square.Square, blockers bitboard.Board) bitboard.Board {
+	return rookTable.Probe(s, blockers)
+}
+
+func Queen(s square.Square, occ bitboard.Board) bitboard.Board {
+	return Rook(s, occ) | Bishop(s, occ)
 }

@@ -39,8 +39,8 @@ type Table struct {
 	MaxMaskN int      // maximum number of blocker mask permutations of piece
 	MoveFunc MoveFunc // piece movegen function; see MoveFunc docs for info
 
-	magics [square.N]Magic            // list of magics for each square
-	table  [square.N][]bitboard.Board // the underlying move-list table
+	Magics [square.N]Magic            // list of magics for each square
+	Table  [square.N][]bitboard.Board // the underlying move-list table
 }
 
 // MoveFunc is a sliding piece's move generation function. It takes the
@@ -52,7 +52,7 @@ type MoveFunc func(square.Square, bitboard.Board, bool) bitboard.Board
 // Probe probes the magic hash table for the move bitboard given the
 // piece square and blocker mask. It returns the move bitboard.
 func (t *Table) Probe(s square.Square, blockerMask bitboard.Board) bitboard.Board {
-	return t.table[s][t.magics[s].Index(blockerMask)]
+	return t.Table[s][t.Magics[s].Index(blockerMask)]
 }
 
 // Populate populates the magic hash table with all the magics and move bitboards.
@@ -60,7 +60,7 @@ func (t *Table) Populate() {
 	var rand util.PRNG
 
 	for s := square.A8; s <= square.H1; s++ {
-		magic := &t.magics[s]
+		magic := &t.Magics[s]
 
 		magic.BlockerMask = t.MoveFunc(s, bitboard.Empty, true)
 		bitCount := magic.BlockerMask.CountBits()
@@ -81,18 +81,18 @@ func (t *Table) Populate() {
 		for {
 			magic.Number = rand.SparseUint64()
 
-			t.table[s] = make([]bitboard.Board, t.MaxMaskN)
+			t.Table[s] = make([]bitboard.Board, t.MaxMaskN)
 
 			for i := 0; i < permutationsN; i++ {
 				blockers := permutations[i]
 				index := magic.Index(blockers)
 				attacks := t.MoveFunc(s, blockers, false)
 
-				if t.table[s][index] != bitboard.Empty && t.table[s][index] != attacks {
+				if t.Table[s][index] != bitboard.Empty && t.Table[s][index] != attacks {
 					continue searchingMagic
 				}
 
-				t.table[s][index] = attacks
+				t.Table[s][index] = attacks
 			}
 
 			break

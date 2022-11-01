@@ -19,3 +19,6 @@ go.work
 
 # Ignore binary directory
 bin/
+
+# Ignore generated go files
+gen_*

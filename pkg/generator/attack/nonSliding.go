@@ -11,12 +11,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package attacks
+package main
 
 import (
 	"laptudirm.com/x/mess/pkg/chess/bitboard"
 	"laptudirm.com/x/mess/pkg/chess/square"
 )
+
+func whitePawnAttacksFrom(s square.Square) bitboard.Board {
+	pawnUp := bitboard.Squares[s].North()
+	return pawnUp.East() | pawnUp.West()
+}
+
+func blackPawnAttacksFrom(s square.Square) bitboard.Board {
+	pawnUp := bitboard.Squares[s].South()
+	return pawnUp.East() | pawnUp.West()
+}
 
 // knightAttacksFrom generates an attack bitboard containing all the
 // possible squares a knight can move to from the given square.
