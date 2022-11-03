@@ -13,6 +13,6 @@
 
 package zobrist
 
-//go:generate go run laptudirm.com/x/mess/pkg/generator/zobrist
+//go:generate go run laptudirm.com/x/mess/internal/generator/zobrist
 
 type Key uint64

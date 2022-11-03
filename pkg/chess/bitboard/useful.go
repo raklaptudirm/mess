@@ -15,7 +15,7 @@ package bitboard
 
 import "laptudirm.com/x/mess/pkg/chess/square"
 
-//go:generate go run laptudirm.com/x/mess/pkg/generator/bitboard
+//go:generate go run laptudirm.com/x/mess/internal/generator/bitboard
 
 // useful bitboard definitions
 const (

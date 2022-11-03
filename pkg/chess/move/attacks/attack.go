@@ -13,7 +13,7 @@
 
 package attacks
 
-//go:generate go run laptudirm.com/x/mess/pkg/generator/attack
+//go:generate go run laptudirm.com/x/mess/internal/generator/attack
 
 import (
 	"laptudirm.com/x/mess/pkg/chess/bitboard"
