@@ -27,7 +27,7 @@ package magic
 import (
 	"laptudirm.com/x/mess/pkg/chess/bitboard"
 	"laptudirm.com/x/mess/pkg/chess/square"
-	"laptudirm.com/x/mess/pkg/util"
+	"laptudirm.com/x/mess/internal/util"
 )
 
 // magicSeeds are optimized prng seeds which generate valid magics fastest

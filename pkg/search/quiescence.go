@@ -15,7 +15,7 @@ package search
 
 import (
 	"laptudirm.com/x/mess/pkg/search/evaluation"
-	"laptudirm.com/x/mess/pkg/util"
+	"laptudirm.com/x/mess/internal/util"
 )
 
 // Quiescence search is a type of limited search which only evaluates 'quiet'

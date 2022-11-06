@@ -20,11 +20,11 @@ import (
 	"errors"
 	"math"
 
+	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/chess"
 	"laptudirm.com/x/mess/pkg/chess/move"
 	"laptudirm.com/x/mess/pkg/search/evaluation"
 	"laptudirm.com/x/mess/pkg/search/transposition"
-	"laptudirm.com/x/mess/pkg/util"
 )
 
 func NewContext(fen string) Context {

@@ -20,7 +20,7 @@ import (
 	"laptudirm.com/x/mess/pkg/chess/move/castling"
 	"laptudirm.com/x/mess/pkg/chess/piece"
 	"laptudirm.com/x/mess/pkg/chess/square"
-	"laptudirm.com/x/mess/pkg/util"
+	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/zobrist"
 )
 
