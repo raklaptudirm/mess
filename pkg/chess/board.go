@@ -36,11 +36,17 @@ type Board struct {
 	PieceBBs [piece.NType]bitboard.Board
 	ColorBBs [piece.NColor]bitboard.Board
 
+	Friends  bitboard.Board
+	Enemies  bitboard.Board
+	Occupied bitboard.Board
+
 	Kings [piece.NColor]square.Square
 
 	SideToMove      piece.Color
 	EnPassantTarget square.Square
 	CastlingRights  castling.Rights
+
+	Target bitboard.Board
 
 	CheckN    int
 	CheckMask bitboard.Board
@@ -56,10 +62,10 @@ type Board struct {
 	DrawClock int
 
 	// game data
-	History [1024]Undo
+	History [1024]BoardState
 }
 
-type Undo struct {
+type BoardState struct {
 	Move            move.Move
 	CastlingRights  castling.Rights
 	CapturedPiece   piece.Piece
@@ -86,10 +92,6 @@ func (b *Board) RepetitionCount() int {
 	}
 
 	return repCount
-}
-
-func (b *Board) Occupied() bitboard.Board {
-	return b.ColorBBs[piece.White] | b.ColorBBs[piece.Black]
 }
 
 func (b *Board) ClearSquare(s square.Square) {
@@ -123,8 +125,6 @@ func (b *Board) IsInCheck(c piece.Color) bool {
 }
 
 func (b *Board) IsAttacked(s square.Square, them piece.Color) bool {
-	occ := b.Occupied()
-
 	if attacks.Pawn[them.Other()][s]&b.Pawns(them) != bitboard.Empty {
 		return true
 	}
@@ -139,11 +139,11 @@ func (b *Board) IsAttacked(s square.Square, them piece.Color) bool {
 
 	queens := b.Queens(them)
 
-	if attacks.Bishop(s, occ)&(b.Bishops(them)|queens) != bitboard.Empty {
+	if attacks.Bishop(s, b.Occupied)&(b.Bishops(them)|queens) != bitboard.Empty {
 		return true
 	}
 
-	return attacks.Rook(s, occ)&(b.Rooks(them)|queens) != bitboard.Empty
+	return attacks.Rook(s, b.Occupied)&(b.Rooks(them)|queens) != bitboard.Empty
 }
 
 func (b *Board) Pawns(c piece.Color) bitboard.Board {
@@ -170,9 +170,17 @@ func (b *Board) King(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.King] & b.ColorBBs[c]
 }
 
-func (b *Board) CalculateCheckmask() {
-	occ := b.Occupied()
+func (b *Board) InitBitboards() {
+	b.Friends = b.ColorBBs[b.SideToMove]
+	b.Enemies = b.ColorBBs[b.SideToMove.Other()]
+	b.Occupied = b.Friends | b.Enemies
+	b.CalculateCheckmask()
+	b.CalculatePinmask()
+	b.SeenByEnemy = b.SeenSquares(b.SideToMove.Other())
+	b.Target = ^b.Friends & b.CheckMask
+}
 
+func (b *Board) CalculateCheckmask() {
 	us := b.SideToMove
 	them := us.Other()
 
@@ -183,8 +191,8 @@ func (b *Board) CalculateCheckmask() {
 
 	pawns := b.Pawns(them) & attacks.Pawn[us][kingSq]
 	knights := b.Knights(them) & attacks.Knight[kingSq]
-	bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, occ)
-	rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, occ)
+	bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, b.Occupied)
+	rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, b.Occupied)
 
 	switch {
 	case pawns != bitboard.Empty:
@@ -198,7 +206,7 @@ func (b *Board) CalculateCheckmask() {
 
 	if bishops != bitboard.Empty {
 		bishopSq := bishops.FirstOne()
-		b.CheckMask |= attacks.Between[kingSq][bishopSq] | bitboard.Squares[bishopSq]
+		b.CheckMask |= bitboard.Between[kingSq][bishopSq] | bitboard.Squares[bishopSq]
 		b.CheckN++
 	}
 
@@ -207,7 +215,7 @@ func (b *Board) CalculateCheckmask() {
 			b.CheckN++
 		} else {
 			rookSq := rooks.FirstOne()
-			b.CheckMask |= attacks.Between[kingSq][rookSq] | bitboard.Squares[rookSq]
+			b.CheckMask |= bitboard.Between[kingSq][rookSq] | bitboard.Squares[rookSq]
 			b.CheckN++
 		}
 	}
@@ -231,7 +239,7 @@ func (b *Board) CalculatePinmask() {
 
 	for rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, enemies); rooks != bitboard.Empty; {
 		rook := rooks.Pop()
-		possiblePin := attacks.Between[kingSq][rook] | bitboard.Squares[rook]
+		possiblePin := bitboard.Between[kingSq][rook] | bitboard.Squares[rook]
 		if (possiblePin & friends).Count() == 1 {
 			b.PinnedHV |= possiblePin
 		}
@@ -239,7 +247,7 @@ func (b *Board) CalculatePinmask() {
 
 	for bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, enemies); bishops != bitboard.Empty; {
 		bishop := bishops.Pop()
-		possiblePin := attacks.Between[kingSq][bishop] | bitboard.Squares[bishop]
+		possiblePin := bitboard.Between[kingSq][bishop] | bitboard.Squares[bishop]
 		if (possiblePin & friends).Count() == 1 {
 			b.PinnedD |= possiblePin
 		}
@@ -254,7 +262,7 @@ func (b *Board) SeenSquares(by piece.Color) bitboard.Board {
 	queens := b.Queens(by)
 	kingSq := b.Kings[by]
 
-	occ := b.Occupied() &^ b.King(by.Other())
+	occ := b.Occupied &^ b.King(by.Other())
 
 	seen := attacks.PawnsLeft(pawns, by) | attacks.PawnsRight(pawns, by)
 

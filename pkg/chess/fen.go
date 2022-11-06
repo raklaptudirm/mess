@@ -42,7 +42,7 @@ func NewBoard(fen string) *Board {
 	for rankId, rankData := range ranks {
 		fileId := square.FileA
 		for _, id := range rankData {
-			s := square.From(fileId, square.Rank(rankId))
+			s := square.New(fileId, square.Rank(rankId))
 
 			if id >= '1' && id <= '8' {
 				skip := square.File(id - 48) // ascii value to number
@@ -66,7 +66,7 @@ func NewBoard(fen string) *Board {
 	board.Hash ^= zobrist.Castling[board.CastlingRights]
 
 	// en-passant target square
-	board.EnPassantTarget = square.New(parts[3])
+	board.EnPassantTarget = square.NewFromString(parts[3])
 	if board.EnPassantTarget != square.None {
 		board.Hash ^= zobrist.EnPassant[board.EnPassantTarget.File()]
 	}

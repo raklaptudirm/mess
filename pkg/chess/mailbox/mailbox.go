@@ -34,7 +34,7 @@ func (b Board) String() string {
 		s += "| "
 
 		for file := square.FileA; file <= square.FileH; file++ {
-			square := square.From(file, rank)
+			square := square.New(file, rank)
 			s += b[square].String() + " | "
 		}
 
