@@ -33,14 +33,14 @@ type Board struct {
 	// position data
 	Hash     zobrist.Key
 	Position mailbox.Board // 8x8 for fast lookup
-	PieceBBs [piece.NType]bitboard.Board
-	ColorBBs [piece.NColor]bitboard.Board
+	PieceBBs [piece.TypeN]bitboard.Board
+	ColorBBs [piece.ColorN]bitboard.Board
 
 	Friends  bitboard.Board
 	Enemies  bitboard.Board
 	Occupied bitboard.Board
 
-	Kings [piece.NColor]square.Square
+	Kings [piece.ColorN]square.Square
 
 	SideToMove      piece.Color
 	EnPassantTarget square.Square

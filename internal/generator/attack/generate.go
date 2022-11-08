@@ -28,7 +28,7 @@ import (
 type attackStruct struct {
 	King   [square.N]bitboard.Board
 	Knight [square.N]bitboard.Board
-	Pawn   [piece.NColor][square.N]bitboard.Board
+	Pawn   [piece.ColorN][square.N]bitboard.Board
 
 	Rook   magic.Table
 	Bishop magic.Table

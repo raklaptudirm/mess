@@ -61,9 +61,9 @@ const (
 	Queenside Rights = WhiteQ | BlackQ
 
 	All Rights = WhiteA | BlackA
-
-	N = 16
 )
+
+const N = 16
 
 var RightUpdates = [square.N]Rights{
 	BlackQ, NoCasl, NoCasl, NoCasl, BlackA, NoCasl, NoCasl, BlackK,

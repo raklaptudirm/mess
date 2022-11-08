@@ -34,8 +34,8 @@ const (
 	Black
 )
 
-// NColor is the number of colors there are.
-const NColor = 2
+// ColorN is the number of colors there are.
+const ColorN = 2
 
 // Other returns the color opposite to the given one. For White,
 // it returns Black and for Black, it returns White.

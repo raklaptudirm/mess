@@ -148,8 +148,8 @@ const (
 	King
 )
 
-// NType is the number of chess piece types, including NoType.
-const NType = 7
+// TypeN is the number of chess piece types, including NoType.
+const TypeN = 7
 
 func (t Type) String() string {
 	const typeToStr = " pnbrqk"
