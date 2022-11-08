@@ -152,6 +152,6 @@ const (
 const NType = 7
 
 func (t Type) String() string {
-	const typeToStr = " pkbrqk"
+	const typeToStr = " pnbrqk"
 	return string(typeToStr[t])
 }
