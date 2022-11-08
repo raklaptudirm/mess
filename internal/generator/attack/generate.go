@@ -50,23 +50,8 @@ func main() {
 	}
 
 	// initialize magic lookup tables for sliding pieces
-	{
-		a.Rook = magic.Table{
-			MaxMaskN: 4096, MoveFunc: rook,
-		}
-
-		a.Bishop = magic.Table{
-			MaxMaskN: 512, MoveFunc: bishop,
-		}
-
-		a.Rook.Populate()
-		a.Bishop.Populate()
-
-		// the MoveFunc property is unnecessary after table population is
-		// complete, so they are excluded from the generated file
-		a.Rook.MoveFunc = nil
-		a.Bishop.MoveFunc = nil
-	}
+	a.Rook = *magic.NewTable(4096, rook)
+	a.Bishop = *magic.NewTable(512, bishop)
 
 	generator.Generate("tables", template, a)
 }

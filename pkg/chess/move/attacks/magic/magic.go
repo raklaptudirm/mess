@@ -25,44 +25,26 @@
 package magic
 
 import (
+	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/chess/bitboard"
 	"laptudirm.com/x/mess/pkg/chess/square"
-	"laptudirm.com/x/mess/internal/util"
 )
 
 // magicSeeds are optimized prng seeds which generate valid magics fastest
 // these values have been taken from the Stockfish chess engine
 var magicSeeds = [8]uint64{255, 16645, 15100, 12281, 32803, 55013, 10316, 728}
 
-// Table represents a magic hash table.
-type Table struct {
-	MaxMaskN int      // maximum number of blocker mask permutations of piece
-	MoveFunc MoveFunc // piece movegen function; see MoveFunc docs for info
+func NewTable(maskN int, moveFunc MoveFunc) *Table {
+	var t Table
 
-	Magics [square.N]Magic            // list of magics for each square
-	Table  [square.N][]bitboard.Board // the underlying move-list table
-}
+	// populate table
 
-// MoveFunc is a sliding piece's move generation function. It takes the
-// piece square, blocker mask, and bool which reports if the function is
-// being used to generate blocker masks, so that it can mask out the edge
-// bits. It returns a bitboard with all the movable squares set.
-type MoveFunc func(square.Square, bitboard.Board, bool) bitboard.Board
-
-// Probe probes the magic hash table for the move bitboard given the
-// piece square and blocker mask. It returns the move bitboard.
-func (t *Table) Probe(s square.Square, blockerMask bitboard.Board) bitboard.Board {
-	return t.Table[s][t.Magics[s].Index(blockerMask)]
-}
-
-// Populate populates the magic hash table with all the magics and move bitboards.
-func (t *Table) Populate() {
 	var rand util.PRNG
 
 	for s := square.A8; s <= square.H1; s++ {
 		magic := &t.Magics[s]
 
-		magic.BlockerMask = t.MoveFunc(s, bitboard.Empty, true)
+		magic.BlockerMask = moveFunc(s, bitboard.Empty, true)
 		bitCount := magic.BlockerMask.CountBits()
 		magic.Shift = uint8(64 - bitCount)
 
@@ -81,12 +63,12 @@ func (t *Table) Populate() {
 		for {
 			magic.Number = rand.SparseUint64()
 
-			t.Table[s] = make([]bitboard.Board, t.MaxMaskN)
+			t.Table[s] = make([]bitboard.Board, maskN)
 
 			for i := 0; i < permutationsN; i++ {
 				blockers := permutations[i]
 				index := magic.Index(blockers)
-				attacks := t.MoveFunc(s, blockers, false)
+				attacks := moveFunc(s, blockers, false)
 
 				if t.Table[s][index] != bitboard.Empty && t.Table[s][index] != attacks {
 					continue searchingMagic
@@ -98,6 +80,26 @@ func (t *Table) Populate() {
 			break
 		}
 	}
+
+	return &t
+}
+
+// Table represents a magic hash table.
+type Table struct {
+	Magics [square.N]Magic            // list of magics for each square
+	Table  [square.N][]bitboard.Board // the underlying move-list table
+}
+
+// MoveFunc is a sliding piece's move generation function. It takes the
+// piece square, blocker mask, and bool which reports if the function is
+// being used to generate blocker masks, so that it can mask out the edge
+// bits. It returns a bitboard with all the movable squares set.
+type MoveFunc func(square.Square, bitboard.Board, bool) bitboard.Board
+
+// Probe probes the magic hash table for the move bitboard given the
+// piece square and blocker mask. It returns the move bitboard.
+func (t *Table) Probe(s square.Square, blockerMask bitboard.Board) bitboard.Board {
+	return t.Table[s][t.Magics[s].Index(blockerMask)]
 }
 
 // Magic represents a single magic entry.

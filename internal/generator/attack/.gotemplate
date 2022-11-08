@@ -31,17 +31,31 @@ import (
 // non-sliding pieces; standard tables
 
 // King contains all the attack sets of a king indexed by it's square.
-var King = {{ printf "%#v" .King }}
+var King = [64]bitboard.Board{ {{ range .King }}{{ printf "%#v" .}}, {{ end }}}
 
 // Knight contains all the attack sets of a knight indexed by it's square.
-var Knight = {{ printf "%#v" .Knight }}
+var Knight = [64]bitboard.Board{ {{ range .Knight }}{{ printf "%#v" .}}, {{ end }}}
 
 // Pawn contains all the attack sets of a pawn indexed by it's color and 
 // square. Note these are the diagonal attack sets, not move sets.
-var Pawn = {{ printf "%#v" .Pawn }}
+var Pawn = [2][64]bitboard.Board{ {{- range .Pawn }}
+	{ {{ range . }}{{ printf "%0#16v" . }}, {{ end }} },{{ end }}
+}
 
 // sliding pieces; magic tables
 // these tables are un-exported since utility functions will be declared
 // to make probing these tables simpler in the attacks package
-var rookTable = {{ printf "%#v" .Rook }}
-var bishopTable = {{ printf "%#v" .Bishop }}
+
+var rookTable = magic.Table{
+	Magics: [64]magic.Magic{ {{ range .Rook.Magics }}{ {{ printf "%#v, %#v, %#v" .Number .BlockerMask .Shift }} }, {{ end }}},
+	Table: [64][]bitboard.Board{ {{- range .Rook.Table }}
+		{ {{ range . }}{{ printf "%0#16v" . }}, {{ end }} },{{ end }}
+	},
+}
+
+var bishopTable = magic.Table{
+	Magics: [64]magic.Magic{ {{ range .Bishop.Magics }}{ {{ printf "%#v, %#v, %#v" .Number .BlockerMask .Shift }} }, {{ end }}},
+	Table: [64][]bitboard.Board{ {{- range .Bishop.Table }}
+		{ {{ range . }}{{ printf "%0#16v" . }}, {{ end }} },{{ end }}
+	},
+}
