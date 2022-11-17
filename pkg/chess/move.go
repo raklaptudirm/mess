@@ -14,16 +14,16 @@
 package chess
 
 import (
+	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/chess/move"
 	"laptudirm.com/x/mess/pkg/chess/move/attacks"
 	"laptudirm.com/x/mess/pkg/chess/move/castling"
 	"laptudirm.com/x/mess/pkg/chess/piece"
 	"laptudirm.com/x/mess/pkg/chess/square"
-	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/zobrist"
 )
 
-// MakeMove plays a legal move on the Board.
+// MakeMove plays the given legal move on the Board.
 func (b *Board) MakeMove(m move.Move) {
 	// add current state to history
 	b.History[b.Plys].Move = m
@@ -80,11 +80,13 @@ func (b *Board) MakeMove(m move.Move) {
 		}
 
 	case isCastling:
+		// castle the rook
 		rookInfo := castling.Rooks[targetSq]
 		b.ClearSquare(rookInfo.From)
 		b.FillSquare(rookInfo.To, rookInfo.RookType)
 
 	case isEnPassant:
+		// capture square is different from target square during en passant
 		if b.SideToMove == piece.White {
 			captureSq += 8
 		} else {
@@ -93,12 +95,12 @@ func (b *Board) MakeMove(m move.Move) {
 		fallthrough
 
 	case isCapture:
-		b.DrawClock = 0
-		b.History[b.Plys].CapturedPiece = b.Position[captureSq]
-		b.ClearSquare(captureSq)
+		b.History[b.Plys].CapturedPiece = b.Position[captureSq] // put captured piece in history
+		b.DrawClock = 0                                         // reset draw clock since capture
+		b.ClearSquare(captureSq)                                // clear the captured square
 	}
 
-	// move the piece in the records
+	// move the piece
 	b.ClearSquare(sourceSq)
 	b.FillSquare(targetSq, toPiece)
 
@@ -117,6 +119,7 @@ func (b *Board) MakeMove(m move.Move) {
 	b.Hash ^= zobrist.SideToMove // switch in zobrist hash
 }
 
+// UnmakeMove unmakes the last move played on the Board.
 func (b *Board) UnmakeMove() {
 	if b.SideToMove = b.SideToMove.Other(); b.SideToMove == piece.Black {
 		b.FullMoves--
@@ -143,16 +146,19 @@ func (b *Board) UnmakeMove() {
 	isEnPassant := pieceType == piece.Pawn && targetSq == b.EnPassantTarget
 	isCapture := m.IsCapture()
 
+	// un-move the piece
 	b.ClearSquare(targetSq)
 	b.FillSquare(sourceSq, fromPiece)
 
 	switch {
 	case isCastling:
+		// un-castle the rook
 		rookInfo := castling.Rooks[targetSq]
 		b.ClearSquare(rookInfo.To)
 		b.FillSquare(rookInfo.From, rookInfo.RookType)
 
 	case isEnPassant:
+		// capture square is different from target square during en passant
 		if b.SideToMove == piece.White {
 			captureSq += 8
 		} else {
@@ -161,12 +167,18 @@ func (b *Board) UnmakeMove() {
 		fallthrough
 
 	case isCapture:
+		// put the captured piece back
 		b.FillSquare(captureSq, capturedPiece)
 	}
 
+	// use the hash stored in history
 	b.Hash = b.History[b.Plys].Hash
 }
 
+// NewMove returns a new move.Move representing moving a piece from `from`
+// to `to` by adding the necessary contextual information from the Board.
+// If the move is a promotion, the promotion square can be set using the
+// (move).SetPromotion(piece.Piece) method.
 func (b *Board) NewMove(from, to square.Square) move.Move {
 	p := b.Position[from]
 	return move.New(from, to, p, b.Position[to] != piece.NoPiece)

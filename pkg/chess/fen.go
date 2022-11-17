@@ -14,7 +14,6 @@
 package chess
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -80,6 +79,12 @@ func NewBoard(fen string) *Board {
 
 // FEN returns the fen string of the current Board position.
 func (b *Board) FEN() string {
-	// <position> <side to move> <castling rights> <en passant target> <half move count> <full move count>
-	return fmt.Sprintf("%s %s %s %s %d %d", b.Position.FEN(), b.SideToMove, b.CastlingRights.String(), b.EnPassantTarget, b.DrawClock, b.FullMoves)
+	var fenString string
+	fenString += b.Position.FEN() + " "
+	fenString += b.SideToMove.String() + " "
+	fenString += b.CastlingRights.String() + " "
+	fenString += b.EnPassantTarget.String() + " "
+	fenString += strconv.Itoa(b.DrawClock) + " "
+	fenString += strconv.Itoa(b.FullMoves)
+	return fenString
 }
