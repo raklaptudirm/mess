@@ -1,10 +1,12 @@
 package util
 
-type number interface {
+// Type integer represents every value that can be represented as an integer.
+type integer interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
 }
 
-func Max[T number](a, b T) T {
+// Max returns the larger value between the integers a and b.
+func Max[T integer](a, b T) T {
 	if a > b {
 		return a
 	}
@@ -12,7 +14,8 @@ func Max[T number](a, b T) T {
 	return b
 }
 
-func Min[T number](a, b T) T {
+// Min returns the smaller value between the integers a and b.
+func Min[T integer](a, b T) T {
 	if a < b {
 		return a
 	}
@@ -20,7 +23,8 @@ func Min[T number](a, b T) T {
 	return b
 }
 
-func Abs[T number](x T) T {
+// Abs returns the absolute value of the integer x.
+func Abs[T integer](x T) T {
 	if x < 0 {
 		return -x
 	}

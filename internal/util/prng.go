@@ -18,10 +18,12 @@ type PRNG struct {
 	seed uint64
 }
 
+// Seed seeds the pseudo-random number generator with the given uint.
 func (p *PRNG) Seed(s uint64) {
 	p.seed = s
 }
 
+// Uint64 generates a new pseudo-random uint64.
 func (p *PRNG) Uint64() uint64 {
 	// linear feedback shifts
 	p.seed ^= p.seed >> 12
@@ -32,6 +34,11 @@ func (p *PRNG) Uint64() uint64 {
 	return p.seed * 2685821657736338717
 }
 
+// SparseUint64 generates a pseudo-random sparse uint64, i.e, a number
+// with very few set bits. This is useful in magic table generation.
 func (p *PRNG) SparseUint64() uint64 {
+	// bitwise and three pseudo-random uint64s together
+	// only the bits set in all three are set in the result
+	//lint:ignore SA4000 ; Uint64 is an impure function
 	return p.Uint64() & p.Uint64() & p.Uint64()
 }
