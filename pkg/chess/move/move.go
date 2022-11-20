@@ -29,6 +29,9 @@ import (
 // [11 target square.Square 6][05 source square.Square  00]
 type Move uint
 
+// MaxN is the maximum number of plys in a chess game.
+const MaxN = 1024
+
 // Null Move represents a "do nothing" move on the chessboard. It is
 // represented by "0000", and is useful for returning errors and pruning.
 const Null Move = 0

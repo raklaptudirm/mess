@@ -67,7 +67,7 @@ type Board struct {
 	DrawClock int
 
 	// game history
-	History [1024]BoardState
+	History [move.MaxN]BoardState
 
 	// utility information:
 	// these data, used by movegen can be calculated from the main board
