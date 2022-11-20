@@ -18,12 +18,17 @@ import (
 	"laptudirm.com/x/mess/pkg/chess/square"
 )
 
-const Sides = 4
+// RookInfo is a struct which contains information about castling a rook.
+type RookInfo struct {
+	From, To square.Square // source and target squares of the rook
+	RookType piece.Piece   // piece.Piece representation of the rook
+}
 
-var Rooks = [square.N]struct {
-	From, To square.Square
-	RookType piece.Piece
-}{
+// Rooks is a look up table which provides information about castling a
+// rook when a king castles. The table is indexed using the king's target
+// square. Squares other than the king's target squares during castling
+// contains the zero-value of RookInfo: RookInfo{}.
+var Rooks = [square.N]RookInfo{
 	square.G1: {
 		From:     square.H1,
 		To:       square.F1,

@@ -11,12 +11,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package castling provides various types and definitions which are useful
+// when dealing with castling moves in a board representation.
 package castling
 
 import "laptudirm.com/x/mess/pkg/chess/square"
 
+// Rights represents the current castling rights of the position.
+// [Black Queen-side][Black King-side][White Queen-side][White King-side]
 type Rights byte
 
+// NewRights creates a new castling.Rights from the given string. It
+// checks if the identifier for each possible castling is in the string
+// in the proper order.
+//
+//     White King-side:  K
+//     White Queen-side: Q
+//     Black King-side:  k
+//     Black Queen-side: q
+//
+// The string "-" represents castling.NoCasl.
 func NewRights(r string) Rights {
 	var rights Rights
 
@@ -46,25 +60,35 @@ func NewRights(r string) Rights {
 	return rights
 }
 
+// Constants representing various castling rights.
 const (
-	WhiteK Rights = 1 << 0
-	WhiteQ Rights = 1 << 1
-	BlackK Rights = 1 << 2
-	BlackQ Rights = 1 << 3
+	WhiteK Rights = 1 << 0 // white king-side
+	WhiteQ Rights = 1 << 1 // white queen-side
+	BlackK Rights = 1 << 2 // black king-side
+	BlackQ Rights = 1 << 3 // black queen-side
 
-	NoCasl Rights = 0
+	NoCasl Rights = 0 // no castling possible
 
-	WhiteA Rights = WhiteK | WhiteQ
-	BlackA Rights = BlackK | BlackQ
+	WhiteA Rights = WhiteK | WhiteQ // only white can castle
+	BlackA Rights = BlackK | BlackQ // only black can castle
 
-	Kingside  Rights = WhiteK | BlackK
-	Queenside Rights = WhiteQ | BlackQ
+	Kingside  Rights = WhiteK | BlackK // only king-side castling
+	Queenside Rights = WhiteQ | BlackQ // only queen-side castling
 
-	All Rights = WhiteA | BlackA
+	All Rights = WhiteA | BlackA // all castling possible
 )
 
-const N = 16
+// N is the number of possible unique castling rights.
+const N = 1 << 4 // 4 possible castling sides
 
+// RightUpdates is a map of each chessboard square to the rights that
+// need to be removed if a piece moves from or to that square. For example,
+// if a piece moves from or two from the square A1, either the white rook
+// has moved or it has been captured, so white can no longer castle
+// queen-side. Squares which are not occupied by a king or a rook do not
+// effect the castling rights. Squares occupied by a rook remove the
+// castling rights of the rook's side and color. Squares occupied by a king
+// remove it's color's castling rights.
 var RightUpdates = [square.N]Rights{
 	BlackQ, NoCasl, NoCasl, NoCasl, BlackA, NoCasl, NoCasl, BlackK,
 	NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl, NoCasl,
@@ -76,6 +100,7 @@ var RightUpdates = [square.N]Rights{
 	WhiteQ, NoCasl, NoCasl, NoCasl, WhiteA, NoCasl, NoCasl, WhiteK,
 }
 
+// String converts the given castling.Rights to a readable string.
 func (c Rights) String() string {
 	var str string
 
