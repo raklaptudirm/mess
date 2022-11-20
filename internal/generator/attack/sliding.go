@@ -14,8 +14,8 @@
 package main
 
 import (
-	"laptudirm.com/x/mess/pkg/chess/bitboard"
-	"laptudirm.com/x/mess/pkg/chess/square"
+	"laptudirm.com/x/mess/pkg/board/bitboard"
+	"laptudirm.com/x/mess/pkg/board/square"
 )
 
 func bishop(s square.Square, occ bitboard.Board, isMask bool) bitboard.Board {

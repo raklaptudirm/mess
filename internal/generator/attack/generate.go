@@ -19,10 +19,10 @@ import (
 	_ "embed"
 
 	"laptudirm.com/x/mess/internal/generator"
-	"laptudirm.com/x/mess/pkg/chess/bitboard"
-	"laptudirm.com/x/mess/pkg/chess/move/attacks/magic"
-	"laptudirm.com/x/mess/pkg/chess/piece"
-	"laptudirm.com/x/mess/pkg/chess/square"
+	"laptudirm.com/x/mess/pkg/board/bitboard"
+	"laptudirm.com/x/mess/pkg/board/move/attacks/magic"
+	"laptudirm.com/x/mess/pkg/board/piece"
+	"laptudirm.com/x/mess/pkg/board/square"
 )
 
 type attackStruct struct {

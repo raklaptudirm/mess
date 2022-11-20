@@ -24,8 +24,8 @@
 package attacks
 
 import (
-	"laptudirm.com/x/mess/pkg/chess/bitboard"
-	"laptudirm.com/x/mess/pkg/chess/move/attacks/magic"
+	"laptudirm.com/x/mess/pkg/board/bitboard"
+	"laptudirm.com/x/mess/pkg/board/move/attacks/magic"
 )
 
 // non-sliding pieces; standard tables

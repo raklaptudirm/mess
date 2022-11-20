@@ -14,8 +14,8 @@
 package main
 
 import (
-	"laptudirm.com/x/mess/pkg/chess/bitboard"
-	"laptudirm.com/x/mess/pkg/chess/square"
+	"laptudirm.com/x/mess/pkg/board/bitboard"
+	"laptudirm.com/x/mess/pkg/board/square"
 )
 
 func whitePawnAttacksFrom(s square.Square) bitboard.Board {

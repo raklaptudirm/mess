@@ -17,9 +17,9 @@ import (
 	_ "embed"
 
 	"laptudirm.com/x/mess/internal/generator"
-	"laptudirm.com/x/mess/pkg/chess/move/castling"
-	"laptudirm.com/x/mess/pkg/chess/piece"
-	"laptudirm.com/x/mess/pkg/chess/square"
+	"laptudirm.com/x/mess/pkg/board/move/castling"
+	"laptudirm.com/x/mess/pkg/board/piece"
+	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/zobrist"
 )
