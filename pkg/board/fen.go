@@ -20,7 +20,7 @@ import (
 	"laptudirm.com/x/mess/pkg/board/move/castling"
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
-	"laptudirm.com/x/mess/pkg/zobrist"
+	"laptudirm.com/x/mess/pkg/board/zobrist"
 )
 
 // NewBoard creates an instance of a *Board from a given fen string.

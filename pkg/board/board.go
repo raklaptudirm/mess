@@ -28,7 +28,7 @@ import (
 	"laptudirm.com/x/mess/pkg/board/move/castling"
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
-	"laptudirm.com/x/mess/pkg/zobrist"
+	"laptudirm.com/x/mess/pkg/board/zobrist"
 )
 
 // Board represents the state of a chessboard at a given position. It
