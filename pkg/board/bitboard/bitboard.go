@@ -18,12 +18,14 @@ package bitboard
 import (
 	"math/bits"
 
+	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 )
 
 // Board is a 64-bit bitboard
 type Board uint64
 
+// String returns a string representation of the given BB.
 func (b Board) String() string {
 	var str string
 	for s := square.A8; s <= square.H1; s++ {
@@ -43,36 +45,68 @@ func (b Board) String() string {
 	return str
 }
 
-func (b Board) Count() int {
-	return bits.OnesCount64(uint64(b))
+// Up shifts the given BB up relative to the given color.
+func (b Board) Up(c piece.Color) Board {
+	switch c {
+	case piece.White:
+		return b.North()
+	case piece.Black:
+		return b.South()
+	default:
+		panic("bad color")
+	}
 }
 
+// Down shifts the given BB down relative to the given color.
+func (b Board) Down(color piece.Color) Board {
+	switch color {
+	case piece.White:
+		return b.South()
+	case piece.Black:
+		return b.North()
+	default:
+		panic("bad color")
+	}
+}
+
+// North shifts the given BB to the north.
 func (b Board) North() Board {
 	return b >> 8
 }
 
+// South shifts the given BB to the south.
 func (b Board) South() Board {
 	return b << 8
 }
 
+// East shifts the given BB to the east.
 func (b Board) East() Board {
 	return (b &^ FileH) << 1
 }
 
+// West shifts the given BB to the west.
 func (b Board) West() Board {
 	return (b &^ FileA) >> 1
 }
 
+// Pop returns the LSB of the given BB and removes it.
 func (b *Board) Pop() square.Square {
 	sq := b.FirstOne()
 	*b &= *b - 1
 	return sq
 }
 
+// Count returns the number of set bits in the given BB.
+func (b Board) Count() int {
+	return bits.OnesCount64(uint64(b))
+}
+
+// TODO: this is a duplicate of Count, remove it.
 func (b Board) CountBits() int {
 	return bits.OnesCount64(uint64(b))
 }
 
+// FirstOne returns the LSB of the given BB.
 func (b Board) FirstOne() square.Square {
 	return square.Square(bits.TrailingZeros64(uint64(b)))
 }
