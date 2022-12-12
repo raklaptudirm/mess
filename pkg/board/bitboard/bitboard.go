@@ -101,11 +101,6 @@ func (b Board) Count() int {
 	return bits.OnesCount64(uint64(b))
 }
 
-// TODO: this is a duplicate of Count, remove it.
-func (b Board) CountBits() int {
-	return bits.OnesCount64(uint64(b))
-}
-
 // FirstOne returns the LSB of the given BB.
 func (b Board) FirstOne() square.Square {
 	return square.Square(bits.TrailingZeros64(uint64(b)))

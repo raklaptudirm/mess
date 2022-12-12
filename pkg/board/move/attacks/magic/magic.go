@@ -45,7 +45,7 @@ func NewTable(maskN int, moveFunc MoveFunc) *Table {
 		magic := &t.Magics[s]
 
 		magic.BlockerMask = moveFunc(s, bitboard.Empty, true)
-		bitCount := magic.BlockerMask.CountBits()
+		bitCount := magic.BlockerMask.Count()
 		magic.Shift = uint8(64 - bitCount)
 
 		permutationsN := 1 << bitCount
