@@ -1,4 +1,4 @@
-// Copyright © 2022 Rak Laptudirm <raklaptudirm@gmail.com>
+// Copyright © 2022 Rak Laptudirm <rak@laptudirm.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,61 +11,81 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package board implements a complete chess board along with valid move
-// generation and other related utilities.
+// Package package board contains the main board representation used by the
+// mess chess engine. It may be used as a library when developing other
+// engines. It also contains various sub-packages related to the board
+// representation.
 package board
 
 import (
 	"fmt"
 
-	"laptudirm.com/x/mess/pkg/attacks"
+	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/board/bitboard"
 	"laptudirm.com/x/mess/pkg/board/mailbox"
-	"laptudirm.com/x/mess/pkg/castling"
-	"laptudirm.com/x/mess/pkg/move"
-	"laptudirm.com/x/mess/pkg/piece"
-	"laptudirm.com/x/mess/pkg/square"
-	"laptudirm.com/x/mess/pkg/zobrist"
+	"laptudirm.com/x/mess/pkg/board/move"
+	"laptudirm.com/x/mess/pkg/board/move/attacks"
+	"laptudirm.com/x/mess/pkg/board/move/castling"
+	"laptudirm.com/x/mess/pkg/board/piece"
+	"laptudirm.com/x/mess/pkg/board/square"
+	"laptudirm.com/x/mess/pkg/board/zobrist"
 )
 
-// Board represents the state of a chessboard at a given position.
+// Board represents the state of a chessboard at a given position. It
+// contains two representations of the chess board: a 8x8 mailbox which is
+// used to easily look up what piece occupies a given square, and a
+// bitboard representation, used for various bitwise calculations like
+// calculating the attack sets of pieces.
+//
+// Board contains the additional state information of a chessboard like the
+// half-move clock, en passant square, number of plys, etc.
+//
+// Various pre-calculated utility information like check masks and pin
+// masks are stored in Board to prevent the need for expensive calculation.
 type Board struct {
-	// position data
-	Hash     zobrist.Key
-	Position mailbox.Board // 8x8 for fast lookup
-	PieceBBs [piece.NType]bitboard.Board
-	ColorBBs [piece.NColor]bitboard.Board
+	// main position data:
+	// these are the basic position data for a chessboard
 
-	Kings [piece.NColor]square.Square
+	// zobrist hash of current position
+	Hash zobrist.Key
 
+	// 8x8 mailbox board representation
+	Position mailbox.Board
+
+	// bitboard board representation
+	PieceBBs [piece.TypeN]bitboard.Board
+	ColorBBs [piece.ColorN]bitboard.Board
+
+	// other necessary information
 	SideToMove      piece.Color
 	EnPassantTarget square.Square
 	CastlingRights  castling.Rights
-
-	CheckN    int
-	CheckMask bitboard.Board
-
-	PinnedD  bitboard.Board
-	PinnedHV bitboard.Board
-
-	SeenByEnemy bitboard.Board
 
 	// move counters
 	Plys      int
 	FullMoves int
 	DrawClock int
 
-	// game data
-	History [1024]Undo
+	UtilityInfo moveGenState
+
+	// game history
+	History [move.MaxN]BoardState
 }
 
-type Undo struct {
-	Move            move.Move
+// BoardState contains the irreversible position data of a given board
+// state. This is used to rollback to a previous position in UnmakeMove.
+type BoardState struct {
+	// move information
+	Move          move.Move   // move made on this BoardState
+	CapturedPiece piece.Piece // piece captured by playing Move
+
+	// irreversible information
 	CastlingRights  castling.Rights
-	CapturedPiece   piece.Piece
 	EnPassantTarget square.Square
 	DrawClock       int
-	Hash            zobrist.Key
+
+	// zobrist key is reversible but is stored for repetition detection
+	Hash zobrist.Key
 }
 
 // String converts a Board into a human readable string.
@@ -73,27 +93,37 @@ func (b Board) String() string {
 	return fmt.Sprintf("%s\nFen: %s\nKey: %X\n", b.Position, b.FEN(), b.Hash)
 }
 
+// IsDraw checks if the given position is a draw either by the 50 move rule
+// or by a repetition. Threefold repetition is not calculated as it is just
+// simpler to evaluate any repetition as a draw.
 func (b *Board) IsDraw() bool {
-	return b.DrawClock >= 100 || b.RepetitionCount() >= 2
+	return b.DrawClock >= 100 || b.IsRepetition()
 }
 
-func (b *Board) RepetitionCount() int {
-	repCount := 0
-	for i := b.Plys - 2; i >= 0 && i >= (b.Plys-b.DrawClock); i -= 2 {
+// IsRepetition checks if the current position has occurred in the game
+// before. This is done by probing the game history till the last
+// irreversible move, which is pawn pushes or a capture.
+func (b *Board) IsRepetition() bool {
+	// probe till game start or last irreversible move, whichever is closer
+	depth := util.Max(0, b.Plys-b.DrawClock)
+
+	for i := b.Plys - 2; i >= depth; i -= 2 {
 		if b.History[i].Hash == b.Hash {
-			repCount++
+			return true
 		}
 	}
 
-	return repCount
+	return false
 }
 
-func (b *Board) Occupied() bitboard.Board {
-	return b.ColorBBs[piece.White] | b.ColorBBs[piece.Black]
-}
-
+// ClearSquare removes the piece occupying the given square and updates the
+// dependent position information accordingly.
 func (b *Board) ClearSquare(s square.Square) {
 	p := b.Position[s]
+
+	if p == piece.NoPiece {
+		return
+	}
 
 	b.ColorBBs[p.Color()].Unset(s)
 
@@ -103,182 +133,76 @@ func (b *Board) ClearSquare(s square.Square) {
 	b.Hash ^= zobrist.PieceSquare[p][s] // zobrist hash
 }
 
+// FillSquare fills the given square with the given piece. Callers should
+// make sure that the provided square is unoccupied, otherwise the
+// incrementally updating the position will give wrong results.
 func (b *Board) FillSquare(s square.Square, p piece.Piece) {
 	c := p.Color()
 	t := p.Type()
 
 	b.ColorBBs[c].Set(s)
 
-	if t == piece.King {
-		b.Kings[c] = s
-	}
-
 	b.PieceBBs[t].Set(s)                // piece bitboard
 	b.Position[s] = p                   // mailbox board
 	b.Hash ^= zobrist.PieceSquare[p][s] // zobrist hash
 }
 
+// IsInCheck checks if the side with the given color is in check.
 func (b *Board) IsInCheck(c piece.Color) bool {
-	return b.IsAttacked(b.Kings[c], c.Other())
+	return b.IsAttacked(b.KingBB(c).FirstOne(), c.Other())
 }
 
+// IsAttacked checks if the given squares is attacked by pieces of the
+// given color.
 func (b *Board) IsAttacked(s square.Square, them piece.Color) bool {
-	occ := b.Occupied()
-
-	if attacks.Pawn[them.Other()][s]&b.Pawns(them) != bitboard.Empty {
+	if attacks.Pawn[them.Other()][s]&b.PawnsBB(them) != bitboard.Empty {
 		return true
 	}
 
-	if attacks.Knight[s]&b.Knights(them) != bitboard.Empty {
+	if attacks.Knight[s]&b.KnightsBB(them) != bitboard.Empty {
 		return true
 	}
 
-	if attacks.King[s]&b.King(them) != bitboard.Empty {
+	if attacks.King[s]&b.KingBB(them) != bitboard.Empty {
 		return true
 	}
 
-	queens := b.Queens(them)
+	blockers := b.ColorBBs[piece.White] | b.ColorBBs[piece.Black]
+	queens := b.QueensBB(them)
 
-	if attacks.Bishop(s, occ)&(b.Bishops(them)|queens) != bitboard.Empty {
+	if attacks.Bishop(s, blockers)&(b.BishopsBB(them)|queens) != bitboard.Empty {
 		return true
 	}
 
-	return attacks.Rook(s, occ)&(b.Rooks(them)|queens) != bitboard.Empty
+	return attacks.Rook(s, blockers)&(b.RooksBB(them)|queens) != bitboard.Empty
 }
 
-func (b *Board) Pawns(c piece.Color) bitboard.Board {
+// PawnsBB returns a bitboard of all the pawns of the given color.
+func (b *Board) PawnsBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.Pawn] & b.ColorBBs[c]
 }
 
-func (b *Board) Knights(c piece.Color) bitboard.Board {
+// KnightsBB returns a bitboard of all the knights of the given color.
+func (b *Board) KnightsBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.Knight] & b.ColorBBs[c]
 }
 
-func (b *Board) Bishops(c piece.Color) bitboard.Board {
+// BishopsBB returns a bitboard of all the bishops of the given color.
+func (b *Board) BishopsBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.Bishop] & b.ColorBBs[c]
 }
 
-func (b *Board) Rooks(c piece.Color) bitboard.Board {
+// RooksBB returns a bitboard of all the rooks of the given color.
+func (b *Board) RooksBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.Rook] & b.ColorBBs[c]
 }
 
-func (b *Board) Queens(c piece.Color) bitboard.Board {
+// QueensBB returns a bitboard of all the queens of the given color.
+func (b *Board) QueensBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.Queen] & b.ColorBBs[c]
 }
 
-func (b *Board) King(c piece.Color) bitboard.Board {
+// KingBB returns a bitboard containing the king of the given color.
+func (b *Board) KingBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.King] & b.ColorBBs[c]
-}
-
-func (b *Board) CalculateCheckmask() {
-	occ := b.Occupied()
-
-	us := b.SideToMove
-	them := us.Other()
-
-	b.CheckN = 0
-	b.CheckMask = bitboard.Empty
-
-	kingSq := b.Kings[us]
-
-	pawns := b.Pawns(them) & attacks.Pawn[us][kingSq]
-	knights := b.Knights(them) & attacks.Knight[kingSq]
-	bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, occ)
-	rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, occ)
-
-	switch {
-	case pawns != bitboard.Empty:
-		b.CheckMask |= pawns
-		b.CheckN++
-
-	case knights != bitboard.Empty:
-		b.CheckMask |= knights
-		b.CheckN++
-	}
-
-	if bishops != bitboard.Empty {
-		bishopSq := bishops.FirstOne()
-		b.CheckMask |= attacks.Between[kingSq][bishopSq] | bitboard.Squares[bishopSq]
-		b.CheckN++
-	}
-
-	if b.CheckN < 2 && rooks != bitboard.Empty {
-		if b.CheckN == 0 && rooks.Count() > 1 {
-			b.CheckN++
-		} else {
-			rookSq := rooks.FirstOne()
-			b.CheckMask |= attacks.Between[kingSq][rookSq] | bitboard.Squares[rookSq]
-			b.CheckN++
-		}
-	}
-
-	if b.CheckN == 0 {
-		b.CheckMask = bitboard.Universe
-	}
-}
-
-func (b *Board) CalculatePinmask() {
-	us := b.SideToMove
-	them := us.Other()
-
-	kingSq := b.Kings[us]
-
-	friends := b.ColorBBs[us]
-	enemies := b.ColorBBs[them]
-
-	b.PinnedD = bitboard.Empty
-	b.PinnedHV = bitboard.Empty
-
-	for rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, enemies); rooks != bitboard.Empty; {
-		rook := rooks.Pop()
-		possiblePin := attacks.Between[kingSq][rook] | bitboard.Squares[rook]
-		if (possiblePin & friends).Count() == 1 {
-			b.PinnedHV |= possiblePin
-		}
-	}
-
-	for bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, enemies); bishops != bitboard.Empty; {
-		bishop := bishops.Pop()
-		possiblePin := attacks.Between[kingSq][bishop] | bitboard.Squares[bishop]
-		if (possiblePin & friends).Count() == 1 {
-			b.PinnedD |= possiblePin
-		}
-	}
-}
-
-func (b *Board) SeenSquares(by piece.Color) bitboard.Board {
-	pawns := b.Pawns(by)
-	knights := b.Knights(by)
-	bishops := b.Bishops(by)
-	rooks := b.Rooks(by)
-	queens := b.Queens(by)
-	kingSq := b.Kings[by]
-
-	occ := b.Occupied() &^ b.King(by.Other())
-
-	seen := attacks.PawnsLeft(pawns, by) | attacks.PawnsRight(pawns, by)
-
-	for knights != bitboard.Empty {
-		from := knights.Pop()
-		seen |= attacks.Knight[from]
-	}
-
-	for bishops != bitboard.Empty {
-		from := bishops.Pop()
-		seen |= attacks.Bishop(from, occ)
-	}
-
-	for rooks != bitboard.Empty {
-		from := rooks.Pop()
-		seen |= attacks.Rook(from, occ)
-	}
-
-	for queens != bitboard.Empty {
-		from := queens.Pop()
-		seen |= attacks.Queen(from, occ)
-	}
-
-	seen |= attacks.King[kingSq]
-
-	return seen
 }

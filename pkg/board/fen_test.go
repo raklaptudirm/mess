@@ -19,7 +19,7 @@ func TestFEN(t *testing.T) {
 
 	for n, test := range tests {
 		t.Run(test, func(t *testing.T) {
-			b := board.New(test)
+			b := board.NewBoard(test)
 			newFEN := b.FEN()
 			if test != newFEN {
 				t.Errorf("test %d: wrong fen\n%s\n%s\n", n, test, newFEN)

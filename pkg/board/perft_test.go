@@ -164,7 +164,7 @@ func TestPerft(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("perft(%d) of %s", test.depth, test.fen), func(*testing.T) {
-			bo := board.New(test.fen)
+			bo := board.NewBoard(test.fen)
 			result := board.Perft(bo, test.depth)
 			if result != test.perft {
 				t.Errorf("perft(%d) of %s: got %d instead of %d\n", test.depth, test.fen, result, test.perft)

@@ -1,4 +1,4 @@
-// Copyright © 2022 Rak Laptudirm <raklaptudirm@gmail.com>
+// Copyright © 2022 Rak Laptudirm <rak@laptudirm.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package mailbox
 import (
 	"fmt"
 
-	"laptudirm.com/x/mess/pkg/piece"
-	"laptudirm.com/x/mess/pkg/square"
+	"laptudirm.com/x/mess/pkg/board/piece"
+	"laptudirm.com/x/mess/pkg/board/square"
 )
 
 // Board represents a 8x8 chessboard consisting of pieces.
@@ -34,7 +34,7 @@ func (b Board) String() string {
 		s += "| "
 
 		for file := square.FileA; file <= square.FileH; file++ {
-			square := square.From(file, rank)
+			square := square.New(file, rank)
 			s += b[square].String() + " | "
 		}
 

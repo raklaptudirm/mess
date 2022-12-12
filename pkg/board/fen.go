@@ -1,4 +1,4 @@
-// Copyright © 2022 Rak Laptudirm <raklaptudirm@gmail.com>
+// Copyright © 2022 Rak Laptudirm <rak@laptudirm.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,19 +14,18 @@
 package board
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
-	"laptudirm.com/x/mess/pkg/castling"
-	"laptudirm.com/x/mess/pkg/piece"
-	"laptudirm.com/x/mess/pkg/square"
-	"laptudirm.com/x/mess/pkg/zobrist"
+	"laptudirm.com/x/mess/pkg/board/move/castling"
+	"laptudirm.com/x/mess/pkg/board/piece"
+	"laptudirm.com/x/mess/pkg/board/square"
+	"laptudirm.com/x/mess/pkg/board/zobrist"
 )
 
-// New creates an instance of a *Board from a given fen string.
+// NewBoard creates an instance of a *Board from a given fen string.
 // https://www.chessprogramming.org/Forsyth-Edwards_Notation
-func New(fen string) *Board {
+func NewBoard(fen string) *Board {
 	var board Board
 
 	parts := strings.Split(fen, " ")
@@ -42,7 +41,7 @@ func New(fen string) *Board {
 	for rankId, rankData := range ranks {
 		fileId := square.FileA
 		for _, id := range rankData {
-			s := square.From(fileId, square.Rank(rankId))
+			s := square.New(fileId, square.Rank(rankId))
 
 			if id >= '1' && id <= '8' {
 				skip := square.File(id - 48) // ascii value to number
@@ -66,7 +65,7 @@ func New(fen string) *Board {
 	board.Hash ^= zobrist.Castling[board.CastlingRights]
 
 	// en-passant target square
-	board.EnPassantTarget = square.New(parts[3])
+	board.EnPassantTarget = square.NewFromString(parts[3])
 	if board.EnPassantTarget != square.None {
 		board.Hash ^= zobrist.EnPassant[board.EnPassantTarget.File()]
 	}
@@ -80,6 +79,12 @@ func New(fen string) *Board {
 
 // FEN returns the fen string of the current Board position.
 func (b *Board) FEN() string {
-	// <position> <side to move> <castling rights> <en passant target> <half move count> <full move count>
-	return fmt.Sprintf("%s %s %s %s %d %d", b.Position.FEN(), b.SideToMove, b.CastlingRights.String(), b.EnPassantTarget, b.DrawClock, b.FullMoves)
+	var fenString string
+	fenString += b.Position.FEN() + " "
+	fenString += b.SideToMove.String() + " "
+	fenString += b.CastlingRights.String() + " "
+	fenString += b.EnPassantTarget.String() + " "
+	fenString += strconv.Itoa(b.DrawClock) + " "
+	fenString += strconv.Itoa(b.FullMoves)
+	return fenString
 }
