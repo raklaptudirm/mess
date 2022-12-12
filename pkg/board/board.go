@@ -66,37 +66,10 @@ type Board struct {
 	FullMoves int
 	DrawClock int
 
+	UtilityInfo moveGenState
+
 	// game history
 	History [move.MaxN]BoardState
-
-	// utility information:
-	// these data, used by movegen can be calculated from the main board
-	// state but are time expensive, so are instead stored in Board
-
-	// bitboards classified by side to move
-	Friends bitboard.Board
-	Enemies bitboard.Board
-
-	// precalculated Friends | Enemies
-	Occupied bitboard.Board
-
-	// king square lookup table
-	Kings [piece.ColorN]square.Square
-
-	// places where pieces can move to
-	// calculated as ^Friends & CheckMask
-	Target bitboard.Board
-
-	// check information
-	CheckN    int
-	CheckMask bitboard.Board
-
-	// pinned piece information
-	PinnedD  bitboard.Board
-	PinnedHV bitboard.Board
-
-	// squares attacked by enemy pieces
-	SeenByEnemy bitboard.Board
 }
 
 // BoardState contains the irreversible position data of a given board
@@ -148,6 +121,10 @@ func (b *Board) IsRepetition() bool {
 func (b *Board) ClearSquare(s square.Square) {
 	p := b.Position[s]
 
+	if p == piece.NoPiece {
+		return
+	}
+
 	b.ColorBBs[p.Color()].Unset(s)
 
 	// remove piece from other records
@@ -165,10 +142,6 @@ func (b *Board) FillSquare(s square.Square, p piece.Piece) {
 
 	b.ColorBBs[c].Set(s)
 
-	if t == piece.King {
-		b.Kings[c] = s
-	}
-
 	b.PieceBBs[t].Set(s)                // piece bitboard
 	b.Position[s] = p                   // mailbox board
 	b.Hash ^= zobrist.PieceSquare[p][s] // zobrist hash
@@ -176,214 +149,60 @@ func (b *Board) FillSquare(s square.Square, p piece.Piece) {
 
 // IsInCheck checks if the side with the given color is in check.
 func (b *Board) IsInCheck(c piece.Color) bool {
-	return b.IsAttacked(b.Kings[c], c.Other())
+	return b.IsAttacked(b.KingBB(c).FirstOne(), c.Other())
 }
 
 // IsAttacked checks if the given squares is attacked by pieces of the
 // given color.
 func (b *Board) IsAttacked(s square.Square, them piece.Color) bool {
-	if attacks.Pawn[them.Other()][s]&b.Pawns(them) != bitboard.Empty {
+	if attacks.Pawn[them.Other()][s]&b.PawnsBB(them) != bitboard.Empty {
 		return true
 	}
 
-	if attacks.Knight[s]&b.Knights(them) != bitboard.Empty {
+	if attacks.Knight[s]&b.KnightsBB(them) != bitboard.Empty {
 		return true
 	}
 
-	if attacks.King[s]&b.King(them) != bitboard.Empty {
+	if attacks.King[s]&b.KingBB(them) != bitboard.Empty {
 		return true
 	}
 
-	queens := b.Queens(them)
+	blockers := b.ColorBBs[piece.White] | b.ColorBBs[piece.Black]
+	queens := b.QueensBB(them)
 
-	if attacks.Bishop(s, b.Occupied)&(b.Bishops(them)|queens) != bitboard.Empty {
+	if attacks.Bishop(s, blockers)&(b.BishopsBB(them)|queens) != bitboard.Empty {
 		return true
 	}
 
-	return attacks.Rook(s, b.Occupied)&(b.Rooks(them)|queens) != bitboard.Empty
+	return attacks.Rook(s, blockers)&(b.RooksBB(them)|queens) != bitboard.Empty
 }
 
-// Pawns returns a bitboard of all the pawns of the given color.
-func (b *Board) Pawns(c piece.Color) bitboard.Board {
+// PawnsBB returns a bitboard of all the pawns of the given color.
+func (b *Board) PawnsBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.Pawn] & b.ColorBBs[c]
 }
 
-// Knights returns a bitboard of all the knights of the given color.
-func (b *Board) Knights(c piece.Color) bitboard.Board {
+// KnightsBB returns a bitboard of all the knights of the given color.
+func (b *Board) KnightsBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.Knight] & b.ColorBBs[c]
 }
 
-// Bishops returns a bitboard of all the bishops of the given color.
-func (b *Board) Bishops(c piece.Color) bitboard.Board {
+// BishopsBB returns a bitboard of all the bishops of the given color.
+func (b *Board) BishopsBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.Bishop] & b.ColorBBs[c]
 }
 
-// Rooks returns a bitboard of all the rooks of the given color.
-func (b *Board) Rooks(c piece.Color) bitboard.Board {
+// RooksBB returns a bitboard of all the rooks of the given color.
+func (b *Board) RooksBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.Rook] & b.ColorBBs[c]
 }
 
-// Queens returns a bitboard of all the queens of the given color.
-func (b *Board) Queens(c piece.Color) bitboard.Board {
+// QueensBB returns a bitboard of all the queens of the given color.
+func (b *Board) QueensBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.Queen] & b.ColorBBs[c]
 }
 
-// King returns a bitboard containing the king of the given color.
-func (b *Board) King(c piece.Color) bitboard.Board {
+// KingBB returns a bitboard containing the king of the given color.
+func (b *Board) KingBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.King] & b.ColorBBs[c]
-}
-
-// InitBitboards initializes all the different utility bitboards which are
-// calculated and necessary for move generation.
-func (b *Board) InitBitboards() {
-	b.Friends = b.ColorBBs[b.SideToMove]
-	b.Enemies = b.ColorBBs[b.SideToMove.Other()]
-	b.Occupied = b.Friends | b.Enemies
-	b.CalculateCheckmask()
-	b.CalculatePinmask()
-	b.SeenByEnemy = b.SeenSquares(b.SideToMove.Other())
-	b.Target = ^b.Friends & b.CheckMask
-}
-
-// CalculateCheckmask calculates the check-mask of the current board state,
-// along with the number of checkers.
-//
-// A checker is an enemy piece which is directly checking the king. The
-// number of checkers can be a maximum of two (double check).
-//
-// The check-mask is defined as all the squares to which if a friendly
-// piece is moved to will block all checks. This is defined as empty for
-// double check, the checking piece and, if the checker is a sliding piece,
-// the squares between the king and the checker. The bitboard is universe
-// if the king is not in check.
-func (b *Board) CalculateCheckmask() {
-	us := b.SideToMove
-	them := us.Other()
-
-	b.CheckN = 0
-	b.CheckMask = bitboard.Empty
-
-	kingSq := b.Kings[us]
-
-	pawns := b.Pawns(them) & attacks.Pawn[us][kingSq]
-	knights := b.Knights(them) & attacks.Knight[kingSq]
-	bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, b.Occupied)
-	rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, b.Occupied)
-
-	// a pawn and a knight cannot be checking the king at the same time as
-	// they are not sliding pieces thus discovered attacks are impossible
-	switch {
-	case pawns != bitboard.Empty:
-		b.CheckMask |= pawns
-		b.CheckN++
-
-	case knights != bitboard.Empty:
-		b.CheckMask |= knights
-		b.CheckN++
-	}
-
-	if bishops != bitboard.Empty {
-		bishopSq := bishops.FirstOne()
-		b.CheckMask |= bitboard.Between[kingSq][bishopSq] | bitboard.Squares[bishopSq]
-		b.CheckN++
-	}
-
-	// 2 is the largest possible value for CheckN so short circuit if thats reached
-	if b.CheckN < 2 && rooks != bitboard.Empty {
-		if b.CheckN == 0 && rooks.Count() > 1 {
-			// double check, don't set the check-mask
-			b.CheckN++
-		} else {
-			rookSq := rooks.FirstOne()
-			b.CheckMask |= bitboard.Between[kingSq][rookSq] | bitboard.Squares[rookSq]
-			b.CheckN++
-		}
-	}
-
-	if b.CheckN == 0 {
-		// king is not in check so check-mask is universe
-		b.CheckMask = bitboard.Universe
-	}
-}
-
-// CalculatePinmask calculates the horizontal and vertical pin-masks.
-// A pin-mask is defined as the mask containing all attack rays pieces
-// pinning a piece in a given direction (horizontal or vertical).
-func (b *Board) CalculatePinmask() {
-	us := b.SideToMove
-	them := us.Other()
-
-	kingSq := b.Kings[us]
-
-	friends := b.ColorBBs[us]
-	enemies := b.ColorBBs[them]
-
-	b.PinnedD = bitboard.Empty
-	b.PinnedHV = bitboard.Empty
-
-	// consider enemy rooks and queens which are attacking or would attack the king if not for intervening pieces
-	// the king is considered as a rook for this and it's attack sets & with rooks and queens gives the bitboard
-	for rooks := (b.Rooks(them) | b.Queens(them)) & attacks.Rook(kingSq, enemies); rooks != bitboard.Empty; {
-		rook := rooks.Pop()
-		possiblePin := bitboard.Between[kingSq][rook] | bitboard.Squares[rook]
-
-		// if there is only one friendly piece blocking the ray, it is pinned
-		if (possiblePin & friends).Count() == 1 {
-			b.PinnedHV |= possiblePin
-		}
-	}
-
-	// consider enemy bishops and queens which are attacking or would attack the king if not for intervening pieces
-	// the king is considered as a bishop for this and it's attack sets & with bishops and queens gives the bitboard
-	for bishops := (b.Bishops(them) | b.Queens(them)) & attacks.Bishop(kingSq, enemies); bishops != bitboard.Empty; {
-		bishop := bishops.Pop()
-		possiblePin := bitboard.Between[kingSq][bishop] | bitboard.Squares[bishop]
-
-		// if there is only one friendly piece blocking the ray, it is pinned
-		if (possiblePin & friends).Count() == 1 {
-			b.PinnedD |= possiblePin
-		}
-	}
-}
-
-// SeenSquares returns a bitboard containing all the squares that are
-// seen(attacked) by pieces of the given color. The enemy king is not
-// considered as a sliding ray blocker by SeenSquares since it has to
-// move away from the attack exposing the blocked squares.
-func (b *Board) SeenSquares(by piece.Color) bitboard.Board {
-	pawns := b.Pawns(by)
-	knights := b.Knights(by)
-	bishops := b.Bishops(by)
-	rooks := b.Rooks(by)
-	queens := b.Queens(by)
-	kingSq := b.Kings[by]
-
-	// don't consider the enemy king as a blocker
-	blockers := b.Occupied &^ b.King(by.Other())
-
-	seen := attacks.PawnsLeft(pawns, by) | attacks.PawnsRight(pawns, by)
-
-	for knights != bitboard.Empty {
-		from := knights.Pop()
-		seen |= attacks.Knight[from]
-	}
-
-	for bishops != bitboard.Empty {
-		from := bishops.Pop()
-		seen |= attacks.Bishop(from, blockers)
-	}
-
-	for rooks != bitboard.Empty {
-		from := rooks.Pop()
-		seen |= attacks.Rook(from, blockers)
-	}
-
-	for queens != bitboard.Empty {
-		from := queens.Pop()
-		seen |= attacks.Queen(from, blockers)
-	}
-
-	seen |= attacks.King[kingSq]
-
-	return seen
 }

@@ -73,7 +73,7 @@ func (b *Board) MakeMove(m move.Move) {
 		}
 
 		// only set en passant square if an enemy pawn can capture it
-		if b.Pawns(b.SideToMove.Other())&attacks.Pawn[b.SideToMove][target] != 0 {
+		if b.PawnsBB(b.SideToMove.Other())&attacks.Pawn[b.SideToMove][target] != 0 {
 			b.EnPassantTarget = target
 			// and new square to zobrist hash
 			b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()]

@@ -21,7 +21,7 @@ func Perft(b *Board, depth int) int {
 	}
 
 	var nodes int
-	moves := b.GenerateMoves()
+	moves := b.GenerateMoves(false)
 
 	for _, move := range moves {
 		b.MakeMove(move)
@@ -40,10 +40,10 @@ func perft(b *Board, depth int) int {
 	case 0:
 		return 1
 	case 1:
-		return len(b.GenerateMoves())
+		return len(b.GenerateMoves(false))
 	default:
 		var nodes int
-		moves := b.GenerateMoves()
+		moves := b.GenerateMoves(false)
 
 		for _, move := range moves {
 			b.MakeMove(move)

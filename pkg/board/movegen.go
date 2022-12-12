@@ -24,250 +24,228 @@ import (
 
 // GenerateMoves generates a move list of all the possible legal moves in
 // the current position.
-func (b *Board) GenerateMoves() []move.Move {
-	// initialize the utility bitboards like check-mask and pin-masks
-	b.InitBitboards()
+func (b *Board) GenerateMoves(tacticalOnly bool) []move.Move {
+	// initialize movegen state
+	state := moveGenState{Board: b}
+	state.Init(tacticalOnly)
 
-	// 31 is the average number of chess moveList in a position
-	// source: https://chess.stackexchange.com/a/24325/33336
-	moveList := make([]move.Move, 0, 31)
-
-	b.appendKingMoves(&moveList)
-
-	if b.CheckN >= 2 {
-		// only king moves are possible in double check
-		return moveList
+	// append moves to movelist
+	if state.CheckN < 2 {
+		// moves of other pieces are only possible
+		// if the king is not in double check
+		state.appendPawnMoves()
+		state.appendKnightMoves()
+		state.appendBishopMoves()
+		state.appendRookMoves()
+		state.appendQueenMoves()
 	}
 
-	// moves of other pieces
-	b.appendKnightMoves(&moveList)
-	b.appendBishopMoves(&moveList)
-	b.appendRookMoves(&moveList)
-	b.appendQueenMoves(&moveList)
-	b.appendPawnMoves(&moveList)
+	// king moves are always possible
+	state.appendKingMoves()
 
-	return moveList
+	return state.MoveList
 }
 
-func (b *Board) appendKingMoves(moveList *[]move.Move) {
-	king := piece.New(piece.King, b.SideToMove)
-	kingSq := b.Kings[b.SideToMove]
+func (s *moveGenState) appendKingMoves() {
+	kingSq := s.Kings[s.SideToMove]
 
 	// king can't move to squares occupied by a friend or sen by an enemy
-	kingMoves := attacks.King[kingSq] &^ (b.Friends | b.SeenByEnemy)
-	b.serializeMoves(moveList, king, kingSq, kingMoves)
+	kingMoves := attacks.King[kingSq] & s.KingTarget
+	s.serializeMoves(s.King, kingSq, kingMoves)
 
-	if b.CheckN == 0 {
+	if !s.TacticalOnly && s.CheckN == 0 {
 		// castling can only occur if king is not in check
-		b.appendCastlingMoves(moveList)
+		s.appendCastlingMoves()
 	}
 }
 
-func (b *Board) appendKnightMoves(moveList *[]move.Move) {
-	knight := piece.New(piece.Knight, b.SideToMove)
+func (s *moveGenState) appendKnightMoves() {
 	// knights pinned in any direction can't move
-	for knights := b.Knights(b.SideToMove) &^ (b.PinnedD | b.PinnedHV); knights != bitboard.Empty; {
+	for knights := s.KnightsBB(s.SideToMove) &^ (s.PinnedD | s.PinnedHV); knights != bitboard.Empty; {
 		from := knights.Pop()
-		knightMoves := attacks.Knight[from] & b.Target
-		b.serializeMoves(moveList, knight, from, knightMoves)
+		knightMoves := attacks.Knight[from] & s.Target
+		s.serializeMoves(s.Knight, from, knightMoves)
 	}
 }
 
-func (b *Board) appendBishopMoves(moveList *[]move.Move) {
-	b.appendBishopTypeMoves(moveList, piece.New(piece.Bishop, b.SideToMove), b.Bishops(b.SideToMove))
+func (s *moveGenState) appendBishopMoves() {
+	s.appendBishopTypeMoves(s.Bishop, s.BishopsBB(s.SideToMove))
 }
 
-func (b *Board) appendRookMoves(moveList *[]move.Move) {
-	b.appendRookTypeMoves(moveList, piece.New(piece.Rook, b.SideToMove), b.Rooks(b.SideToMove))
+func (s *moveGenState) appendRookMoves() {
+	s.appendRookTypeMoves(s.Rook, s.RooksBB(s.SideToMove))
 }
 
-func (b *Board) appendQueenMoves(moveList *[]move.Move) {
-	queen := piece.New(piece.Queen, b.SideToMove)
-	queens := b.Queens(b.SideToMove)
+func (s *moveGenState) appendQueenMoves() {
+	queens := s.QueensBB(s.SideToMove)
 
-	b.appendBishopTypeMoves(moveList, queen, queens)
-	b.appendRookTypeMoves(moveList, queen, queens)
+	s.appendBishopTypeMoves(s.Queen, queens)
+	s.appendRookTypeMoves(s.Queen, queens)
 }
 
 // appendBishopTypeMoves appends the moves of any pieces which moves like a bishop.
-func (b *Board) appendBishopTypeMoves(moveList *[]move.Move, bishop piece.Piece, bishops bitboard.Board) {
-	bishops &^= b.PinnedHV
+func (s *moveGenState) appendBishopTypeMoves(bishop piece.Piece, bishops bitboard.Board) {
+	bishops &^= s.PinnedHV
 
-	pinned := bishops & b.PinnedD
+	pinned := bishops & s.PinnedD
 	for pinned != bitboard.Empty {
 		from := pinned.Pop()
 		// pinned bishops can only move in their pin-mask
-		bishopMoves := attacks.Bishop(from, b.Occupied) & b.Target & b.PinnedD
-		b.serializeMoves(moveList, bishop, from, bishopMoves)
+		bishopMoves := attacks.Bishop(from, s.Occupied) & s.Target & s.PinnedD
+		s.serializeMoves(bishop, from, bishopMoves)
 	}
 
-	unpinned := bishops &^ b.PinnedD
+	unpinned := bishops &^ s.PinnedD
 	for unpinned != bitboard.Empty {
 		from := unpinned.Pop()
-		bishopMoves := attacks.Bishop(from, b.Occupied) & b.Target
-		b.serializeMoves(moveList, bishop, from, bishopMoves)
+		bishopMoves := attacks.Bishop(from, s.Occupied) & s.Target
+		s.serializeMoves(bishop, from, bishopMoves)
 	}
 }
 
 // appendRookTypeMoves appends the moves of any pieces which moves like a rook.
-func (b *Board) appendRookTypeMoves(moveList *[]move.Move, rook piece.Piece, rooks bitboard.Board) {
-	rooks &^= b.PinnedD
+func (s *moveGenState) appendRookTypeMoves(rook piece.Piece, rooks bitboard.Board) {
+	rooks &^= s.PinnedD
 
-	pinned := rooks & b.PinnedHV
+	pinned := rooks & s.PinnedHV
 	for pinned != bitboard.Empty {
 		from := pinned.Pop()
 		// pinned rooks can only move in their pin-mask
-		rookMoves := attacks.Rook(from, b.Occupied) & b.Target & b.PinnedHV
-		b.serializeMoves(moveList, rook, from, rookMoves)
+		rookMoves := attacks.Rook(from, s.Occupied) & s.Target & s.PinnedHV
+		s.serializeMoves(rook, from, rookMoves)
 	}
 
-	unpinned := rooks &^ b.PinnedHV
+	unpinned := rooks &^ s.PinnedHV
 	for unpinned != bitboard.Empty {
 		from := unpinned.Pop()
-		rookMoves := attacks.Rook(from, b.Occupied) & b.Target
-		b.serializeMoves(moveList, rook, from, rookMoves)
+		rookMoves := attacks.Rook(from, s.Occupied) & s.Target
+		s.serializeMoves(rook, from, rookMoves)
 	}
 }
 
-func (b *Board) appendPawnMoves(moveList *[]move.Move) {
-	// various properties which change depending on the side to move
+func (s *moveGenState) appendPawnMoves() {
+	s.appendPawnCaptures()
 
-	var down, left, right square.Square
-	var promotionRank bitboard.Board
-	var enPassantRank bitboard.Board
-	var doublePushRank bitboard.Board
-	var p piece.Piece
+	pushTarget := s.CheckMask &^ s.Occupied
 
-	left = -1
-	right = 1
+	// pawns that are pinned diagonally or blocked can't push
+	pawnsThatPush := s.PawnsBB(s.SideToMove) &^ s.PinnedD &^ s.Occupied.Down(s.Us)
 
-	switch b.SideToMove {
-	case piece.White:
-		down = 8
+	pinnedPawnsThatPush := pawnsThatPush & s.PinnedHV
+	unpinnedPawnsThatPush := pawnsThatPush &^ s.PinnedHV
 
-		promotionRank = bitboard.Rank8
-		enPassantRank = bitboard.Rank5
-		doublePushRank = bitboard.Rank3
+	pinnedPawnPushesSingle := attacks.PawnPush(pinnedPawnsThatPush, s.SideToMove) & s.PinnedHV
+	unpinnedPawnPushesSingle := attacks.PawnPush(unpinnedPawnsThatPush, s.SideToMove)
 
-		p = piece.WhitePawn
+	pawnPushesSingle := (pinnedPawnPushesSingle | unpinnedPawnPushesSingle) & pushTarget
 
-	case piece.Black:
-		down = -8
-
-		promotionRank = bitboard.Rank1
-		enPassantRank = bitboard.Rank4
-		doublePushRank = bitboard.Rank6
-
-		p = piece.BlackPawn
+	// pawn pushes which result in promotions
+	for promotionPawnPushes := pawnPushesSingle & s.PromotionRankBB; promotionPawnPushes != bitboard.Empty; {
+		to := promotionPawnPushes.Pop()
+		from := to + s.Down
+		s.appendPromotions(move.New(from, to, s.Pawn, false), s.SideToMove)
 	}
 
-	pushTarget := b.CheckMask &^ b.Occupied
-	captureTarget := b.Enemies & b.CheckMask
+	if s.TacticalOnly {
+		// don't append quiet moves
+		return
+	}
 
-	pawns := b.Pawns(b.SideToMove)
+	// pawn pushes that don't result in promotions
+	for simplePawnPushes := pawnPushesSingle &^ s.PromotionRankBB; simplePawnPushes != bitboard.Empty; {
+		to := simplePawnPushes.Pop()
+		from := to + s.Down
+		s.AppendMoves(move.New(from, to, s.Pawn, false))
+	}
 
-	pawnsThatAttack := pawns &^ b.PinnedHV
+	// double push is the same as a single push on the single pushed pawns
+	// pawnPushes single is not used since pawn pushes which don't block
+	// checks but whose double pushes do block them are removed
+	pawnPushesDouble := (pinnedPawnPushesSingle | unpinnedPawnPushesSingle) & s.DoublePushRankBB
+	pawnPushesDouble = attacks.PawnPush(pawnPushesDouble, s.Us) & pushTarget
 
-	unpinnedPawnsThatAttack := pawnsThatAttack &^ b.PinnedD
-	pinnedPawnsThatAttack := pawnsThatAttack & b.PinnedD
+	// double pawn pushes
+	for pawnPushesDouble != bitboard.Empty {
+		to := pawnPushesDouble.Pop()
+		from := to + s.Down + s.Down
+		s.AppendMoves(move.New(from, to, s.Pawn, false))
+	}
+}
 
-	pawnAttacksL := attacks.PawnsLeft(unpinnedPawnsThatAttack, b.SideToMove) & captureTarget
-	pawnAttacksL |= attacks.PawnsLeft(pinnedPawnsThatAttack, b.SideToMove) & captureTarget & b.PinnedD
+func (s *moveGenState) appendPawnCaptures() {
+	const left = -1
+	const right = 1
 
-	pawnAttacksR := attacks.PawnsRight(unpinnedPawnsThatAttack, b.SideToMove) & captureTarget
-	pawnAttacksR |= attacks.PawnsRight(pinnedPawnsThatAttack, b.SideToMove) & captureTarget & b.PinnedD
+	captureTarget := s.Enemies & s.CheckMask
 
-	simplePawnAttacksL := pawnAttacksL &^ promotionRank
-	simplePawnAttacksR := pawnAttacksR &^ promotionRank
+	// pawns that aren't pinned horizantally or vertically
+	// can freely move in diagonal directions
+	pawnsThatAttack := s.PawnsBB(s.SideToMove) &^ s.PinnedHV
+
+	unpinnedPawnsThatAttack := pawnsThatAttack &^ s.PinnedD
+	pinnedPawnsThatAttack := pawnsThatAttack & s.PinnedD
+
+	pawnAttacksL := attacks.PawnsLeft(unpinnedPawnsThatAttack, s.SideToMove) & captureTarget
+	pawnAttacksL |= attacks.PawnsLeft(pinnedPawnsThatAttack, s.SideToMove) & captureTarget & s.PinnedD
+
+	pawnAttacksR := attacks.PawnsRight(unpinnedPawnsThatAttack, s.SideToMove) & captureTarget
+	pawnAttacksR |= attacks.PawnsRight(pinnedPawnsThatAttack, s.SideToMove) & captureTarget & s.PinnedD
+
+	simplePawnAttacksL := pawnAttacksL &^ s.PromotionRankBB
+	simplePawnAttacksR := pawnAttacksR &^ s.PromotionRankBB
 
 	for simplePawnAttacksL != bitboard.Empty {
 		to := simplePawnAttacksL.Pop()
-		from := to + down + right
-		*moveList = append(*moveList, move.New(from, to, p, true))
+		from := to + s.Down + right
+		s.AppendMoves(move.New(from, to, s.Pawn, true))
 	}
 
 	for simplePawnAttacksR != bitboard.Empty {
 		to := simplePawnAttacksR.Pop()
-		from := to + down + left
-		*moveList = append(*moveList, move.New(from, to, p, true))
+		from := to + s.Down + left
+		s.AppendMoves(move.New(from, to, s.Pawn, true))
 	}
 
-	promotionPawnAttacksL := pawnAttacksL & promotionRank
-	promotionPawnAttacksR := pawnAttacksR & promotionRank
+	promotionPawnAttacksL := pawnAttacksL & s.PromotionRankBB
+	promotionPawnAttacksR := pawnAttacksR & s.PromotionRankBB
 
 	for promotionPawnAttacksL != bitboard.Empty {
 		to := promotionPawnAttacksL.Pop()
-		from := to + down + right
-		appendPromotions(moveList, move.New(from, to, p, true), b.SideToMove)
+		from := to + s.Down + right
+		s.appendPromotions(move.New(from, to, s.Pawn, true), s.SideToMove)
 	}
 
 	for promotionPawnAttacksR != bitboard.Empty {
 		to := promotionPawnAttacksR.Pop()
-		from := to + down + left
-		appendPromotions(moveList, move.New(from, to, p, true), b.SideToMove)
+		from := to + s.Down + left
+		s.appendPromotions(move.New(from, to, s.Pawn, true), s.SideToMove)
 	}
 
-	pawnsThatPush := pawns &^ b.PinnedD
+	// append en passant capture
+	if s.EnPassantTarget != square.None {
+		epPawn := s.EnPassantTarget + s.Down
 
-	unpinnedPawnsThatPush := pawnsThatPush &^ b.PinnedHV
-	pinnedPawnsThatPush := pawnsThatPush & b.PinnedHV
-
-	pawnPushesSingleUnpinned := attacks.PawnPush(unpinnedPawnsThatPush, b.SideToMove)
-	pawnPushesSinglePinned := attacks.PawnPush(pinnedPawnsThatPush, b.SideToMove) & b.PinnedHV
-
-	pawnPushesSingle := (pawnPushesSinglePinned | pawnPushesSingleUnpinned) &^ b.Occupied
-
-	pawnPushesDouble := attacks.PawnPush(pawnPushesSingle&doublePushRank, b.SideToMove) & pushTarget
-
-	pawnPushesSingle &= pushTarget
-
-	simplePawnPushes := pawnPushesSingle &^ promotionRank
-
-	for simplePawnPushes != bitboard.Empty {
-		to := simplePawnPushes.Pop()
-		from := to + down
-		*moveList = append(*moveList, move.New(from, to, p, false))
-	}
-
-	for pawnPushesDouble != bitboard.Empty {
-		to := pawnPushesDouble.Pop()
-		from := to + down + down
-		*moveList = append(*moveList, move.New(from, to, p, false))
-	}
-
-	promotionPawnPushes := pawnPushesSingle & promotionRank
-
-	for promotionPawnPushes != bitboard.Empty {
-		to := promotionPawnPushes.Pop()
-		from := to + down
-		appendPromotions(moveList, move.New(from, to, p, false), b.SideToMove)
-	}
-
-	if b.EnPassantTarget != square.None {
-		epPawn := b.EnPassantTarget + down
-		them := b.SideToMove.Other()
-
-		epMask := bitboard.Squares[b.EnPassantTarget] | bitboard.Squares[epPawn]
+		epMask := bitboard.Squares[s.EnPassantTarget] | bitboard.Squares[epPawn]
 		// check if en-passant leaves king in check
 		// this does not account for the double rook pin
-		if b.CheckMask&epMask == 0 {
+		if s.CheckMask&epMask == 0 {
 			return
 		}
 
-		kingSq := b.Kings[b.SideToMove]
-		kingMask := bitboard.Squares[kingSq] & enPassantRank
+		kingSq := s.Kings[s.SideToMove]
+		kingMask := bitboard.Squares[kingSq] & s.EnPassantRankBB
 
-		enemyRooksQueens := (b.Rooks(them) | b.Queens(them)) & enPassantRank
+		enemyRooksQueens := (s.RooksBB(s.Them) | s.QueensBB(s.Them)) & s.EnPassantRankBB
 
 		// if king and enemy horizontal sliding piece are on ep rank
 		// a horizontal rook pin may be possible so more checks
 		isPossiblePin := kingMask != bitboard.Empty && enemyRooksQueens != bitboard.Empty
 
-		for fromBB := attacks.Pawn[them][b.EnPassantTarget] & pawnsThatAttack; fromBB != bitboard.Empty; {
+		for fromBB := attacks.Pawn[s.Them][s.EnPassantTarget] & pawnsThatAttack; fromBB != bitboard.Empty; {
 			from := fromBB.Pop()
 
 			// pawn is pinned in other direction
-			if b.PinnedD.IsSet(from) && !b.PinnedD.IsSet(b.EnPassantTarget) {
+			if s.PinnedD.IsSet(from) && !s.PinnedD.IsSet(s.EnPassantTarget) {
 				continue
 			}
 
@@ -275,58 +253,72 @@ func (b *Board) appendPawnMoves(moveList *[]move.Move) {
 			// remove the ep pawn and the enemy pawn from the blocker mask
 			// and check if a rook ray from the king hits any rook or queen
 			pawnsMask := bitboard.Squares[from] | bitboard.Squares[epPawn]
-			if isPossiblePin && attacks.Rook(kingSq, b.Occupied&^pawnsMask)&enemyRooksQueens != 0 {
+			if isPossiblePin && attacks.Rook(kingSq, s.Occupied&^pawnsMask)&enemyRooksQueens != 0 {
 				break
 			}
 
-			*moveList = append(*moveList, move.New(from, b.EnPassantTarget, p, true))
+			s.AppendMoves(move.New(from, s.EnPassantTarget, s.Pawn, true))
 		}
 	}
 }
 
-func (b *Board) appendCastlingMoves(moveList *[]move.Move) {
+func (s *moveGenState) appendCastlingMoves() {
 	// for each castling move the following things are checked:
 	// 1. if castling that side is legal (king and rook haven't moved)
 	// 2. if pieces are occupying the space between the king and rook
 	// 3. if the squares that the king moves through are seen by the enemy
 	// if all the conditions are satisfied then castling that side is legal
 
-	switch b.SideToMove {
+	switch s.SideToMove {
 	case piece.White:
-		if b.CastlingRights&castling.WhiteK != 0 &&
-			(b.Occupied|b.SeenByEnemy)&bitboard.F1G1 == bitboard.Empty {
-			*moveList = append(*moveList, move.New(square.E1, square.G1, piece.WhiteKing, false))
+		if s.CastlingRights&castling.WhiteK != 0 &&
+			(s.Occupied|s.SeenByEnemy)&bitboard.F1G1 == bitboard.Empty {
+			s.AppendMoves(move.New(square.E1, square.G1, piece.WhiteKing, false))
 		}
 
-		if b.CastlingRights&castling.WhiteQ != 0 &&
-			b.Occupied&bitboard.B1C1D1 == bitboard.Empty &&
-			b.SeenByEnemy&bitboard.C1D1 == bitboard.Empty {
-			*moveList = append(*moveList, move.New(square.E1, square.C1, piece.WhiteKing, false))
+		if s.CastlingRights&castling.WhiteQ != 0 &&
+			s.Occupied&bitboard.B1C1D1 == bitboard.Empty &&
+			s.SeenByEnemy&bitboard.C1D1 == bitboard.Empty {
+			s.AppendMoves(move.New(square.E1, square.C1, piece.WhiteKing, false))
 		}
 	case piece.Black:
-		if b.CastlingRights&castling.BlackK != 0 &&
-			(b.Occupied|b.SeenByEnemy)&bitboard.F8G8 == bitboard.Empty {
-			*moveList = append(*moveList, move.New(square.E8, square.G8, piece.BlackKing, false))
+		if s.CastlingRights&castling.BlackK != 0 &&
+			(s.Occupied|s.SeenByEnemy)&bitboard.F8G8 == bitboard.Empty {
+			s.AppendMoves(move.New(square.E8, square.G8, piece.BlackKing, false))
 		}
 
-		if b.CastlingRights&castling.BlackQ != 0 &&
-			b.Occupied&bitboard.B8C8D8 == bitboard.Empty &&
-			b.SeenByEnemy&bitboard.C8D8 == bitboard.Empty {
-			*moveList = append(*moveList, move.New(square.E8, square.C8, piece.BlackKing, false))
+		if s.CastlingRights&castling.BlackQ != 0 &&
+			s.Occupied&bitboard.B8C8D8 == bitboard.Empty &&
+			s.SeenByEnemy&bitboard.C8D8 == bitboard.Empty {
+			s.AppendMoves(move.New(square.E8, square.C8, piece.BlackKing, false))
 		}
 	}
 }
 
 // serializeMoves serialized the given move bitboard into the movelist.
-func (b *Board) serializeMoves(moveList *[]move.Move, p piece.Piece, from square.Square, moves bitboard.Board) {
-	for toBB := moves; toBB != bitboard.Empty; {
-		to := toBB.Pop()
-		*moveList = append(*moveList, move.New(from, to, p, b.Enemies.IsSet(to)))
+func (s *moveGenState) serializeMoves(p piece.Piece, from square.Square, moves bitboard.Board) {
+	// append captures
+	for captures := moves & s.Enemies; captures != bitboard.Empty; {
+		to := captures.Pop()
+		s.AppendMoves(move.New(from, to, p, true))
+	}
+
+	if s.TacticalOnly {
+		// don't serialize quiet moves
+		return
+	}
+
+	// append quiet moves
+	for quiets := moves &^ s.Enemies; quiets != bitboard.Empty; {
+		to := quiets.Pop()
+		s.AppendMoves(move.New(from, to, p, false))
 	}
 }
 
-func appendPromotions(moveList *[]move.Move, m move.Move, c piece.Color) {
-	*moveList = append(*moveList,
+// appendPromotions appends all the different promotion variations of the
+// given move to the movelist.
+func (s *moveGenState) appendPromotions(m move.Move, c piece.Color) {
+	s.AppendMoves(
 		m.SetPromotion(piece.New(piece.Queen, c)),
 		m.SetPromotion(piece.New(piece.Rook, c)),
 		m.SetPromotion(piece.New(piece.Bishop, c)),
