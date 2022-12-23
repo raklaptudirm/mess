@@ -1,6 +1,7 @@
 package board_test
 
 import (
+	"strings"
 	"testing"
 
 	"laptudirm.com/x/mess/pkg/board"
@@ -19,7 +20,7 @@ func TestFEN(t *testing.T) {
 
 	for n, test := range tests {
 		t.Run(test, func(t *testing.T) {
-			b := board.NewBoard(test)
+			b := board.NewBoard(strings.Fields(test))
 			newFEN := b.FEN()
 			if test != newFEN {
 				t.Errorf("test %d: wrong fen\n%s\n%s\n", n, test, newFEN)
