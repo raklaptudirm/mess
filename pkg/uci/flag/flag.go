@@ -30,9 +30,15 @@ func (s Schema) Parse(args []string) (Values, error) {
 	for len(args) > 0 {
 		name := args[0]
 
+		// check if it is a valid flag
 		collect, isFlag := s.flags[name]
 		if !isFlag {
 			return values, fmt.Errorf("parse flags: unknown flag %q", name)
+		}
+
+		// check if flag is already set
+		if values[name].Set {
+			return values, fmt.Errorf("parse flags: flag %q already set", name)
 		}
 
 		// collect value from arguments
@@ -41,7 +47,10 @@ func (s Schema) Parse(args []string) (Values, error) {
 			return values, err
 		}
 
+		// update args after collection
 		args = newArgs
+
+		// add new value
 		values[name] = Value{
 			Set:   true,
 			Value: value,
