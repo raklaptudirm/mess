@@ -14,6 +14,7 @@ import (
 // commands and with the default isready and quit commands added.
 func NewClient() Client {
 	client := Client{
+		// communication streams
 		stdin:  os.Stdin,
 		stdout: os.Stdout,
 	}
@@ -43,18 +44,41 @@ func (c *Client) AddCommand(cmd cmd.Command) {
 // Start makes the client start listening for commands.
 func (c *Client) Start() error {
 	reader := bufio.NewReader(c.stdin)
-
 	for {
-		// command strings are newline terminated
 		prompt, err := reader.ReadString('\n')
 		if err != nil {
 			return err
 		}
 
-		switch err = c.commands.RunWith(strings.Fields(prompt)); err {
+		// parse args
+		args := strings.Fields(prompt)
+
+		// get uci command
+		cmd, found := c.commands.Get(args[0])
+		if !found {
+			c.Printf("%s: command not found", args[0])
+			continue
+		}
+
+		// remove command name from args
+		args = args[1:]
+
+		if cmd.Parallel {
+			// this command's execution should not block the client
+			// so it's execution is started in a separate goroutine
+			go func() {
+				if err := cmd.RunWith(args, c.commands); err != nil {
+					c.Println(err)
+				}
+			}()
+			continue
+		}
+
+		switch err := cmd.RunWith(args, c.commands); err {
 		case nil:
 			// continue repl
 		case errQuit:
+			// returned by quit command to stop the repl
 			return nil
 		default:
 			c.Println(err)

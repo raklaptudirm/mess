@@ -26,29 +26,9 @@ func (l *Schema) Add(c Command) {
 	l.commands[c.Name] = c
 }
 
-// RunWith runs commands from the command schema according
-// to the given arguments.
-func (l *Schema) RunWith(args []string) error {
-	if len(args) == 0 {
-		return nil
-	}
-
-	cmd, isCmd := l.commands[args[0]]
-	if !isCmd {
-		return fmt.Errorf("%s: command not found", args[0])
-	}
-
-	values, err := cmd.Flags.Parse(args[1:])
-	if err != nil {
-		return err
-	}
-
-	return cmd.Run(Interaction{
-		stdout:  l.replyWriter,
-		Command: cmd,
-
-		Values: values,
-	})
+func (l *Schema) Get(name string) (Command, bool) {
+	cmd, found := l.commands[name]
+	return cmd, found
 }
 
 // Command represents the schema of a GUI to Engine command.
@@ -56,6 +36,10 @@ type Command struct {
 	// name of the command
 	// this is used as a token to identify if this command has been run
 	Name string
+
+	// If Parallel is true, the listener will not wait for the command
+	// to finish before accepting new commands.
+	Parallel bool
 
 	// Run is the actual work function for the command. It is provided
 	// with an interaction which contains the relevant information
@@ -65,6 +49,20 @@ type Command struct {
 	// Flags contains the flag schema of this command. The flags the
 	// parsed from the provided args before the Run function is called.
 	Flags flag.Schema
+}
+
+func (c Command) RunWith(args []string, schema Schema) error {
+	values, err := c.Flags.Parse(args)
+	if err != nil {
+		return err
+	}
+
+	return c.Run(Interaction{
+		stdout:  schema.replyWriter,
+		Command: c,
+
+		Values: values,
+	})
 }
 
 // Interaction encapsulates relevant information about a Command sent to
