@@ -1,0 +1,36 @@
+name: Continuous Integration
+on:
+  push:
+    # prevent duplication of tests with
+    # `pull_request` event
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  golang_lint_and_test:
+    name: Code style and tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # setup Go for testing
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.18'
+
+      # check code formatting
+      - name: Run Golang CI Lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest
+          args: -E gofmt
+
+      # run tests
+      - name: Run tests
+        run: go test ./...
