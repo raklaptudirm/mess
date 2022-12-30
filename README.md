@@ -1,12 +1,20 @@
 <div align="center">
-  <img src="./assets/logo.png" alt="mess logo" height="200"/>
+  <a href=".">
+    <img src="./assets/logo.png" alt="mess logo" height="200"/>
+  </a>
   
   <br>
   
-  <img src="https://img.shields.io/github/license/rakarchive/mess?style=for-the-badge">
-  <img src="https://img.shields.io/github/actions/workflow/status/rakarchive/mess/ci.yml?style=for-the-badge">
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/rakarchive/mess?style=for-the-badge">
+  </a>
+  <a href="https://github.com/raklaptudirm/mess/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/rakarchive/mess/ci.yml?style=for-the-badge">
+  </a>
   <br>
-  <img src="https://img.shields.io/github/v/release/rakarchive/mess?style=for-the-badge">
+  <a href="https://github.com/raklaptudirm/mess/releases">
+    <img src="https://img.shields.io/github/v/release/rakarchive/mess?style=for-the-badge">
+  </a>
 </div>
 
 # Overview
