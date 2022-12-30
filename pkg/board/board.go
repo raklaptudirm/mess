@@ -66,8 +66,6 @@ type Board struct {
 	FullMoves int
 	DrawClock int
 
-	UtilityInfo moveGenState
-
 	// game history
 	History [move.MaxN]BoardState
 }
