@@ -28,5 +28,7 @@ func Generate(name, t string, v any) {
 	}
 	defer f.Close()
 
-	template.Must(template.New(name).Parse(t)).Execute(f, v)
+	if err := template.Must(template.New(name).Parse(t)).Execute(f, v); err != nil {
+		panic(err)
+	}
 }
