@@ -16,15 +16,14 @@ package square
 // Rank represents a rank on the chessboard.
 // Every horizontal line of squares is called a rank.
 //
-//     8 8 8 8 8 8 8 8
-//     7 7 7 7 7 7 7 7
-//     6 6 6 6 6 6 6 6
-//     5 5 5 5 5 5 5 5
-//     4 4 4 4 4 4 4 4
-//     3 3 3 3 3 3 3 3
-//     2 2 2 2 2 2 2 2
-//     1 1 1 1 1 1 1 1
-//
+//	8 8 8 8 8 8 8 8
+//	7 7 7 7 7 7 7 7
+//	6 6 6 6 6 6 6 6
+//	5 5 5 5 5 5 5 5
+//	4 4 4 4 4 4 4 4
+//	3 3 3 3 3 3 3 3
+//	2 2 2 2 2 2 2 2
+//	1 1 1 1 1 1 1 1
 type Rank int8
 
 // constants representing various ranks

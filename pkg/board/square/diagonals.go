@@ -16,15 +16,14 @@ package square
 // Diagonal represents a diagonal on the chessboard.
 // Every NE-SW diagonal is called a diagonal.
 //
-//     e d c b a 9 8 7
-//     d c b a 9 8 7 6
-//     c b a 9 8 7 6 5
-//     b a 9 8 7 6 5 4
-//     a 9 8 7 6 5 4 3
-//     9 8 7 6 5 4 3 2
-//     8 7 6 5 4 3 2 1
-//     7 6 5 4 3 2 1 0
-//
+//	e d c b a 9 8 7
+//	d c b a 9 8 7 6
+//	c b a 9 8 7 6 5
+//	b a 9 8 7 6 5 4
+//	a 9 8 7 6 5 4 3
+//	9 8 7 6 5 4 3 2
+//	8 7 6 5 4 3 2 1
+//	7 6 5 4 3 2 1 0
 type Diagonal int
 
 // constants representing various diagonals
@@ -54,15 +53,14 @@ const (
 // AntiDiagonal represents an anti-diagonal on the chessboard.
 // Every NW-SE diagonal is called an anti-diagonal.
 //
-//     7 8 9 a b c d e
-//     6 7 8 9 a b c d
-//     5 6 7 8 9 a b c
-//     4 5 6 7 8 9 a b
-//     3 4 5 6 7 8 9 a
-//     2 3 4 5 6 7 8 9
-//     1 2 3 4 5 6 7 8
-//     0 1 2 3 4 5 6 7
-//
+//	7 8 9 a b c d e
+//	6 7 8 9 a b c d
+//	5 6 7 8 9 a b c
+//	4 5 6 7 8 9 a b
+//	3 4 5 6 7 8 9 a
+//	2 3 4 5 6 7 8 9
+//	1 2 3 4 5 6 7 8
+//	0 1 2 3 4 5 6 7
 type AntiDiagonal int
 
 // constants representing various anti-diagonals

@@ -25,10 +25,10 @@ type Rights byte
 // checks if the identifier for each possible castling is in the string
 // in the proper order.
 //
-//     White King-side:  K
-//     White Queen-side: Q
-//     Black King-side:  k
-//     Black Queen-side: q
+//	White King-side:  K
+//	White Queen-side: Q
+//	Black King-side:  k
+//	Black Queen-side: q
 //
 // The string "-" represents castling.NoCasl.
 func NewRights(r string) Rights {

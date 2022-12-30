@@ -16,15 +16,14 @@ package square
 // File represents a file on the chessboard.
 // Every vertical line of squares is called a file.
 //
-//     a b c d e f g h
-//     a b c d e f g h
-//     a b c d e f g h
-//     a b c d e f g h
-//     a b c d e f g h
-//     a b c d e f g h
-//     a b c d e f g h
-//     a b c d e f g h
-//
+//	a b c d e f g h
+//	a b c d e f g h
+//	a b c d e f g h
+//	a b c d e f g h
+//	a b c d e f g h
+//	a b c d e f g h
+//	a b c d e f g h
+//	a b c d e f g h
 type File int8
 
 // constants representing various files
