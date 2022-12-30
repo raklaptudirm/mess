@@ -14,6 +14,8 @@
 package board
 
 import (
+	"strings"
+
 	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/board/move/attacks"
@@ -182,4 +184,21 @@ func (b *Board) UnmakeMove() {
 func (b *Board) NewMove(from, to square.Square) move.Move {
 	p := b.Position[from]
 	return move.New(from, to, p, b.Position[to] != piece.NoPiece)
+}
+
+func (b *Board) NewMoveFromString(m string) move.Move {
+	from := square.NewFromString(m[:2])
+	to := square.NewFromString(m[2:4])
+
+	move := b.NewMove(from, to)
+	if len(m) == 5 {
+		pieceID := m[4:]
+		if b.SideToMove == piece.White {
+			pieceID = strings.ToUpper(pieceID)
+		}
+
+		move = move.SetPromotion(piece.NewFromString(pieceID))
+	}
+
+	return move
 }
