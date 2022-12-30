@@ -143,7 +143,7 @@ rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3 ; 5 11139762`
 func TestPerft(t *testing.T) {
 	testStrings := strings.Split(perftTests, "\n")
 	var tests []struct {
-		fen   string
+		fen   []string
 		depth int
 		perft int
 	}
@@ -154,11 +154,11 @@ func TestPerft(t *testing.T) {
 		depth, _ := strconv.Atoi(depthStr)
 		perft, _ := strconv.Atoi(perftStr)
 		tests = append(tests, struct {
-			fen   string
+			fen   []string
 			depth int
 			perft int
 		}{
-			fen: fen, depth: depth, perft: perft,
+			fen: strings.Fields(fen), depth: depth, perft: perft,
 		})
 	}
 

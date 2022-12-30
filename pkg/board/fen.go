@@ -25,19 +25,17 @@ import (
 
 // NewBoard creates an instance of a *Board from a given fen string.
 // https://www.chessprogramming.org/Forsyth-Edwards_Notation
-func NewBoard(fen string) *Board {
+func NewBoard(fen []string) *Board {
 	var board Board
 
-	parts := strings.Split(fen, " ")
-
 	// side to move
-	board.SideToMove = piece.NewColor(parts[1])
+	board.SideToMove = piece.NewColor(fen[1])
 	if board.SideToMove == piece.Black {
 		board.Hash ^= zobrist.SideToMove
 	}
 
 	// generate position
-	ranks := strings.Split(parts[0], "/")
+	ranks := strings.Split(fen[0], "/")
 	for rankId, rankData := range ranks {
 		fileId := square.FileA
 		for _, id := range rankData {
@@ -61,18 +59,18 @@ func NewBoard(fen string) *Board {
 	}
 
 	// castling rights
-	board.CastlingRights = castling.NewRights(parts[2])
+	board.CastlingRights = castling.NewRights(fen[2])
 	board.Hash ^= zobrist.Castling[board.CastlingRights]
 
 	// en-passant target square
-	board.EnPassantTarget = square.NewFromString(parts[3])
+	board.EnPassantTarget = square.NewFromString(fen[3])
 	if board.EnPassantTarget != square.None {
 		board.Hash ^= zobrist.EnPassant[board.EnPassantTarget.File()]
 	}
 
 	// move counters
-	board.DrawClock, _ = strconv.Atoi(parts[4])
-	board.FullMoves, _ = strconv.Atoi(parts[5])
+	board.DrawClock, _ = strconv.Atoi(fen[4])
+	board.FullMoves, _ = strconv.Atoi(fen[5])
 
 	return &board
 }

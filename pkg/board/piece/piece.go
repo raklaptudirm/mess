@@ -105,12 +105,7 @@ func (p Piece) String() string {
 
 // Type returns the piece type of the given Piece.
 func (p Piece) Type() Type {
-	switch {
-	case p == NoPiece:
-		return NoType
-	default:
-		return Type(p & typeMask)
-	}
+	return Type(p & typeMask)
 }
 
 // Color returns the piece color of the given Piece.
