@@ -97,7 +97,7 @@ func (b Board) String() string {
 // or by a repetition. Threefold repetition is not calculated as it is just
 // simpler to evaluate any repetition as a draw.
 func (b *Board) IsDraw() bool {
-	return b.DrawClock >= 100 || b.IsRepetition()
+	return b.DrawClock >= 100 || b.IsThreefoldRepetition()
 }
 
 // IsRepetition checks if the current position has occurred in the game
@@ -110,6 +110,23 @@ func (b *Board) IsRepetition() bool {
 	for i := b.Plys - 2; i >= depth; i -= 2 {
 		if b.History[i].Hash == b.Hash {
 			return true
+		}
+	}
+
+	return false
+}
+
+func (b *Board) IsThreefoldRepetition() bool {
+	// probe till game start or last irreversible move, whichever is closer
+	depth := util.Max(0, b.Plys-b.DrawClock)
+
+	repetitions := 1 // current position is a repetition
+	for i := b.Plys - 2; i >= depth; i -= 2 {
+		if b.History[i].Hash == b.Hash {
+			repetitions++
+			if repetitions >= 3 {
+				return true
+			}
 		}
 	}
 
