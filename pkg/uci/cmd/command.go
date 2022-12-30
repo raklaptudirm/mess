@@ -90,12 +90,12 @@ type Interaction struct {
 }
 
 // Reply writes to the GUI's input. It is similar to fmt.Println.
-func (i *Interaction) Reply(a ...any) (int, error) {
-	return fmt.Fprintln(i.stdout, a...)
+func (i *Interaction) Reply(a ...any) {
+	fmt.Fprintln(i.stdout, a...)
 }
 
 // Replyf writes to the GUI's input. It is similar to fmt.Printf with
 // a newline terminator.
-func (i *Interaction) Replyf(format string, a ...any) (int, error) {
-	return fmt.Fprintf(i.stdout, format+"\n", a...)
+func (i *Interaction) Replyf(format string, a ...any) {
+	fmt.Fprintf(i.stdout, format+"\n", a...)
 }
