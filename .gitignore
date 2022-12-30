@@ -1,3 +1,9 @@
+# Ignore files with no extensions
+# i.e., binaries in unix systems
+*
+!*.*
+!*/
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -17,8 +23,11 @@ vendor/
 # Go workspace file
 go.work
 
-# Ignore binary directory
-bin/
+# Go profiling files
+*.prof
 
-# Ignore generated go files
-gen_*
+# VS Code config folder
+.vscode/
+
+# MacOS folder config
+.DS_Store
