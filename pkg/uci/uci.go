@@ -54,49 +54,72 @@ func (c *Client) AddCommand(cmd cmd.Command) {
 	c.commands.Add(cmd)
 }
 
-// Start makes the client start listening for commands.
+// Start starts a repl listening for UCI commands which match the client's
+// Schema. It listen's on the Client's stdin.
 func (c *Client) Start() error {
 	reader := bufio.NewReader(c.stdin)
+
+	// read-eval-print loop
 	for {
+		// read prompt form client's stdin
 		prompt, err := reader.ReadString('\n')
 		if err != nil {
+			// read errors are probably fatal
 			return err
 		}
 
-		// parse args
+		// parse arguments from prompt
 		args := strings.Fields(prompt)
 
-		// get uci command
-		cmd, found := c.commands.Get(args[0])
-		if !found {
-			c.Printf("%s: command not found", args[0])
-			continue
-		}
-
-		// remove command name from args
-		args = args[1:]
-
-		if cmd.Parallel {
-			// this command's execution should not block the client
-			// so it's execution is started in a separate goroutine
-			go func() {
-				if err := cmd.RunWith(args, c.commands); err != nil {
-					c.Println(err)
-				}
-			}()
-			continue
-		}
-
-		switch err := cmd.RunWith(args, c.commands); err {
+		// since we are in a repl run commands in parallel if needed
+		switch err := c.RunWith(args, true); err {
 		case nil:
-			// continue repl
+			// no error: continue repl
+
 		case errQuit:
-			// returned by quit command to stop the repl
+			// errQuit is returned by quit command to stop the repl
+			// so honour the request and return, stopping the repl
 			return nil
+
 		default:
+			// non-nil error: print and continue
 			c.Println(err)
 		}
 	}
+}
+
+// RunWith finds a command whose name matches the first element of the args
+// array, and runs it with the remaining args. It returns any error sent
+// by the command. It honours the cmd.Parallel property if parallelize is
+// set to true.
+func (c *Client) RunWith(args []string, parallelize bool) error {
+	// separate command name and arguments
+	name, args := args[0], args[1:]
+
+	// get uci command
+	cmd, found := c.commands.Get(name)
+	if !found {
+		// command with given name not found
+		return fmt.Errorf("%s: command not found", name)
+	}
+
+	// check if command should be run in parallel
+	if parallelize && cmd.Parallel {
+		// this command's execution should not block the repl
+		// so it's execution is started in a separate goroutine
+		go func() {
+			if err := cmd.RunWith(args, c.commands); err != nil {
+				c.Println(err)
+			}
+		}()
+
+		// any errors returned by the parallelized command will be
+		// printed by it's goroutine
+		return nil
+	}
+
+	// run command with given arguments
+	return cmd.RunWith(args, c.commands)
 }
 
 // Print acts as fmt.Print on the client's stdout.
