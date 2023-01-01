@@ -63,7 +63,7 @@ func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
 		fmt.Printf(
 			"info depth %d score %s nodes %d nps %.f time %d pv %s\n",
 			search.depth, score, search.nodes,
-			float64(search.nodes)/util.Max(1, searchTime.Seconds()),
+			float64(search.nodes)/util.Max(0.001, searchTime.Seconds()),
 			searchTime.Milliseconds(), pv,
 		)
 	}
