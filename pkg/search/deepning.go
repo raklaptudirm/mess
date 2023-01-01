@@ -37,7 +37,7 @@ func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
 	// search to any depth depending on the allocated time. Previous iterations
 	// also populate the transposition table with scores and pv moves which makes
 	// iterative deepening to a depth faster that directly searching that depth.
-	for search.depth = 1; search.depth < search.limits.Depth; search.depth++ {
+	for search.depth = 1; search.depth <= search.limits.Depth; search.depth++ {
 
 		// the new pv isn't directly stored into the pv variable since it will
 		// pollute the correct pv if the next search is incomplete. Instead the
