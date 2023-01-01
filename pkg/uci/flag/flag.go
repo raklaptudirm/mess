@@ -39,6 +39,11 @@ func (s Schema) Parse(args []string) (Values, error) {
 
 	// nil schema
 	if s.flags == nil {
+		// no flags should be present if schema is nil
+		if len(args) > 0 {
+			return values, fmt.Errorf("parse flags: unknown flag %q", args[0])
+		}
+
 		return values, nil
 	}
 
