@@ -11,6 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package command implements type representing an UCI command, whose
+// details and working can be specified by an engine.
 package cmd
 
 import (
@@ -39,6 +41,9 @@ func (l *Schema) Add(c Command) {
 	l.commands[c.Name] = c
 }
 
+// Get tries to find a command with the given name from the Schema. If it
+// succeeds, it returns and command and true, otherwise, it returns
+// something undefined along with false.
 func (l *Schema) Get(name string) (Command, bool) {
 	cmd, found := l.commands[name]
 	return cmd, found
@@ -64,6 +69,7 @@ type Command struct {
 	Flags flag.Schema
 }
 
+// RunWith runs the given Command with the given flags and Schema.
 func (c Command) RunWith(args []string, schema Schema) error {
 	values, err := c.Flags.Parse(args)
 	if err != nil {
