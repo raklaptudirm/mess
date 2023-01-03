@@ -23,6 +23,8 @@ import (
 	"laptudirm.com/x/mess/pkg/board/zobrist"
 )
 
+var StartFEN = strings.Fields("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+
 // NewBoard creates an instance of a *Board from a given fen string.
 // https://www.chessprogramming.org/Forsyth-Edwards_Notation
 func NewBoard(fen []string) *Board {
