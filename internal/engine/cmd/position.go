@@ -11,47 +11,81 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package engine
+package cmd
 
 import (
 	"errors"
-	"strings"
 
+	"laptudirm.com/x/mess/internal/engine/context"
 	"laptudirm.com/x/mess/pkg/board"
-	"laptudirm.com/x/mess/pkg/search"
 	"laptudirm.com/x/mess/pkg/uci/cmd"
 	"laptudirm.com/x/mess/pkg/uci/flag"
 )
 
-func newCmdUciNewGame(engine Engine) cmd.Command {
+// UCI command position [ fen <fenstring> | startpos ] moves <move>...
+//
+// Set up the position described in fenstring on the internal board and
+// play the moves on the internal chess board.
+//
+// If the game was played from the start position the string startpos will
+// be sent
+//
+// Note: no "new" command is needed. However, if this position is from a
+// different game than the last position sent to the engine, the GUI should
+// have sent a ucinewgame in-between.
+func NewPosition(engine *context.Engine) cmd.Command {
+	schema := flag.NewSchema()
+
+	// base position
+	schema.Array("fen", len(board.StartFEN))
+	schema.Button("startpos")
+
+	// moves played on base position
+	schema.Variadic("moves")
+
 	return cmd.Command{
-		Name: "ucinewgame",
+		Name: "position",
 		Run: func(interaction cmd.Interaction) error {
-			// new context for new game
-			*engine.search = search.NewContext(board.NewBoard(startpos))
+			// parse flags into a board.Board
+			board, err := parsePositionFlags(interaction.Values)
+			if err != nil {
+				return err
+			}
+
+			// update search board
+			engine.Search.Board = board
+
 			return nil
 		},
+		Flags: schema,
 	}
 }
-
-// fen string for the starting position
-var startpos = strings.Fields("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
 // parsePositionFlags parses the position data from the given flags.
 func parsePositionFlags(values flag.Values) (*board.Board, error) {
 	// set up new position here
 	var b *board.Board
 
+	// parse base position
 	switch {
+	// only one of the base position descriptors should be set
+	case values["startpos"].Set && values["fen"].Set:
+		return nil, errors.New("position: both startpos and fen flags found")
+
 	case values["startpos"].Set:
-		b = board.NewBoard(startpos)
+		// starting position
+		b = board.NewBoard(board.StartFEN)
+
 	case values["fen"].Set:
+		// parse fen string for base position
 		b = board.NewBoard(values["fen"].Value.([]string))
+
 	default:
 		// one of fen or startpos have to be there
 		return nil, errors.New("position: no startpos or fen option")
 	}
 
+	// check if any moves are played on the base position
 	if values["moves"].Set {
 		// play the provided moves on the board
 		moves := values["moves"].Value.([]string)
@@ -61,29 +95,4 @@ func parsePositionFlags(values flag.Values) (*board.Board, error) {
 	}
 
 	return b, nil
-}
-
-func newCmdPosition(engine Engine) cmd.Command {
-	schema := flag.NewSchema()
-
-	// position
-	schema.Array("fen", len(startpos))
-	schema.Button("startpos")
-
-	// moves on position
-	schema.Variadic("moves")
-
-	return cmd.Command{
-		Name: "position",
-		Run: func(interaction cmd.Interaction) error {
-			board, err := parsePositionFlags(interaction.Values)
-			if err != nil {
-				return err
-			}
-
-			engine.search.Board = board
-			return nil
-		},
-		Flags: schema,
-	}
 }

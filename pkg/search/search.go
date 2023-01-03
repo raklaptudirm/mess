@@ -29,10 +29,12 @@ import (
 // maximum depth to search to
 const MaxDepth = 256
 
-// NewContext creates a new Context from the given board.
-func NewContext(board *board.Board) Context {
+// NewContext creates a new search Context.
+func NewContext() Context {
 	return Context{
-		Board:   board,
+		// default position
+		Board: board.NewBoard(board.StartFEN),
+
 		tt:      tt.NewTable(16),
 		stopped: true,
 	}

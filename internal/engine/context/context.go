@@ -11,18 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package engine
+package context
 
-import (
-	"laptudirm.com/x/mess/pkg/uci/cmd"
-)
+import "laptudirm.com/x/mess/pkg/search"
 
-func newCmdD(engine Engine) cmd.Command {
-	return cmd.Command{
-		Name: "d",
-		Run: func(interaction cmd.Interaction) error {
-			interaction.Reply(engine.search.Board.String())
-			return nil
-		},
-	}
+// Engine represents the context containing the engine's information which
+// is shared among it's UCI commands to store state.
+type Engine struct {
+	// current search context
+	Search *search.Context
 }

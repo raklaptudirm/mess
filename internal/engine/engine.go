@@ -14,30 +14,32 @@
 package engine
 
 import (
-	"laptudirm.com/x/mess/pkg/board"
+	"laptudirm.com/x/mess/internal/engine/cmd"
+	"laptudirm.com/x/mess/internal/engine/context"
 	"laptudirm.com/x/mess/pkg/search"
 	"laptudirm.com/x/mess/pkg/uci"
 )
 
+// NewClient returns a new uci.Client containing all of the engine's
+// supported commands. The commands share a context.Engine among them.
 func NewClient() uci.Client {
-	client := uci.NewClient()
 
-	context := search.NewContext(board.NewBoard(startpos))
-	engine := Engine{
-		search: &context,
+	// initialize search context
+	search := search.NewContext()
+	// initialize engine context
+	engine := &context.Engine{
+		Search: &search,
 	}
 
-	client.AddCommand(newCmdD(engine))
-	client.AddCommand(newCmdUci())
-	client.AddCommand(newCmdUciNewGame(engine))
-	client.AddCommand(newCmdGo(engine))
-	client.AddCommand(newCmdUci())
-	client.AddCommand(newCmdPosition(engine))
-	client.AddCommand(newCmdStop(engine))
+	client := uci.NewClient()
+
+	// add the engine's commands to the client
+	client.AddCommand(cmd.NewD(engine))
+	client.AddCommand(cmd.NewGo(engine))
+	client.AddCommand(cmd.NewUci(engine))
+	client.AddCommand(cmd.NewStop(engine))
+	client.AddCommand(cmd.NewPosition(engine))
+	client.AddCommand(cmd.NewUciNewGame(engine))
 
 	return client
-}
-
-type Engine struct {
-	search *search.Context
 }
