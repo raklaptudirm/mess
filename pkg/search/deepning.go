@@ -15,9 +15,7 @@ package search
 
 import (
 	"fmt"
-	"time"
 
-	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/search/eval"
 )
@@ -27,23 +25,19 @@ import (
 // It returns the principal variation and it's evaluation.
 // https://www.chessprogramming.org/Iterative_Deepening
 func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
-	var score eval.Eval
-	var pv move.Variation
-
-	start := time.Now()
 
 	// iterative deepening loop, starting from 1, call negamax for each depth
 	// until the depth limit is reached or time runs out. This allows us to
 	// search to any depth depending on the allocated time. Previous iterations
 	// also populate the transposition table with scores and pv moves which makes
 	// iterative deepening to a depth faster that directly searching that depth.
-	for search.depth = 1; search.depth <= search.limits.Depth; search.depth++ {
+	for search.stats.Depth = 1; search.stats.Depth <= search.limits.Depth; search.stats.Depth++ {
 
 		// the new pv isn't directly stored into the pv variable since it will
 		// pollute the correct pv if the next search is incomplete. Instead the
 		// old pv is overwritten only if the search is found to be complete.
 		var childPV move.Variation
-		score = search.negamax(0, search.depth, -eval.Inf, eval.Inf, &childPV)
+		search.pvScore = search.negamax(0, search.stats.Depth, -eval.Inf, eval.Inf, &childPV)
 
 		if search.stopped {
 			// don't use the new pv if search was stopped since the
@@ -56,17 +50,11 @@ func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
 		}
 
 		// search successfully completed, so update pv
-		pv = childPV
+		search.pv = childPV
 
 		// print some info for the GUI
-		searchTime := time.Since(start)
-		fmt.Printf(
-			"info depth %d score %s nodes %d nps %.f time %d pv %s\n",
-			search.depth, score, search.nodes,
-			float64(search.nodes)/util.Max(0.001, searchTime.Seconds()),
-			searchTime.Milliseconds(), pv,
-		)
+		fmt.Println(search.GenerateReport())
 	}
 
-	return pv, score
+	return search.pv, search.pvScore
 }

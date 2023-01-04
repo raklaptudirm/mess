@@ -56,7 +56,7 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 		// In other words, node amount updates for a quiescence search
 		// is done by the caller function, which in this case is the
 		// quiescence search itself.
-		search.nodes++
+		search.stats.Nodes++
 
 		search.Board.MakeMove(m)
 		score := -search.quiescence(plys+1, -beta, -alpha)

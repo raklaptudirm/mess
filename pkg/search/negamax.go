@@ -31,7 +31,7 @@ import (
 // is enough to mark a position as worse compared to an already found one.
 // https://www.chessprogramming.org/Alpha-Beta
 func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.Variation) eval.Eval {
-	search.nodes++
+	search.stats.Nodes++
 
 	// quick exit clauses
 	switch {
@@ -82,7 +82,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		// only use entry if current node is not a pv node and
 		// entry depth is >= current depth (not worse quality)
 		if !isPVNode && entry.Depth >= depth {
-			search.ttHits++
+			search.stats.TTHits++
 			value := entry.Value.Eval(plys)
 
 			switch entry.Type {
