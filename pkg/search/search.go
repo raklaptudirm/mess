@@ -31,13 +31,15 @@ import (
 const MaxDepth = 256
 
 // NewContext creates a new search Context.
-func NewContext() Context {
+func NewContext(reporter Reporter) Context {
 	return Context{
 		// default position
 		Board: board.NewBoard(board.StartFEN),
 
 		tt:      tt.NewTable(16),
 		stopped: true,
+
+		reporter: reporter,
 	}
 }
 
@@ -56,7 +58,8 @@ type Context struct {
 	pvScore eval.Eval
 
 	// stats
-	stats Stats
+	stats    Stats
+	reporter Reporter
 
 	// search limits
 	limits Limits
@@ -140,6 +143,10 @@ func (search *Context) shouldStop() bool {
 		// no search stopping clause reached
 		return false
 	}
+}
+
+func (search *Context) report(report Report) {
+	search.reporter(report)
 }
 
 // score return the static evaluation of the current context's internal

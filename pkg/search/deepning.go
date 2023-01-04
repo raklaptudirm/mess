@@ -14,8 +14,6 @@
 package search
 
 import (
-	"fmt"
-
 	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/search/eval"
 )
@@ -53,7 +51,7 @@ func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
 		search.pv = childPV
 
 		// print some info for the GUI
-		fmt.Println(search.GenerateReport())
+		search.report(search.GenerateReport())
 	}
 
 	return search.pv, search.pvScore

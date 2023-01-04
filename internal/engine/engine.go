@@ -24,14 +24,16 @@ import (
 // supported commands. The commands share a context.Engine among them.
 func NewClient() uci.Client {
 
+	client := uci.NewClient()
+
 	// initialize search context
-	search := search.NewContext()
+	search := search.NewContext(func(r search.Report) {
+		client.Println(r)
+	})
 	// initialize engine context
 	engine := &context.Engine{
 		Search: &search,
 	}
-
-	client := uci.NewClient()
 
 	// add the engine's commands to the client
 	client.AddCommand(cmd.NewD(engine))

@@ -56,6 +56,9 @@ func (search *Context) GenerateReport() Report {
 	}
 }
 
+// Reporter takes a report as input and processes it in some way.
+type Reporter func(Report)
+
 // Report represents a report of various statistics about a search.
 type Report struct {
 	// depth stats
