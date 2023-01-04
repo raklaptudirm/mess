@@ -17,6 +17,7 @@ package search
 
 import (
 	"errors"
+	realtime "time"
 
 	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/board"
@@ -30,13 +31,15 @@ import (
 const MaxDepth = 256
 
 // NewContext creates a new search Context.
-func NewContext() Context {
+func NewContext(reporter Reporter) Context {
 	return Context{
 		// default position
 		Board: board.NewBoard(board.StartFEN),
 
 		tt:      tt.NewTable(16),
 		stopped: true,
+
+		reporter: reporter,
 	}
 }
 
@@ -48,12 +51,15 @@ type Context struct {
 	// search state
 	Board   *board.Board
 	tt      *tt.Table
-	depth   int
 	stopped bool
 
+	// principal variation
+	pv      move.Variation
+	pvScore eval.Eval
+
 	// stats
-	ttHits int
-	nodes  int
+	stats    Stats
+	reporter Reporter
 
 	// search limits
 	limits Limits
@@ -93,25 +99,34 @@ func (search *Context) start(limits Limits) {
 	limits.Depth = util.Min(limits.Depth, MaxDepth)
 	search.limits = limits
 
-	// reset counters
-	search.nodes = 0
-	search.ttHits = 0
+	// reset principal variation
+	search.pv.Clear()
+
+	// reset stats
+	search.stats = Stats{}
 
 	// start search
 	search.stopped = false           // search not stopped
 	search.limits.Time.GetDeadline() // get search deadline
+
+	// start search timer
+	search.stats.SearchStart = realtime.Now()
 }
 
 // shouldStop checks the various limits provided for the search and
 // reports if the search should be stopped at that moment.
 func (search *Context) shouldStop() bool {
+
+	// the depth limit is kept up in the iterative deepening
+	// loop so it's breaching isn't tested in this function
+
 	switch {
 	case search.stopped:
 		// search already stopped
 		// no checking necessary
 		return true
 
-	case search.nodes&2047 != 0, search.limits.Infinite:
+	case search.stats.Nodes&2047 != 0, search.limits.Infinite:
 		// only check once every 2048 nodes to prevent
 		// spending too much time here
 
@@ -119,7 +134,7 @@ func (search *Context) shouldStop() bool {
 
 		return false
 
-	case search.nodes > search.limits.Nodes, search.limits.Time.Expired():
+	case search.stats.Nodes > search.limits.Nodes, search.limits.Time.Expired():
 		// node limit or time limit crossed
 		search.Stop()
 		return true
@@ -128,6 +143,10 @@ func (search *Context) shouldStop() bool {
 		// no search stopping clause reached
 		return false
 	}
+}
+
+func (search *Context) report(report Report) {
+	search.reporter(report)
 }
 
 // score return the static evaluation of the current context's internal
@@ -139,7 +158,7 @@ func (search *Context) score() eval.Eval {
 // draw returns a randomized draw score to prevent threefold-repetition
 // blindness while searching.
 func (search *Context) draw() eval.Eval {
-	return eval.RandDraw(search.nodes)
+	return eval.RandDraw(search.stats.Nodes)
 }
 
 // Limits contains the various limits which decide how long a search can
