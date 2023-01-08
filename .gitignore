@@ -1,14 +1,6 @@
-# Ignore files with no extensions
-# i.e., binaries in unix systems
-*
-!*.*
-!*/
-
-# Files which don't have an extension
-# but should not be ignored by git as
-# they are not executables
-!makefile
-!CODEOWNERS
+#####################
+# Go Language Files #
+#####################
 
 # Binaries for programs and plugins
 *.exe
@@ -20,7 +12,8 @@
 # Test binary, built with `go test -c`
 *.test
 
-# Output of the go coverage tool, specifically when used with LiteIDE
+# Output of the go coverage tool,
+# specifically when used with LiteIDE
 *.out
 
 # Dependency directories
@@ -29,11 +22,13 @@ vendor/
 # Go workspace file
 go.work
 
-# Go profiling files
-*.prof
+##############
+# Chess Data #
+##############
 
-# VS Code config folder
-.vscode/
+# chess data files
+*.pgn
+*.epd
 
-# MacOS folder config
-.DS_Store
+# engine data files
+engine-data/
