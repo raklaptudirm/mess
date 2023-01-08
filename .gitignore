@@ -4,9 +4,11 @@
 !*.*
 !*/
 
-# makefile doesn't have any extension
-# but should not be ignored by git
+# Files which don't have an extension
+# but should not be ignored by git as
+# they are not executables
 !makefile
+!CODEOWNERS
 
 # Binaries for programs and plugins
 *.exe
