@@ -17,3 +17,13 @@ EXE = mess
 # Default Build Target
 build:
 	go build -o ${EXE} .
+
+# Cross Build Target
+build-all:
+	GOOS=linux   GOARCH=arm   go build -o ${EXE}-linux-arm
+	GOOS=linux   GOARCH=arm64 go build -o ${EXE}-linux-arm64
+	GOOS=linux   GOARCH=amd64 go build -o ${EXE}-linux-amd64
+	GOOS=darwin  GOARCH=amd64 go build -o ${EXE}-darwin-amd64
+	GOOS=darwin  GOARCH=arm64 go build -o ${EXE}-darwin-arm64
+	GOOS=windows GOARCH=amd64 go build -o ${EXE}-windows-amd64.exe
+	GOOS=windows GOARCH=386   go build -o ${EXE}-windows-386.exe	
