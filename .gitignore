@@ -4,6 +4,10 @@
 !*.*
 !*/
 
+# makefile doesn't have any extension
+# but should not be ignored by git
+!makefile
+
 # Binaries for programs and plugins
 *.exe
 *.exe~

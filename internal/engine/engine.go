@@ -40,6 +40,7 @@ func NewClient() uci.Client {
 	client.AddCommand(cmd.NewGo(engine))
 	client.AddCommand(cmd.NewUci(engine))
 	client.AddCommand(cmd.NewStop(engine))
+	client.AddCommand(cmd.NewBench(engine))
 	client.AddCommand(cmd.NewPosition(engine))
 	client.AddCommand(cmd.NewUciNewGame(engine))
 
