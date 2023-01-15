@@ -37,7 +37,7 @@ func NewClient() (uci.Client, error) {
 	engine.Client.AddCommand(cmd.NewUciNewGame(engine))
 
 	// run ucinewgame to initialize position
-	err := engine.Client.RunWith([]string{"ucinewgame"}, false)
+	err := engine.Client.Run("ucinewgame")
 
 	return engine.Client, err
 }

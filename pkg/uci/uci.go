@@ -88,6 +88,12 @@ func (c *Client) Start() error {
 	}
 }
 
+// Run is a simple utility function which runs the provided arguments as a
+// command without parallelization.
+func (c *Client) Run(args ...string) error {
+	return c.RunWith(args, false)
+}
+
 // RunWith finds a command whose name matches the first element of the args
 // array, and runs it with the remaining args. It returns any error sent
 // by the command. It honours the cmd.Parallel property if parallelize is
