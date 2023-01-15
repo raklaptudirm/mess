@@ -34,7 +34,10 @@ func main() {
 
 func run() error {
 	// create new UCI client
-	client := engine.NewClient()
+	client, err := engine.NewClient()
+	if err != nil {
+		return err
+	}
 
 	// engine header with name, version, and author
 	fmt.Printf("Mess %s by Rak Laptudirm\n", build.Version)

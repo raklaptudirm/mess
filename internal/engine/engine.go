@@ -16,33 +16,28 @@ package engine
 import (
 	"laptudirm.com/x/mess/internal/engine/cmd"
 	"laptudirm.com/x/mess/internal/engine/context"
-	"laptudirm.com/x/mess/pkg/search"
 	"laptudirm.com/x/mess/pkg/uci"
 )
 
 // NewClient returns a new uci.Client containing all of the engine's
 // supported commands. The commands share a context.Engine among them.
-func NewClient() uci.Client {
+func NewClient() (uci.Client, error) {
 
-	client := uci.NewClient()
-
-	// initialize search context
-	search := search.NewContext(func(r search.Report) {
-		client.Println(r)
-	})
 	// initialize engine context
-	engine := &context.Engine{
-		Search: &search,
-	}
+	engine := &context.Engine{}
+	engine.Client = uci.NewClient()
 
 	// add the engine's commands to the client
-	client.AddCommand(cmd.NewD(engine))
-	client.AddCommand(cmd.NewGo(engine))
-	client.AddCommand(cmd.NewUci(engine))
-	client.AddCommand(cmd.NewStop(engine))
-	client.AddCommand(cmd.NewBench(engine))
-	client.AddCommand(cmd.NewPosition(engine))
-	client.AddCommand(cmd.NewUciNewGame(engine))
+	engine.Client.AddCommand(cmd.NewD(engine))
+	engine.Client.AddCommand(cmd.NewGo(engine))
+	engine.Client.AddCommand(cmd.NewUci(engine))
+	engine.Client.AddCommand(cmd.NewStop(engine))
+	engine.Client.AddCommand(cmd.NewBench(engine))
+	engine.Client.AddCommand(cmd.NewPosition(engine))
+	engine.Client.AddCommand(cmd.NewUciNewGame(engine))
 
-	return client
+	// run ucinewgame to initialize position
+	err := engine.Client.RunWith([]string{"ucinewgame"}, false)
+
+	return engine.Client, err
 }

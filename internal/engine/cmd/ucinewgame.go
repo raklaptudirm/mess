@@ -40,7 +40,7 @@ func NewUciNewGame(engine *context.Engine) cmd.Command {
 		Name: "ucinewgame",
 		Run: func(interaction cmd.Interaction) error {
 			// new context for new game
-			*engine.Search = search.NewContext(func(r search.Report) {
+			engine.Search = search.NewContext(func(r search.Report) {
 				interaction.Reply(r)
 			})
 			return nil

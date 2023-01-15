@@ -31,8 +31,8 @@ import (
 const MaxDepth = 256
 
 // NewContext creates a new search Context.
-func NewContext(reporter Reporter) Context {
-	return Context{
+func NewContext(reporter Reporter) *Context {
+	return &Context{
 		// default position
 		Board: board.NewBoard(board.StartFEN),
 

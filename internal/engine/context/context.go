@@ -13,11 +13,17 @@
 
 package context
 
-import "laptudirm.com/x/mess/pkg/search"
+import (
+	"laptudirm.com/x/mess/pkg/search"
+	"laptudirm.com/x/mess/pkg/uci"
+)
 
 // Engine represents the context containing the engine's information which
 // is shared among it's UCI commands to store state.
 type Engine struct {
+	// engine's uci client
+	Client uci.Client
+
 	// current search context
 	Search *search.Context
 }
