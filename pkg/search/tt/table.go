@@ -45,6 +45,26 @@ type Table struct {
 	size  int     // table size
 }
 
+// Resize resizes the given transposition table to the new size. The
+// entries are copied from the old table to the new one. If the new table
+// is smaller, some entries are discarded.
+func (tt *Table) Resize(mbs int) {
+	// compute new table size (number of entries)
+	size := (mbs * 1024 * 1024) / EntrySize
+
+	// create table with new size
+	newTable := make([]Entry, size)
+
+	// copy old elements
+	copy(newTable, tt.table)
+
+	// replace old table
+	*tt = Table{
+		table: newTable,
+		size:  size,
+	}
+}
+
 // Store puts the given data into the transposition table.
 func (tt *Table) Store(entry Entry) {
 	target := tt.fetch(entry.Hash)

@@ -11,30 +11,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package context
+package options
 
 import (
-	"laptudirm.com/x/mess/pkg/search"
-	"laptudirm.com/x/mess/pkg/uci"
+	"laptudirm.com/x/mess/internal/engine/context"
 	"laptudirm.com/x/mess/pkg/uci/option"
 )
 
-// Engine represents the context containing the engine's information which
-// is shared among it's UCI commands to store state.
-type Engine struct {
-	// engine's uci client
-	Client uci.Client
+// UCI option Threads, type spin
+//
+// The number of threads the engine should use while searching.
+func NewThreads(engine *context.Engine) option.Option {
+	return &option.Spin{
+		// multi-threading not implemented, so fix value at 1
+		Default: 1,
+		Min:     1, Max: 1,
 
-	// current search context
-	Search *search.Context
-
-	// uci options
-	OptionSchema option.Schema
-	Options      options
-}
-
-// options contains the values of the UCI options supported by the engine.
-type options struct {
-	Hash    int // name hash type spin
-	Threads int // name threads type spin
+		Storage: func(threads int) error {
+			engine.Options.Threads = threads
+			return nil
+		},
+	}
 }

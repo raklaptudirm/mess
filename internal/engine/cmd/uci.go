@@ -40,6 +40,10 @@ func NewUci(engine *context.Engine) cmd.Command {
 			// identify engine
 			interaction.Replyf("id name Mess %s", build.Version)
 			interaction.Reply("id author Rak Laptudirm")
+			interaction.Reply()
+
+			// print the supported options
+			interaction.Reply(engine.OptionSchema.String())
 
 			// declare uci support
 			interaction.Reply("uciok")

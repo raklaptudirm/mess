@@ -115,7 +115,7 @@ func NewBench(engine *context.Engine) cmd.Command {
 				context := search.NewContext(func(report search.Report) {
 					nodes += report.Nodes // add to total node count
 					interaction.Reply(report)
-				})
+				}, 16)
 				context.Board = board.NewBoard(strings.Fields(fen))
 
 				// search position

@@ -42,7 +42,7 @@ func NewUciNewGame(engine *context.Engine) cmd.Command {
 			// new context for new game
 			engine.Search = search.NewContext(func(r search.Report) {
 				interaction.Reply(r)
-			})
+			}, engine.Options.Hash)
 			return nil
 		},
 	}

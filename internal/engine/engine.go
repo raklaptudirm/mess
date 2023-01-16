@@ -16,7 +16,9 @@ package engine
 import (
 	"laptudirm.com/x/mess/internal/engine/cmd"
 	"laptudirm.com/x/mess/internal/engine/context"
+	"laptudirm.com/x/mess/internal/engine/options"
 	"laptudirm.com/x/mess/pkg/uci"
+	"laptudirm.com/x/mess/pkg/uci/option"
 )
 
 // NewClient returns a new uci.Client containing all of the engine's
@@ -25,19 +27,32 @@ func NewClient() (uci.Client, error) {
 
 	// initialize engine context
 	engine := &context.Engine{}
-	engine.Client = uci.NewClient()
 
-	// add the engine's commands to the client
+	// add uci commands to engine
+	engine.Client = uci.NewClient()
 	engine.Client.AddCommand(cmd.NewD(engine))
 	engine.Client.AddCommand(cmd.NewGo(engine))
 	engine.Client.AddCommand(cmd.NewUci(engine))
 	engine.Client.AddCommand(cmd.NewStop(engine))
 	engine.Client.AddCommand(cmd.NewBench(engine))
 	engine.Client.AddCommand(cmd.NewPosition(engine))
+	engine.Client.AddCommand(cmd.NewSetOption(engine))
 	engine.Client.AddCommand(cmd.NewUciNewGame(engine))
 
 	// run ucinewgame to initialize position
-	err := engine.Client.Run("ucinewgame")
+	if err := engine.Client.Run("ucinewgame"); err != nil {
+		return uci.Client{}, err
+	}
 
-	return engine.Client, err
+	// add uci options to engine
+	engine.OptionSchema = option.NewSchema()
+	engine.OptionSchema.AddOption("Hash", options.NewHash(engine))
+	engine.OptionSchema.AddOption("Threads", options.NewThreads(engine))
+
+	// initialize options
+	if err := engine.OptionSchema.SetDefaults(); err != nil {
+		return uci.Client{}, err
+	}
+
+	return engine.Client, nil
 }
