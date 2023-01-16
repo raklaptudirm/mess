@@ -31,12 +31,12 @@ import (
 const MaxDepth = 256
 
 // NewContext creates a new search Context.
-func NewContext(reporter Reporter) *Context {
+func NewContext(reporter Reporter, ttSize int) *Context {
 	return &Context{
 		// default position
 		Board: board.NewBoard(board.StartFEN),
 
-		tt:      tt.NewTable(16),
+		tt:      tt.NewTable(ttSize),
 		stopped: true,
 
 		reporter: reporter,
@@ -85,6 +85,11 @@ func (search *Context) Search(limits Limits) (move.Variation, eval.Eval, error) 
 // InProgress reports whether a search is in progress on the given context.
 func (search *Context) InProgress() bool {
 	return !search.stopped
+}
+
+// ResizeTT resizes the search's transposition table.
+func (search *Context) ResizeTT(mbs int) {
+	search.tt.Resize(mbs)
 }
 
 // Stop stops any ongoing search on the given context. The main search
