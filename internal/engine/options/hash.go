@@ -14,8 +14,6 @@
 package options
 
 import (
-	"math"
-
 	"laptudirm.com/x/mess/internal/engine/context"
 	"laptudirm.com/x/mess/pkg/uci/option"
 )
@@ -30,7 +28,9 @@ import (
 func NewHash(engine *context.Engine) option.Option {
 	return &option.Spin{
 		Default: 16, // default from stockfish
-		Min:     1, Max: math.MaxInt,
+		Min:     1,
+		// use stockfish value to suppress cutechess warnings
+		Max: 33554432,
 		Storage: func(hash int) error {
 			engine.Options.Hash = hash
 
