@@ -20,25 +20,24 @@ import (
 	"laptudirm.com/x/mess/pkg/uci/cmd"
 )
 
-// UCI command stop
-//
-// Stop calculating as soon as possible.
-func NewStop(engine *context.Engine) cmd.Command {
+func NewPonderHit(engine *context.Engine) cmd.Command {
 	return cmd.Command{
-		Name: "stop",
+		Name: "ponderhit",
 		Run: func(interaction cmd.Interaction) error {
-			// check if any search is ongoing
-			if !engine.Searching {
-				return errors.New("stop: no search ongoing")
+			// check if any ponder search is ongoing
+			if !engine.Pondering {
+				return errors.New("stop: no ponder search ongoing")
 			}
 
 			for !engine.Search.InProgress() {
-				// wait for search to start before stopping it
+				// wait for search to start before updating limits
 				// cause otherwise parallelization issues will occur
 			}
 
-			// stop the search
-			engine.Search.Stop()
+			// stop pondering but continue search with updated limits
+			engine.Pondering = false // search is now normal
+			// update to previously stored limits for normal search
+			engine.Search.UpdateLimits(engine.PonderLimits)
 			return nil
 		},
 	}

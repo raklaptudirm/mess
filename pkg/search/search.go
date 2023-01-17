@@ -92,6 +92,14 @@ func (search *Context) ResizeTT(mbs int) {
 	search.tt.Resize(mbs)
 }
 
+// UpdateLimits updates the search limits while a search is in progress.
+// The caller should make sure that a search is indeed in progress before
+// calling UpdateLimits.
+func (search *Context) UpdateLimits(limits Limits) {
+	search.limits = limits           // update limits
+	search.limits.Time.GetDeadline() // get search deadline
+}
+
 // Stop stops any ongoing search on the given context. The main search
 // function will immediately return after this function is called.
 func (search *Context) Stop() {

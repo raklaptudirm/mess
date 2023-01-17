@@ -19,6 +19,7 @@ import (
 	"strconv"
 
 	"laptudirm.com/x/mess/internal/engine/context"
+	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/search"
 	"laptudirm.com/x/mess/pkg/search/time"
@@ -100,7 +101,7 @@ func NewGo(engine *context.Engine) cmd.Command {
 	schema := flag.NewSchema()
 
 	// schema.Variadic("searchmoves")
-	// schema.Button("ponder")
+	schema.Button("ponder")
 	schema.Single("wtime")
 	schema.Single("btime")
 	schema.Single("winc")
@@ -126,20 +127,57 @@ func NewGo(engine *context.Engine) cmd.Command {
 				return err
 			}
 
-			// start search
-			pv, _, err := engine.Search.Search(limits)
-			if err != nil {
-				return err
+			// ponder search
+			if interaction.Values["ponder"].Set {
+				if !engine.Options.Ponder {
+					return errors.New("go ponder: pondering is disabled")
+				}
+
+				engine.Pondering = true
+
+				// store search limits for later
+				engine.PonderLimits = limits
+
+				// for now, start an infinite search
+				limits = search.Limits{
+					Depth:    search.MaxDepth,
+					Nodes:    math.MaxInt,
+					Infinite: true,
+					Time:     &time.MoveManager{Duration: math.MaxInt32},
+				}
 			}
 
-			// print bestmove and ponder move
-			interaction.Replyf("bestmove %s ponder %s", pv.Move(0), pv.Move(1))
+			// start searching
+			engine.Searching = true
+			// search in a separate thread that we don't block the repl
+			go func() {
+				defer func() {
+					// set search booleans to false
+					// since the search has ended
+					engine.Searching = false
+					engine.Pondering = false
+				}()
+
+				// start search
+				pv, _, err := engine.Search.Search(limits)
+				if err != nil {
+					interaction.Reply(err)
+					return
+				}
+
+				if bestMove, ponderMove := pv.Move(0), pv.Move(1); ponderMove == move.Null {
+					// just print bestmove since pondermove is null
+					interaction.Replyf("bestmove %s", bestMove)
+				} else {
+					// print bestmove and pondermove
+					interaction.Replyf("bestmove %s ponder %s", bestMove, ponderMove)
+				}
+			}()
+
 			return nil
 		},
 
-		// execution of this function should not block the repl
-		Parallel: true,
-		Flags:    schema,
+		Flags: schema,
 	}
 }
 

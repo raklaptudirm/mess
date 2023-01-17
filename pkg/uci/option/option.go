@@ -67,7 +67,7 @@ func (s *Schema) String() string {
 	var str string
 
 	for name, option := range s.options {
-		str += fmt.Sprintf("option %s type %s\n", name, option.Type())
+		str += fmt.Sprintf("option name %s type %s\n", name, option.Type())
 	}
 
 	return str

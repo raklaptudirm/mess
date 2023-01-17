@@ -26,7 +26,11 @@ type Engine struct {
 	Client uci.Client
 
 	// current search context
-	Search *search.Context
+	Search    *search.Context
+	Searching bool
+
+	Pondering    bool
+	PonderLimits search.Limits
 
 	// uci options
 	OptionSchema option.Schema
@@ -35,6 +39,7 @@ type Engine struct {
 
 // options contains the values of the UCI options supported by the engine.
 type options struct {
-	Hash    int // name hash type spin
-	Threads int // name threads type spin
+	Ponder  bool // name Ponder type check
+	Hash    int  // name Hash type spin
+	Threads int  // name Threads type spin
 }

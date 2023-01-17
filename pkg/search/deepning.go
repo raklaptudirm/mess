@@ -54,5 +54,9 @@ func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
 		search.report(search.GenerateReport())
 	}
 
+	for search.limits.Infinite && !search.shouldStop() {
+		// if in infinite mode, wait for stop
+	}
+
 	return search.pv, search.pvScore
 }
