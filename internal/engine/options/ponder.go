@@ -11,34 +11,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package options
 
 import (
-	"errors"
-
 	"laptudirm.com/x/mess/internal/engine/context"
-	"laptudirm.com/x/mess/pkg/uci/cmd"
+	"laptudirm.com/x/mess/pkg/uci/option"
 )
 
-// UCI command stop
+// UCI option Ponder, type check
 //
-// Stop calculating as soon as possible.
-func NewStop(engine *context.Engine) cmd.Command {
-	return cmd.Command{
-		Name: "stop",
-		Run: func(interaction cmd.Interaction) error {
-			// check if any search is ongoing
-			if !engine.Searching {
-				return errors.New("stop: no search ongoing")
-			}
-
-			for !engine.Search.InProgress() {
-				// wait for search to start before stopping it
-				// cause otherwise parallelization issues will occur
-			}
-
-			// stop the search
-			engine.Search.Stop()
+// This means that the engine is able to ponder. The GUI will send this
+// whenever pondering is possible or not.
+//
+// Note: The engine should not start pondering on its own if this is
+// enabled, this option is only needed because the engine might change its
+// time management algorithm when pondering is allowed.
+func NewPonder(engine *context.Engine) option.Option {
+	return &option.Check{
+		Default: false,
+		Storage: func(ponder bool) error {
+			engine.Options.Ponder = ponder
 			return nil
 		},
 	}

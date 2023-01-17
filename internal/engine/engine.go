@@ -37,6 +37,7 @@ func NewClient() (uci.Client, error) {
 	engine.Client.AddCommand(cmd.NewBench(engine))
 	engine.Client.AddCommand(cmd.NewPosition(engine))
 	engine.Client.AddCommand(cmd.NewSetOption(engine))
+	engine.Client.AddCommand(cmd.NewPonderHit(engine))
 	engine.Client.AddCommand(cmd.NewUciNewGame(engine))
 
 	// run ucinewgame to initialize position
@@ -47,6 +48,7 @@ func NewClient() (uci.Client, error) {
 	// add uci options to engine
 	engine.OptionSchema = option.NewSchema()
 	engine.OptionSchema.AddOption("Hash", options.NewHash(engine))
+	engine.OptionSchema.AddOption("Ponder", options.NewPonder(engine))
 	engine.OptionSchema.AddOption("Threads", options.NewThreads(engine))
 
 	// initialize options
