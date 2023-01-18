@@ -47,7 +47,11 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 	moves := search.Board.GenerateMoves(true)
 
 	// move ordering
-	list := move.ScoreMoves(moves, eval.OfMove(search.Board, move.Null))
+	list := move.ScoreMoves(moves, eval.OfMove(eval.ModeEvalInfo{
+		Board:   &search.Board.Position,
+		Killers: search.killers[plys],
+	}))
+
 	for i := 0; i < list.Length; i++ {
 		m := list.PickMove(i)
 
@@ -73,6 +77,7 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 				alpha = score
 
 				if alpha >= beta {
+					search.storeKiller(plys, m)
 					break // fail high
 				}
 			}

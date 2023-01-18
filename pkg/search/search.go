@@ -63,6 +63,9 @@ type Context struct {
 
 	// search limits
 	limits Limits
+
+	// move ordering stuff
+	killers [MaxDepth][2]move.Move
 }
 
 // Search initializes the context for a new search and calls the main
@@ -172,6 +175,31 @@ func (search *Context) score() eval.Eval {
 // blindness while searching.
 func (search *Context) draw() eval.Eval {
 	return eval.RandDraw(search.stats.Nodes)
+}
+
+// storeKiller tries to store the given move from the given depth as one
+// of the two killer moves.
+func (search *Context) storeKiller(plys int, killer move.Move) {
+	if killer.IsCapture() {
+		// killer moves are quiet
+		return
+	}
+
+	switch search.killers[plys][0] {
+	case move.Null:
+		// no killer move 1, store this
+		search.killers[plys][0] = killer
+
+	case killer:
+		// move already stored, no
+		// need to store it again
+
+	default:
+		// different move in killer 1
+		// move it to killer 2 position
+		search.killers[plys][1] = search.killers[plys][0]
+		search.killers[plys][0] = killer // new killer 1
+	}
 }
 
 // Limits contains the various limits which decide how long a search can
