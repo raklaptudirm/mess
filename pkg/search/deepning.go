@@ -34,8 +34,7 @@ func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
 		// the new pv isn't directly stored into the pv variable since it will
 		// pollute the correct pv if the next search is incomplete. Instead the
 		// old pv is overwritten only if the search is found to be complete.
-		var childPV move.Variation
-		search.pvScore = search.negamax(0, search.stats.Depth, -eval.Inf, eval.Inf, &childPV)
+		score, pv := search.aspirationWindow(search.stats.Depth, search.pvScore)
 
 		if search.stopped {
 			// don't use the new pv if search was stopped since the
@@ -48,7 +47,8 @@ func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
 		}
 
 		// search successfully completed, so update pv
-		search.pv = childPV
+		search.pv = pv
+		search.pvScore = score
 
 		// print some info for the GUI
 		search.report(search.GenerateReport())
