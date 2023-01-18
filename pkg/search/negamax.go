@@ -101,7 +101,12 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 	}
 
 	// move ordering; score the generated moves
-	list := move.ScoreMoves(moves, eval.OfMove(search.Board, bestMove))
+	list := move.ScoreMoves(moves, eval.OfMove(eval.ModeEvalInfo{
+		Board:   &search.Board.Position,
+		PVMove:  bestMove,
+		Killers: search.killers[plys],
+	}))
+
 	for i := 0; i < list.Length; i++ {
 		var childPV move.Variation
 
@@ -140,6 +145,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 				pv.Update(move, childPV)
 
 				if alpha >= beta {
+					search.storeKiller(plys, move)
 					break // fail high
 				}
 			}

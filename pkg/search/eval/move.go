@@ -14,9 +14,7 @@
 package eval
 
 import (
-	"math"
-
-	"laptudirm.com/x/mess/pkg/board"
+	"laptudirm.com/x/mess/pkg/board/mailbox"
 	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/board/piece"
 )
@@ -29,9 +27,14 @@ type Move uint16
 
 // constants representing move evaluations
 const (
-	PVMove       Move = math.MaxUint16
-	MvvLvaOffset Move = 100
-	DefaultMove  Move = 0
+	PVMove Move = 60000
+
+	MvvLvaOffset Move = 50000
+
+	KillerMove1 Move = 42000
+	KillerMove2 Move = 41000
+
+	DefaultMove Move = 0
 )
 
 // MvvLva table taken from Blunder
@@ -49,25 +52,40 @@ var MvvLva = [piece.TypeN][piece.TypeN]Move{
 
 // OfMove is a move evaluation function which returns a move func which can
 // be used for ordering moves. It takes the position and pv move as input.
-func OfMove(b *board.Board, pv move.Move) MoveFunc {
+func OfMove(info ModeEvalInfo) MoveFunc {
 	return func(m move.Move) Move {
 		switch {
-		case m == pv:
+		case m == info.PVMove:
 			// pv move from previous iteration is most likely
 			// to be the best move in the position
 			return PVMove
 
+		// captures and promotions
 		case m.IsCapture(), m.IsPromotion():
-			victim := b.Position[m.Target()].Type()
+			victim := info.Board[m.Target()].Type()
 			attacker := m.FromPiece().Type() // piece.NoType for promotions
 
 			// a less valuable piece capturing a more valuable
 			// piece is very likely to be a good move
 			return MvvLvaOffset + MvvLva[victim][attacker]
 
+		// killer moves
+		case m == info.Killers[0]:
+			return KillerMove1
+		case m == info.Killers[1]:
+			return KillerMove2
+
 		default:
 			// default move evaluation
 			return DefaultMove
 		}
 	}
+}
+
+// MoveEvalInfo stores the various search specific information which are
+// required by the move ordering function.
+type ModeEvalInfo struct {
+	Board   *mailbox.Board
+	PVMove  move.Move
+	Killers [2]move.Move
 }
