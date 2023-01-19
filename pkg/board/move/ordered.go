@@ -16,7 +16,8 @@ package move
 // the following core types may represent move evaluations
 // uint64 is excluded to prevent overflows during storage
 type eval interface {
-	~uint | ~uint8 | ~uint16 | ~uint32
+	~int | ~int8 | ~int16 | ~int32 |
+		~uint | ~uint8 | ~uint16 | ~uint32
 }
 
 // ScoreMoves scores each move in the provided move-list according to the
