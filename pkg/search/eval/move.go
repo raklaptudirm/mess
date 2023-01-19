@@ -17,13 +17,14 @@ import (
 	"laptudirm.com/x/mess/pkg/board/mailbox"
 	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/board/piece"
+	"laptudirm.com/x/mess/pkg/board/square"
 )
 
 // MoveFunc represents a move evaluation function.
 type MoveFunc func(move.Move) Move
 
 // Move represents the evaluation of a move.
-type Move uint16
+type Move int32
 
 // constants representing move evaluations
 const (
@@ -33,8 +34,6 @@ const (
 
 	KillerMove1 Move = 42000
 	KillerMove2 Move = 41000
-
-	DefaultMove Move = 0
 )
 
 // MvvLva table taken from Blunder
@@ -76,8 +75,7 @@ func OfMove(info ModeEvalInfo) MoveFunc {
 			return KillerMove2
 
 		default:
-			// default move evaluation
-			return DefaultMove
+			return info.History[m.Source()][m.Target()]
 		}
 	}
 }
@@ -85,7 +83,9 @@ func OfMove(info ModeEvalInfo) MoveFunc {
 // MoveEvalInfo stores the various search specific information which are
 // required by the move ordering function.
 type ModeEvalInfo struct {
-	Board   *mailbox.Board
-	PVMove  move.Move
+	Board  *mailbox.Board
+	PVMove move.Move
+
 	Killers [2]move.Move
+	History *[square.N][square.N]Move
 }

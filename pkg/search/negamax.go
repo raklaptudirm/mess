@@ -105,6 +105,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		Board:   &search.Board.Position,
 		PVMove:  bestMove,
 		Killers: search.killers[plys],
+		History: &search.history[search.Board.SideToMove],
 	}))
 
 	for i := 0; i < list.Length; i++ {
@@ -146,7 +147,12 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 				if alpha >= beta {
 					search.storeKiller(plys, move)
+					// history bonus
+					search.updateHistory(move, depthBonus(depth))
 					break // fail high
+				} else {
+					// history penalty
+					search.updateHistory(move, -depthBonus(depth))
 				}
 			}
 		}
