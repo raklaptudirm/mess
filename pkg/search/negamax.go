@@ -154,6 +154,9 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 					// history penalty
 					search.updateHistory(move, -depthBonus(depth))
 				}
+			} else {
+				// history penalty
+				search.updateHistory(move, -depthBonus(depth))
 			}
 		}
 	}
