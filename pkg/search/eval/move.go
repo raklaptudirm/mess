@@ -28,12 +28,12 @@ type Move int32
 
 // constants representing move evaluations
 const (
-	PVMove Move = 60000
+	PVMove Move = 2000000000
 
-	MvvLvaOffset Move = 50000
+	MvvLvaOffset Move = 1900000000
 
-	KillerMove1 Move = 42000
-	KillerMove2 Move = 41000
+	KillerMove1 Move = 1820000000
+	KillerMove2 Move = 1810000000
 )
 
 // MvvLva table taken from Blunder

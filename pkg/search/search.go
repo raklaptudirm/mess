@@ -210,7 +210,7 @@ func (search *Context) storeKiller(plys int, killer move.Move) {
 func (search *Context) updateHistory(m move.Move, bonus eval.Move) {
 	if !m.IsCapture() {
 		entry := search.fetchHistory(m)
-		hhBonus := bonus - *entry*util.Abs(bonus)/16384
+		hhBonus := bonus - *entry*util.Abs(bonus)/32768
 		*entry += hhBonus
 	}
 }
