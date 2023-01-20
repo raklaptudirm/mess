@@ -100,6 +100,8 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		}
 	}
 
+	historyBonus := depthBonus(depth)
+
 	// move ordering; score the generated moves
 	list := move.ScoreMoves(moves, eval.OfMove(eval.ModeEvalInfo{
 		Board:   &search.Board.Position,
@@ -146,19 +148,17 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 				pv.Update(move, childPV)
 
 				if alpha >= beta {
-					search.storeKiller(plys, move)
-					// history bonus
-					search.updateHistory(move, depthBonus(depth))
+					// move ordering heuristics
+					search.storeKiller(plys, move)           // killer move
+					search.updateHistory(move, historyBonus) // history bonus
+
 					break // fail high
-				} else {
-					// history penalty
-					search.updateHistory(move, -depthBonus(depth))
 				}
-			} else {
-				// history penalty
-				search.updateHistory(move, -depthBonus(depth))
 			}
 		}
+
+		// beta wasn't raised, so give move a history penalty
+		search.updateHistory(move, -historyBonus)
 	}
 
 	// if search is stopped, score may be of a bad quality and
