@@ -18,7 +18,7 @@ import (
 )
 
 // LMR reductions indexed by depth and move number.
-var reductions [MaxDepth][128]int
+var reductions [MaxDepth + 1][128]int
 
 func init() {
 	reductions[0][0] = 0
@@ -28,7 +28,7 @@ func init() {
 		return 63 - bits.LeadingZeros64(uint64(n))
 	}
 
-	for depth := 1; depth < MaxDepth; depth++ {
+	for depth := 1; depth <= MaxDepth; depth++ {
 		for moves := 1; moves < 128; moves++ {
 			reductions[depth][moves] = 1 + log(depth)*log(moves)/2
 		}
