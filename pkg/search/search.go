@@ -22,6 +22,8 @@ import (
 	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/board"
 	"laptudirm.com/x/mess/pkg/board/move"
+	"laptudirm.com/x/mess/pkg/board/piece"
+	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/pkg/search/eval"
 	"laptudirm.com/x/mess/pkg/search/time"
 	"laptudirm.com/x/mess/pkg/search/tt"
@@ -65,6 +67,7 @@ type Context struct {
 	limits Limits
 
 	// move ordering stuff
+	history [piece.ColorN][square.N][square.N]eval.Move
 	killers [MaxDepth][2]move.Move
 }
 
@@ -200,6 +203,26 @@ func (search *Context) storeKiller(plys int, killer move.Move) {
 		search.killers[plys][1] = search.killers[plys][0]
 		search.killers[plys][0] = killer // new killer 1
 	}
+}
+
+// updateHistory updates the history score of the given move with the given
+// bonus. It also verifies that the move is a quiet move.
+func (search *Context) updateHistory(m move.Move, bonus eval.Move) {
+	if !m.IsCapture() {
+		entry := search.fetchHistory(m)
+		hhBonus := bonus - *entry*util.Abs(bonus)/32768
+		*entry += hhBonus
+	}
+}
+
+// depthBonus returns the the history bonus for a particular depth.
+func depthBonus(depth int) eval.Move {
+	return eval.Move(util.Min(2000, depth*155))
+}
+
+// fetchHistory returns a pointer to the history entry of the given move.
+func (search *Context) fetchHistory(move move.Move) *eval.Move {
+	return &search.history[search.Board.SideToMove][move.Source()][move.Target()]
 }
 
 // Limits contains the various limits which decide how long a search can
