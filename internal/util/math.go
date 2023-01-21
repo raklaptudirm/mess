@@ -46,3 +46,9 @@ func Abs[T number](x T) T {
 
 	return x
 }
+
+// Clamp returns a value between min and max. If n is between min and max,
+// n is returned, otherwise the closest limit is returned.
+func Clamp[T number](n, min, max T) T {
+	return Max(min, Min(n, max))
+}

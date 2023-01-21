@@ -51,9 +51,6 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		return search.quiescence(plys, alpha, beta)
 	}
 
-	// node properties
-	isPVNode := beta-alpha != 1 // beta = alpha + 1 during PVS
-
 	// generate all moves
 	moves := search.Board.GenerateMoves(false)
 	if len(moves) == 0 {
@@ -65,6 +62,10 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 		return eval.Draw // stalemate
 	}
+
+	// node properties
+	isCheck := search.Board.UtilityInfo.CheckN > 0
+	isPVNode := beta-alpha != 1 // beta = alpha + 1 during PVS
 
 	// keep track of the original value of alpha for determining whether
 	// the score will act as an upper bound entry in the transposition table
@@ -121,8 +122,33 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 		var eval eval.Eval
 
-		if !isPVNode || i > 0 {
-			// null window search for non-pv nodes
+		// move after which LMR will be used
+		lmrAfter := 2
+		if isPVNode {
+			// start lmr later in pv nodes
+			lmrAfter += 2
+		}
+
+		switch {
+		// Late Move Reduction (LMR): Assuming that our move ordering is
+		// good, later moves are less likely to raise alpha. LMR is used to
+		// quickly prove that a move will be worse than alpha by searching
+		// it at a lower(reduced) depth.
+		case depth >= 3 && !isCheck && i > lmrAfter:
+			rDepth := reductions[depth][i+1]
+			rDepth = util.Clamp(depth-rDepth, 1, depth+1)
+
+			// reduced depth search
+			eval = -search.negamax(plys+1, rDepth, -alpha-1, -alpha, &childPV)
+			if eval <= alpha {
+				break
+			}
+
+			// lmr failed: do a full depth research
+			fallthrough
+
+		case !isPVNode || i > 0:
+			// full depth search if lmr failed or for a non-PV node
 			eval = -search.negamax(plys+1, depth-1, -alpha-1, -alpha, &childPV)
 		}
 

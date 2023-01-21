@@ -61,6 +61,15 @@ type Board struct {
 	EnPassantTarget square.Square
 	CastlingRights  castling.Rights
 
+	// UtilityInfo stores a pointer to the information
+	// generated during move generates, which includes many
+	// expensive but useful board properties.
+	//
+	// A call to GenerateMoves is required to ensure that this
+	// pointer carries up to date information, and it is the
+	// responsibility of the user to ensure that.
+	UtilityInfo *moveGenState
+
 	// move counters
 	Plys      int
 	FullMoves int

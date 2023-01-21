@@ -43,6 +43,8 @@ func (b *Board) GenerateMoves(tacticalOnly bool) []move.Move {
 	// king moves are always possible
 	state.appendKingMoves()
 
+	b.UtilityInfo = &state
+
 	return state.MoveList
 }
 
