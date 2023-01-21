@@ -29,7 +29,8 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 	case search.shouldStop():
 		return 0 // return value doesn't matter
 
-	case search.Board.IsDraw():
+	case search.Board.DrawClock >= 100,
+		search.Board.IsRepetition():
 		return search.draw()
 
 	case plys >= MaxDepth:
