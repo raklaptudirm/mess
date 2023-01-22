@@ -41,7 +41,9 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		// will be trashed and the previous iteration's pv will be used
 		return 0
 
-	case search.Board.IsDraw():
+	case search.Board.DrawClock >= 100,
+		plys == 0 && search.Board.IsThreefoldRepetition(),
+		plys != 0 && search.Board.IsRepetition():
 		// position is draw due to 50-move rule or threefold-repetition
 		return search.draw()
 
