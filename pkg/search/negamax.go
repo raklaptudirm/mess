@@ -15,6 +15,7 @@ package search
 
 import (
 	"laptudirm.com/x/mess/internal/util"
+	"laptudirm.com/x/mess/pkg/board/bitboard"
 	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/search/eval"
 	"laptudirm.com/x/mess/pkg/search/tt"
@@ -68,6 +69,8 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 	// node properties
 	isCheck := search.Board.UtilityInfo.CheckN > 0
 	isPVNode := beta-alpha != 1 // beta = alpha + 1 during PVS
+	isNullMove := search.Board.Plys > 0 && search.Board.History[search.Board.Plys-1].Move == move.Null
+	var staticEval eval.Eval
 
 	// keep track of the original value of alpha for determining whether
 	// the score will act as an upper bound entry in the transposition table
@@ -82,9 +85,12 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		// use pv move for move ordering in any case
 		bestMove = entry.Move
 
+		// use static eval from tt
+		staticEval = entry.Value.Eval(plys)
+
 		// only use entry if current node is not a pv node and
 		// entry depth is >= current depth (not worse quality)
-		if !isPVNode && entry.Depth >= depth {
+		if !isPVNode && !isNullMove && entry.Depth >= depth {
 			search.stats.TTHits++
 			value := entry.Value.Eval(plys)
 
@@ -100,6 +106,38 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 			if alpha >= beta {
 				return value // fail high
 			}
+		}
+	} else {
+		staticEval = search.score()
+	}
+
+	// Null Move Pruning (NMP): Based on the Null Move Observation(given a
+	// free move, the side to move can almost always improve their position)
+	// NMP reduces the search tree by giving the opponent a free move in a
+	// position where the static evaluation is enough to cause a beta cutoff.
+	// If the score is still high enough to cause a beta cutoff after a
+	// null move, the branch can be safely pruned.
+	//
+	// However, this method fails in Zugzwang positions, were it is better to
+	// do nothing than to move. Therefore, NMP is not used in endgame positions
+	// containing only pawns, where zugzwang positions occur most frequently.
+	if !isPVNode && !isCheck && !isNullMove && depth >= 3 && staticEval >= beta &&
+		search.Board.NonPawnMaterial(search.Board.SideToMove) != bitboard.Empty {
+
+		reduction := 5 + util.Min(4, depth/5) + util.Min(3, int((staticEval-beta)/214))
+
+		search.Board.MakeMove(move.Null)
+		score := -search.negamax(plys+1, depth-reduction, -beta, -beta+1, &move.Variation{})
+		search.Board.UnmakeMove()
+
+		if score >= beta {
+			if score >= eval.WinInMaxPly {
+				// don't return mate evaluations
+				// from the null move search
+				return beta
+			}
+
+			return score
 		}
 	}
 

@@ -42,6 +42,11 @@ func (b *Board) MakeMove(m move.Move) {
 
 	// parse move
 
+	if m == move.Null {
+		b.makeNullMove()
+		return
+	}
+
 	sourceSq := m.Source()
 	targetSq := m.Target()
 	captureSq := targetSq
@@ -121,6 +126,23 @@ func (b *Board) MakeMove(m move.Move) {
 	b.Hash ^= zobrist.SideToMove // switch in zobrist hash
 }
 
+func (b *Board) makeNullMove() {
+	// update en passant target square
+	if b.EnPassantTarget != square.None {
+		b.Hash ^= zobrist.EnPassant[b.EnPassantTarget.File()] // reset hash
+	}
+	b.EnPassantTarget = square.None // reset square
+
+	// switch turn
+	b.Plys++
+
+	// update side to move
+	if b.SideToMove = b.SideToMove.Other(); b.SideToMove == piece.White {
+		b.FullMoves++
+	}
+	b.Hash ^= zobrist.SideToMove // switch in zobrist hash
+}
+
 // UnmakeMove unmakes the last move played on the Board.
 func (b *Board) UnmakeMove() {
 	if b.SideToMove = b.SideToMove.Other(); b.SideToMove == piece.Black {
@@ -136,6 +158,12 @@ func (b *Board) UnmakeMove() {
 	m := b.History[b.Plys].Move
 
 	// parse move
+
+	if m == move.Null {
+		// use the hash stored in history
+		b.Hash = b.History[b.Plys].Hash
+		return
+	}
 
 	sourceSq := m.Source()
 	targetSq := m.Target()

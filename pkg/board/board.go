@@ -230,3 +230,10 @@ func (b *Board) QueensBB(c piece.Color) bitboard.Board {
 func (b *Board) KingBB(c piece.Color) bitboard.Board {
 	return b.PieceBBs[piece.King] & b.ColorBBs[c]
 }
+
+// NonPawnMaterial returns a bitboard containing all the pieces except the
+// king and pawns of the given color.
+func (b *Board) NonPawnMaterial(c piece.Color) bitboard.Board {
+	return (b.PieceBBs[piece.Knight] | b.PieceBBs[piece.Bishop] |
+		b.PieceBBs[piece.Rook] | b.PieceBBs[piece.Queen]) & b.ColorBBs[c]
+}
