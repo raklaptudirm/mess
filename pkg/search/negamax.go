@@ -70,7 +70,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 	isCheck := search.Board.UtilityInfo.CheckN > 0
 	isPVNode := beta-alpha != 1 // beta = alpha + 1 during PVS
 	isNullMove := search.Board.Plys > 0 && search.Board.History[search.Board.Plys-1].Move == move.Null
-	var staticEval eval.Eval
+	var posEval eval.Eval
 
 	// keep track of the original value of alpha for determining whether
 	// the score will act as an upper bound entry in the transposition table
@@ -78,15 +78,15 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 	// keep track of best move and score
 	bestMove := move.Null
-	bestEval := -eval.Inf
+	bestScore := -eval.Inf
 
 	// check for transposition table hits
 	if entry, hit := search.tt.Probe(search.Board.Hash); hit {
 		// use pv move for move ordering in any case
 		bestMove = entry.Move
 
-		// use static eval from tt
-		staticEval = entry.Value.Eval(plys)
+		// use tt score as position eval when available
+		posEval = entry.Value.Eval(plys)
 
 		// only use entry if current node is not a pv node and
 		// entry depth is >= current depth (not worse quality)
@@ -108,23 +108,25 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 			}
 		}
 	} else {
-		staticEval = search.score()
+		// when tt score is not available, use the position's
+		// static evaluation as the position evaluation
+		posEval = search.score()
 	}
 
 	// Null Move Pruning (NMP): Based on the Null Move Observation(given a
 	// free move, the side to move can almost always improve their position)
 	// NMP reduces the search tree by giving the opponent a free move in a
-	// position where the static evaluation is enough to cause a beta cutoff.
+	// position where the position evaluation is enough to cause a beta cutoff.
 	// If the score is still high enough to cause a beta cutoff after a
 	// null move, the branch can be safely pruned.
 	//
 	// However, this method fails in Zugzwang positions, were it is better to
 	// do nothing than to move. Therefore, NMP is not used in endgame positions
 	// containing only pawns, where zugzwang positions occur most frequently.
-	if !isPVNode && !isCheck && !isNullMove && depth >= 3 && staticEval >= beta &&
+	if !isPVNode && !isCheck && !isNullMove && depth >= 3 && posEval >= beta &&
 		search.Board.NonPawnMaterial(search.Board.SideToMove) != bitboard.Empty {
 
-		reduction := 5 + util.Min(4, depth/5) + util.Min(3, int((staticEval-beta)/214))
+		reduction := 5 + util.Min(4, depth/5) + util.Min(3, int((posEval-beta)/214))
 
 		search.Board.MakeMove(move.Null)
 		score := -search.negamax(plys+1, depth-reduction, -beta, -beta+1, &move.Variation{})
@@ -160,7 +162,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 		// Principal Variation Search
 
-		var eval eval.Eval
+		var score eval.Eval
 
 		// move after which LMR will be used
 		lmrAfter := 2
@@ -179,8 +181,8 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 			rDepth = util.Clamp(depth-rDepth, 1, depth+1)
 
 			// reduced depth search
-			eval = -search.negamax(plys+1, rDepth, -alpha-1, -alpha, &childPV)
-			if eval <= alpha {
+			score = -search.negamax(plys+1, rDepth, -alpha-1, -alpha, &childPV)
+			if score <= alpha {
 				break
 			}
 
@@ -189,26 +191,26 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 		case !isPVNode || i > 0:
 			// full depth search if lmr failed or for a non-PV node
-			eval = -search.negamax(plys+1, depth-1, -alpha-1, -alpha, &childPV)
+			score = -search.negamax(plys+1, depth-1, -alpha-1, -alpha, &childPV)
 		}
 
-		if isPVNode && ((eval > alpha && eval < beta) || i == 0) {
+		if isPVNode && ((score > alpha && score < beta) || i == 0) {
 			// full window search for pv nodes
-			eval = -search.negamax(plys+1, depth-1, -beta, -alpha, &childPV)
+			score = -search.negamax(plys+1, depth-1, -beta, -alpha, &childPV)
 		}
 
 		search.Board.UnmakeMove()
 
 		// update score and bounds
-		if eval > bestEval {
+		if score > bestScore {
 			// better move found
 			bestMove = move
-			bestEval = eval
+			bestScore = score
 
 			// check if move is new pv move
-			if eval > alpha {
+			if score > alpha {
 				// new pv so alpha increases
-				alpha = eval
+				alpha = score
 
 				// update parent pv
 				pv.Update(move, childPV)
@@ -232,12 +234,12 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 	if !search.stopped {
 		var entryType tt.EntryType
 		switch {
-		case bestEval <= originalAlpha:
+		case bestScore <= originalAlpha:
 			// if score <= alpha, it is a worse position for the max player than
 			// a previously explored line, since the move's exact score is at
 			// most score. Therefore, it is an upperbound on the exact score.
 			entryType = tt.UpperBound
-		case bestEval >= beta:
+		case bestScore >= beta:
 			// if score >= beta, it is a worse position for the min player than
 			// a previously explored line, singe the move's exact score is at
 			// least score. Therefore, it is a lowerbound on the exact score.
@@ -251,12 +253,12 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		// update transposition table
 		search.tt.Store(tt.Entry{
 			Hash:  search.Board.Hash,
-			Value: tt.EvalFrom(bestEval, plys),
+			Value: tt.EvalFrom(bestScore, plys),
 			Move:  bestMove,
 			Depth: depth,
 			Type:  entryType,
 		})
 	}
 
-	return bestEval
+	return bestScore
 }
