@@ -48,29 +48,32 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		// position is draw due to 50-move rule or threefold-repetition
 		return search.draw()
 
-	case depth <= 0, plys >= MaxDepth:
+	case plys >= MaxDepth:
+		// maximum search depth reached, return static evaluation
+		return search.score()
+
+	case depth <= 0:
 		// depth 0 reached, drop to quiescence search to prevent
 		// the horizon effect from making the evaluation bad
 		return search.quiescence(plys, alpha, beta)
-	}
-
-	// generate all moves
-	moves := search.Board.GenerateMoves(false)
-	if len(moves) == 0 {
-		// no legal moves, so some type of mate
-
-		if search.Board.IsInCheck(search.Board.SideToMove) {
-			return eval.MatedIn(plys) // checkmate
-		}
-
-		return eval.Draw // stalemate
 	}
 
 	// node properties
 	isCheck := search.Board.UtilityInfo.CheckN > 0
 	isPVNode := beta-alpha != 1 // beta = alpha + 1 during PVS
 	isNullMove := search.Board.Plys > 0 && search.Board.History[search.Board.Plys-1].Move == move.Null
-	var posEval eval.Eval
+
+	// generate all moves
+	moves := search.Board.GenerateMoves(false)
+	if len(moves) == 0 {
+		// no legal moves, so some type of mate
+
+		if isCheck {
+			return eval.MatedIn(plys) // checkmate
+		}
+
+		return eval.Draw // stalemate
+	}
 
 	// keep track of the original value of alpha for determining whether
 	// the score will act as an upper bound entry in the transposition table
@@ -79,6 +82,10 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 	// keep track of best move and score
 	bestMove := move.Null
 	bestScore := -eval.Inf
+
+	// non-static position evaluation used by
+	// some heuristics and pruning techniques
+	var posEval eval.Eval
 
 	// check for transposition table hits
 	if entry, hit := search.tt.Probe(search.Board.Hash); hit {
