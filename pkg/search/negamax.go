@@ -129,6 +129,15 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 			return posEval
 		}
 
+		// Razoring: If static evaluation is really bad, drop into qsearch
+		// and if qsearch score is <= alpha, don't spend any more time
+		// searching this node which will probably fail low.
+		if depth <= 3 && posEval+eval.Eval(200*depth) <= alpha {
+			if score := search.quiescence(plys, alpha, beta); score <= alpha {
+				return score
+			}
+		}
+
 		// Null Move Pruning (NMP): Based on the Null Move Observation(given a
 		// free move, the side to move can almost always improve their position)
 		// NMP reduces the search tree by giving the opponent a free move in a
