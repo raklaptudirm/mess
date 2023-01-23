@@ -121,33 +121,42 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		posEval = search.score()
 	}
 
-	// Null Move Pruning (NMP): Based on the Null Move Observation(given a
-	// free move, the side to move can almost always improve their position)
-	// NMP reduces the search tree by giving the opponent a free move in a
-	// position where the position evaluation is enough to cause a beta cutoff.
-	// If the score is still high enough to cause a beta cutoff after a
-	// null move, the branch can be safely pruned.
-	//
-	// However, this method fails in Zugzwang positions, were it is better to
-	// do nothing than to move. Therefore, NMP is not used in endgame positions
-	// containing only pawns, where zugzwang positions occur most frequently.
-	if !isPVNode && !isCheck && !isNullMove && depth >= 3 && posEval >= beta &&
-		search.Board.NonPawnMaterial(search.Board.SideToMove) != bitboard.Empty {
+	if !isPVNode && !isCheck {
+		// Reverse Futility Pruning (RFP): The position is so far above
+		// beta that we can expect the node to fail high and thus we can
+		// safely prune this branch.
+		if depth <= 5 && posEval >= beta && posEval-eval.Eval(75*depth) >= beta && posEval < eval.WinInMaxPly {
+			return posEval
+		}
 
-		reduction := 5 + util.Min(4, depth/5) + util.Min(3, int((posEval-beta)/214))
+		// Null Move Pruning (NMP): Based on the Null Move Observation(given a
+		// free move, the side to move can almost always improve their position)
+		// NMP reduces the search tree by giving the opponent a free move in a
+		// position where the position evaluation is enough to cause a beta cutoff.
+		// If the score is still high enough to cause a beta cutoff after a
+		// null move, the branch can be safely pruned.
+		//
+		// However, this method fails in Zugzwang positions, were it is better to
+		// do nothing than to move. Therefore, NMP is not used in endgame positions
+		// containing only pawns, where zugzwang positions occur most frequently.
+		if !isNullMove && depth >= 3 && posEval >= beta &&
+			search.Board.NonPawnMaterial(search.Board.SideToMove) != bitboard.Empty {
 
-		search.Board.MakeMove(move.Null)
-		score := -search.negamax(plys+1, depth-reduction, -beta, -beta+1, &move.Variation{})
-		search.Board.UnmakeMove()
+			reduction := 5 + util.Min(4, depth/5) + util.Min(3, int((posEval-beta)/214))
 
-		if score >= beta {
-			if score >= eval.WinInMaxPly {
-				// don't return mate evaluations
-				// from the null move search
-				return beta
+			search.Board.MakeMove(move.Null)
+			score := -search.negamax(plys+1, depth-reduction, -beta, -beta+1, &move.Variation{})
+			search.Board.UnmakeMove()
+
+			if score >= beta {
+				if score >= eval.WinInMaxPly {
+					// don't return mate evaluations
+					// from the null move search
+					return beta
+				}
+
+				return score
 			}
-
-			return score
 		}
 	}
 
