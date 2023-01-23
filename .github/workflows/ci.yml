@@ -34,3 +34,6 @@ jobs:
       # run tests
       - name: Run tests
         run: go test ./...
+        
+      - name: Benchmark Engine
+        run: go run . bench
