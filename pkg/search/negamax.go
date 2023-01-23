@@ -58,13 +58,14 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		return search.quiescence(plys, alpha, beta)
 	}
 
+	// generate all moves
+	moves := search.Board.GenerateMoves(false)
+
 	// node properties
 	isCheck := search.Board.UtilityInfo.CheckN > 0
 	isPVNode := beta-alpha != 1 // beta = alpha + 1 during PVS
 	isNullMove := search.Board.Plys > 0 && search.Board.History[search.Board.Plys-1].Move == move.Null
 
-	// generate all moves
-	moves := search.Board.GenerateMoves(false)
 	if len(moves) == 0 {
 		// no legal moves, so some type of mate
 
