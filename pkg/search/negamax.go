@@ -67,13 +67,8 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 	isNullMove := search.Board.Plys > 0 && search.Board.History[search.Board.Plys-1].Move == move.Null
 
 	if len(moves) == 0 {
-		// no legal moves, so some type of mate
-
-		if isCheck {
-			return eval.MatedIn(plys) // checkmate
-		}
-
-		return eval.Draw // stalemate
+		// position is mated; checkmate if king is in check
+		return util.Ternary(isCheck, eval.MatedIn(plys), eval.Draw)
 	}
 
 	// keep track of the original value of alpha for determining whether
@@ -176,6 +171,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		}
 	}
 
+	lmrDepth := util.Ternary(isPVNode, 4, 2)
 	historyBonus := depthBonus(depth)
 
 	// move ordering; score the generated moves
@@ -193,23 +189,14 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 		search.Board.MakeMove(move)
 
-		// Principal Variation Search
-
 		var score eval.Eval
-
-		// move after which LMR will be used
-		lmrAfter := 2
-		if isPVNode {
-			// start lmr later in pv nodes
-			lmrAfter += 2
-		}
 
 		switch {
 		// Late Move Reduction (LMR): Assuming that our move ordering is
 		// good, later moves are less likely to raise alpha. LMR is used to
 		// quickly prove that a move will be worse than alpha by searching
 		// it at a lower(reduced) depth.
-		case depth >= 3 && !isCheck && i > lmrAfter:
+		case depth >= 3 && !isCheck && i > lmrDepth:
 			rDepth := reductions[depth][i+1]
 			rDepth = util.Clamp(depth-rDepth, 1, depth+1)
 
@@ -227,6 +214,10 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 			score = -search.negamax(plys+1, depth-1, -alpha-1, -alpha, &childPV)
 		}
 
+		// Principal Variation Search (PVS): Search PV nodes with a full
+		// window as they are expected to be the best move in a position
+		// while non PV nodes are searched with a null window to prove
+		// that they are worse compared to the PV.
 		if isPVNode && ((score > alpha && score < beta) || i == 0) {
 			// full window search for pv nodes
 			score = -search.negamax(plys+1, depth-1, -beta, -alpha, &childPV)
