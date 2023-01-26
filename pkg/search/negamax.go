@@ -274,7 +274,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 			entryType = tt.UpperBound
 		case bestScore >= beta:
 			// if score >= beta, it is a worse position for the min player than
-			// a previously explored line, singe the move's exact score is at
+			// a previously explored line, since the move's exact score is at
 			// least score. Therefore, it is a lowerbound on the exact score.
 			entryType = tt.LowerBound
 		default:
