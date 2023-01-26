@@ -121,6 +121,13 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		posEval = search.score()
 	}
 
+	// Internal Iterative Reduction (IIR): If a hash move is not found by
+	// probing the transposition table, do a shallower search, as our move
+	// ordering won't be as effective.
+	if depth >= 4 && bestMove == move.Null {
+		depth--
+	}
+
 	if !isPVNode && !isCheck {
 		// Reverse Futility Pruning (RFP): The position is so far above
 		// beta that we can expect the node to fail high and thus we can
