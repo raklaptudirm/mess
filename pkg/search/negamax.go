@@ -34,6 +34,18 @@ import (
 func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.Variation) eval.Eval {
 	search.stats.Nodes++
 
+	// node properties
+	isCheck := search.Board.IsInCheck(search.Board.SideToMove)
+	isPVNode := beta-alpha != 1 // beta = alpha + 1 during PVS
+	isNullMove := search.Board.Plys > 0 && search.Board.History[search.Board.Plys-1].Move == move.Null
+
+	// Check Extension: If position is in check, extend search depth so
+	// that we don't push anything important over the horizon. This also
+	// prevents search from going into qsearch while in check.
+	if isCheck {
+		depth++
+	}
+
 	// quick exit clauses
 	switch {
 	case search.shouldStop():
@@ -60,12 +72,6 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 	// generate all moves
 	moves := search.Board.GenerateMoves(false)
-
-	// node properties
-	isCheck := search.Board.UtilityInfo.CheckN > 0
-	isPVNode := beta-alpha != 1 // beta = alpha + 1 during PVS
-	isNullMove := search.Board.Plys > 0 && search.Board.History[search.Board.Plys-1].Move == move.Null
-
 	if len(moves) == 0 {
 		// position is mated; checkmate if king is in check
 		return util.Ternary(isCheck, eval.MatedIn(plys), eval.Draw)
