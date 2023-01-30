@@ -179,6 +179,8 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 	lmrDepth := util.Ternary(isPVNode, 4, 2)
 	historyBonus := depthBonus(depth)
+	seeQuietMargin := eval.Eval(-64 * depth)
+	seeNoisyMargin := eval.Eval(-19 * depth * depth)
 
 	// move ordering; score the generated moves
 	list := move.ScoreMoves(moves, eval.OfMove(eval.ModeEvalInfo{
@@ -192,6 +194,13 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		var childPV move.Variation
 
 		move := list.PickMove(i)
+
+		if bestScore > eval.LoseInMaxPly {
+			// Static Exchange Evaluation Pruning (SEE Pruning):
+			if depth < 6 && !eval.SEE(search.Board, move, util.Ternary(move.IsQuiet(), seeQuietMargin, seeNoisyMargin)) {
+				continue
+			}
+		}
 
 		search.Board.MakeMove(move)
 
