@@ -17,6 +17,7 @@
 package tt
 
 import (
+	"math/bits"
 	"reflect"
 
 	"laptudirm.com/x/mess/pkg/board/move"
@@ -97,8 +98,11 @@ func (tt *Table) fetch(hash zobrist.Key) *Entry {
 }
 
 // indexOf is the hash function used by the transposition table.
-func (tt *Table) indexOf(hash zobrist.Key) int {
-	return int(uint64(hash) % uint64(tt.size))
+func (tt *Table) indexOf(hash zobrist.Key) uint {
+	// fast indexing function from Daniel Lemire's blog post
+	// https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
+	index, _ := bits.Mul(uint(hash), uint(tt.size))
+	return index
 }
 
 // Entry represents a transposition table entry.
