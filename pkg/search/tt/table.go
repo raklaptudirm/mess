@@ -17,6 +17,7 @@
 package tt
 
 import (
+	"math/bits"
 	"reflect"
 
 	"laptudirm.com/x/mess/pkg/board/move"
@@ -43,6 +44,12 @@ func NewTable(mbs int) *Table {
 type Table struct {
 	table []Entry // hash table
 	size  int     // table size
+	epoch int     // table epoch
+}
+
+// NextEpoch increases the epoch number of the given tt.
+func (tt *Table) NextEpoch() {
+	tt.epoch++
 }
 
 // Resize resizes the given transposition table to the new size. The
@@ -68,9 +75,10 @@ func (tt *Table) Resize(mbs int) {
 // Store puts the given data into the transposition table.
 func (tt *Table) Store(entry Entry) {
 	target := tt.fetch(entry.Hash)
+	entry.epoch = tt.epoch
 
 	// replace only if the new data has an equal or higher quality.
-	if target.Depth <= entry.Depth {
+	if entry.quality() >= target.quality() {
 		*target = entry
 	}
 }
@@ -90,8 +98,11 @@ func (tt *Table) fetch(hash zobrist.Key) *Entry {
 }
 
 // indexOf is the hash function used by the transposition table.
-func (tt *Table) indexOf(hash zobrist.Key) int {
-	return int(uint64(hash) % uint64(tt.size))
+func (tt *Table) indexOf(hash zobrist.Key) uint {
+	// fast indexing function from Daniel Lemire's blog post
+	// https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
+	index, _ := bits.Mul(uint(hash), uint(tt.size))
+	return index
 }
 
 // Entry represents a transposition table entry.
@@ -105,10 +116,17 @@ type Entry struct {
 
 	Value Eval      // value of this position
 	Type  EntryType // entry type of the value
+	epoch int       // birth epoch of the entry
 
 	// best move in the position
 	// used during iterative deepening as pv move
 	Move move.Move
+}
+
+// quality returns a quality measure of the given tt entry which will be
+// used to determine whether a tt entry should be overwritten or not.
+func (entry *Entry) quality() int {
+	return entry.epoch + entry.Depth/3
 }
 
 // EntryType represents the type of a transposition table entry's

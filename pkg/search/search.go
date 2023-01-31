@@ -124,6 +124,9 @@ func (search *Context) start(limits Limits) {
 	// reset stats
 	search.stats = Stats{}
 
+	// age the transposition table
+	search.tt.NextEpoch()
+
 	// start search
 	search.stopped = false           // search not stopped
 	search.limits.Time.GetDeadline() // get search deadline
