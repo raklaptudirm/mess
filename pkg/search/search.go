@@ -34,9 +34,13 @@ const MaxDepth = 256
 
 // NewContext creates a new search Context.
 func NewContext(reporter Reporter, ttSize int) *Context {
+	evaluator := &eval.OTSePUE{}
+
 	return &Context{
 		// default position
-		board: board.NewBoard(board.StartFEN),
+		board: board.New(board.EU(evaluator), board.FEN(board.StartFEN)),
+
+		evaluator: evaluator,
 
 		tt:      tt.NewTable(ttSize),
 		stopped: true,
@@ -54,6 +58,8 @@ type Context struct {
 	board   *board.Board
 	tt      *tt.Table
 	stopped bool
+
+	evaluator eval.EfficientlyUpdatable
 
 	// principal variation
 	pv      move.Variation
@@ -96,6 +102,24 @@ func (search *Context) InProgress() bool {
 // ResizeTT resizes the search's transposition table.
 func (search *Context) ResizeTT(mbs int) {
 	search.tt.Resize(mbs)
+}
+
+func (search *Context) UpdatePosition(fen [6]string) {
+	search.board.UpdateWithFEN(fen)
+}
+
+func (search *Context) MakeMoves(moves ...string) {
+	for _, m := range moves {
+		search.board.MakeMove(search.board.NewMoveFromString(m))
+	}
+}
+
+func (search *Context) String() string {
+	return search.board.String()
+}
+
+func (search *Context) STM() piece.Color {
+	return search.board.SideToMove
 }
 
 // UpdateLimits updates the search limits while a search is in progress.
@@ -174,7 +198,7 @@ func (search *Context) report(report Report) {
 // score return the static evaluation of the current context's internal
 // board. Any changes to the evaluation function should be done here.
 func (search *Context) score() eval.Eval {
-	return eval.PeSTO(search.board)
+	return search.evaluator.Accumulate(search.board.SideToMove)
 }
 
 // draw returns a randomized draw score to prevent threefold-repetition

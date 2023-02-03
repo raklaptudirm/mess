@@ -227,7 +227,7 @@ func parseSearchLimits(engine *context.Engine, values flag.Values) (search.Limit
 		limits.Time = &time.MoveManager{Duration: t}
 
 	case timeSet:
-		tc := &time.NormalManager{Us: engine.Search.Board.SideToMove}
+		tc := &time.NormalManager{Us: engine.Search.STM()}
 
 		var err error
 

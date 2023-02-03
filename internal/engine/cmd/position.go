@@ -47,13 +47,14 @@ func NewPosition(engine *context.Engine) cmd.Command {
 		Name: "position",
 		Run: func(interaction cmd.Interaction) error {
 			// parse flags into a board.Board
-			board, err := parsePositionFlags(interaction.Values)
+			fen, moves, err := parsePositionFlags(interaction.Values)
 			if err != nil {
 				return err
 			}
 
 			// update search board
-			engine.Search.Board = board
+			engine.Search.UpdatePosition(fen)
+			engine.Search.MakeMoves(moves...)
 
 			return nil
 		},
@@ -62,37 +63,30 @@ func NewPosition(engine *context.Engine) cmd.Command {
 }
 
 // parsePositionFlags parses the position data from the given flags.
-func parsePositionFlags(values flag.Values) (*board.Board, error) {
-	// set up new position here
-	var b *board.Board
+func parsePositionFlags(values flag.Values) ([6]string, []string, error) {
+	var fen [6]string
 
 	// parse base position
 	switch {
 	// only one of the base position descriptors should be set
 	case values["startpos"].Set && values["fen"].Set:
-		return nil, errors.New("position: both startpos and fen flags found")
+		return board.StartFEN, nil, errors.New("position: both startpos and fen flags found")
 
 	case values["startpos"].Set:
-		// starting position
-		b = board.NewBoard(board.StartFEN)
+		fen = board.StartFEN
 
 	case values["fen"].Set:
 		// parse fen string for base position
-		b = board.NewBoard(values["fen"].Value.([]string))
+		fen = *(*[6]string)(values["fen"].Value.([]string))
 
 	default:
 		// one of fen or startpos have to be there
-		return nil, errors.New("position: no startpos or fen option")
+		return board.StartFEN, nil, errors.New("position: no startpos or fen option")
 	}
 
-	// check if any moves are played on the base position
 	if values["moves"].Set {
-		// play the provided moves on the board
-		moves := values["moves"].Value.([]string)
-		for _, m := range moves {
-			b.MakeMove(b.NewMoveFromString(m))
-		}
+		return fen, values["moves"].Value.([]string), nil
 	}
 
-	return b, nil
+	return fen, nil, nil
 }

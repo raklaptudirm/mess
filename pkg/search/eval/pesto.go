@@ -15,40 +15,41 @@ package eval
 
 import (
 	"laptudirm.com/x/mess/internal/util"
-	"laptudirm.com/x/mess/pkg/board"
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 )
 
 //go:generate go run laptudirm.com/x/mess/internal/generator/pesto
 
-var phaseInc = [piece.TypeN]int{0, 0, 1, 1, 2, 4, 0}
+var phaseInc = [piece.TypeN]Eval{0, 0, 1, 1, 2, 4, 0}
 
-// PeSTO is an evaluation.Func which uses PeSTO evaluation.
-// https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function
-func PeSTO(b *board.Board) Eval {
-	var mg [piece.ColorN]Eval
-	var eg [piece.ColorN]Eval
+type OTSePUE struct {
+	mg, eg [piece.ColorN]Eval
+	phase  Eval
+}
 
-	var gamePhase int
+var _ EfficientlyUpdatable = (*OTSePUE)(nil)
 
-	for s := square.A8; s < square.N; s++ {
-		p := b.Position[s]
-		if p != piece.NoPiece {
-			mg[p.Color()] += mgTable[p][s]
-			eg[p.Color()] += egTable[p][s]
+func (pesto *OTSePUE) FillSquare(s square.Square, p piece.Piece) {
+	pesto.mg[p.Color()] += mgTable[p][s]
+	pesto.eg[p.Color()] += egTable[p][s]
 
-			gamePhase += phaseInc[p.Type()]
-		}
-	}
+	pesto.phase += phaseInc[p.Type()]
+}
 
-	// tapered evaluation
+func (pesto *OTSePUE) ClearSquare(s square.Square, p piece.Piece) {
+	pesto.mg[p.Color()] -= mgTable[p][s]
+	pesto.eg[p.Color()] -= egTable[p][s]
 
-	mgScore := mg[b.SideToMove] - mg[b.SideToMove.Other()]
-	egScore := eg[b.SideToMove] - eg[b.SideToMove.Other()]
+	pesto.phase -= phaseInc[p.Type()]
+}
 
-	mgPhase := util.Min(gamePhase, 24)
+func (pesto *OTSePUE) Accumulate(stm piece.Color) Eval {
+	mgScore := pesto.mg[stm] - pesto.mg[stm.Other()]
+	egScore := pesto.eg[stm] - pesto.eg[stm.Other()]
+
+	mgPhase := util.Min(pesto.phase, 24)
 	egPhase := 24 - mgPhase
 
-	return (mgScore*Eval(mgPhase) + egScore*Eval(egPhase)) / 24
+	return (mgScore*mgPhase + egScore*egPhase) / 24
 }
