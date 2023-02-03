@@ -143,7 +143,7 @@ rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3 ; 5 11139762`
 func TestPerft(t *testing.T) {
 	testStrings := strings.Split(perftTests, "\n")
 	var tests []struct {
-		fen   []string
+		fen   [6]string
 		depth int
 		perft int
 	}
@@ -154,17 +154,18 @@ func TestPerft(t *testing.T) {
 		depth, _ := strconv.Atoi(depthStr)
 		perft, _ := strconv.Atoi(perftStr)
 		tests = append(tests, struct {
-			fen   []string
+			fen   [6]string
 			depth int
 			perft int
 		}{
-			fen: strings.Fields(fen), depth: depth, perft: perft,
+			fen:   *(*[6]string)(strings.Fields(fen)),
+			depth: depth, perft: perft,
 		})
 	}
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("perft(%d) of %s", test.depth, test.fen), func(*testing.T) {
-			bo := board.NewBoard(test.fen)
+			bo := board.New(board.FEN(test.fen))
 			result := board.Perft(bo, test.depth)
 			if result != test.perft {
 				t.Errorf("perft(%d) of %s: got %d instead of %d\n", test.depth, test.fen, result, test.perft)

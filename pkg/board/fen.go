@@ -23,12 +23,15 @@ import (
 	"laptudirm.com/x/mess/pkg/board/zobrist"
 )
 
-var StartFEN = strings.Fields("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+var StartFEN = *(*[6]string)(strings.Fields("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"))
 
 // NewBoard creates an instance of a *Board from a given fen string.
 // https://www.chessprogramming.org/Forsyth-Edwards_Notation
-func NewBoard(fen []string) *Board {
-	var board Board
+func (board *Board) UpdateWithFEN(fen [6]string) {
+	// empty board
+	for s := square.A8; s <= square.H1; s++ {
+		board.ClearSquare(s)
+	}
 
 	// side to move
 	board.SideToMove = piece.NewColor(fen[1])
@@ -73,8 +76,6 @@ func NewBoard(fen []string) *Board {
 	// move counters
 	board.DrawClock, _ = strconv.Atoi(fen[4])
 	board.FullMoves, _ = strconv.Atoi(fen[5])
-
-	return &board
 }
 
 // FEN returns the fen string of the current Board position.

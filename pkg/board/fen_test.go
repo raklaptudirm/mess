@@ -20,7 +20,10 @@ func TestFEN(t *testing.T) {
 
 	for n, test := range tests {
 		t.Run(test, func(t *testing.T) {
-			b := board.NewBoard(strings.Fields(test))
+			// go magic
+			fen := (*(*[6]string)(strings.Fields(test)))
+
+			b := board.New(board.FEN(fen))
 			newFEN := b.FEN()
 			if test != newFEN {
 				t.Errorf("test %d: wrong fen\n%s\n%s\n", n, test, newFEN)
