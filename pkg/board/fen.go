@@ -33,6 +33,10 @@ func (board *Board) UpdateWithFEN(fen [6]string) {
 		board.ClearSquare(s)
 	}
 
+	// reset some stuff
+	board.Plys = 0
+	board.Hash = 0
+
 	// side to move
 	board.SideToMove = piece.NewColor(fen[1])
 	if board.SideToMove == piece.Black {
