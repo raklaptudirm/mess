@@ -29,8 +29,8 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 	case search.shouldStop():
 		return 0 // return value doesn't matter
 
-	case search.Board.DrawClock >= 100,
-		search.Board.IsRepetition():
+	case search.board.DrawClock >= 100,
+		search.board.IsRepetition():
 		return search.draw()
 
 	case plys >= MaxDepth:
@@ -45,11 +45,11 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 	alpha = util.Max(alpha, bestScore)
 
 	// generate tactical (captures and promotions) moves only
-	moves := search.Board.GenerateMoves(true)
+	moves := search.board.GenerateMoves(true)
 
 	// move ordering
 	list := move.ScoreMoves(moves, eval.OfMove(eval.ModeEvalInfo{
-		Board:   &search.Board.Position,
+		Board:   &search.board.Position,
 		Killers: search.killers[plys],
 	}))
 
@@ -63,9 +63,9 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 		// quiescence search itself.
 		search.stats.Nodes++
 
-		search.Board.MakeMove(m)
+		search.board.MakeMove(m)
 		score := -search.quiescence(plys+1, -beta, -alpha)
-		search.Board.UnmakeMove()
+		search.board.UnmakeMove()
 
 		// update score and bounds
 		if score > bestScore {

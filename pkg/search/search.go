@@ -34,9 +34,13 @@ const MaxDepth = 256
 
 // NewContext creates a new search Context.
 func NewContext(reporter Reporter, ttSize int) *Context {
+	evaluator := &eval.OTSePUE{}
+
 	return &Context{
 		// default position
-		Board: board.NewBoard(board.StartFEN),
+		board: board.New(board.EU(evaluator), board.FEN(board.StartFEN)),
+
+		evaluator: evaluator,
 
 		tt:      tt.NewTable(ttSize),
 		stopped: true,
@@ -51,9 +55,11 @@ func NewContext(reporter Reporter, ttSize int) *Context {
 // new Context should be used for different games.
 type Context struct {
 	// search state
-	Board   *board.Board
+	board   *board.Board
 	tt      *tt.Table
 	stopped bool
+
+	evaluator eval.EfficientlyUpdatable
 
 	// principal variation
 	pv      move.Variation
@@ -80,7 +86,7 @@ func (search *Context) Search(limits Limits) (move.Variation, eval.Eval, error) 
 	defer search.Stop()
 
 	// illegal position check; king can be captured
-	if search.Board.IsInCheck(search.Board.SideToMove.Other()) {
+	if search.board.IsInCheck(search.board.SideToMove.Other()) {
 		return move.Variation{}, eval.Inf, errors.New("search move: position is illegal")
 	}
 
@@ -96,6 +102,24 @@ func (search *Context) InProgress() bool {
 // ResizeTT resizes the search's transposition table.
 func (search *Context) ResizeTT(mbs int) {
 	search.tt.Resize(mbs)
+}
+
+func (search *Context) UpdatePosition(fen [6]string) {
+	search.board.UpdateWithFEN(fen)
+}
+
+func (search *Context) MakeMoves(moves ...string) {
+	for _, m := range moves {
+		search.board.MakeMove(search.board.NewMoveFromString(m))
+	}
+}
+
+func (search *Context) String() string {
+	return search.board.String()
+}
+
+func (search *Context) STM() piece.Color {
+	return search.board.SideToMove
 }
 
 // UpdateLimits updates the search limits while a search is in progress.
@@ -174,7 +198,7 @@ func (search *Context) report(report Report) {
 // score return the static evaluation of the current context's internal
 // board. Any changes to the evaluation function should be done here.
 func (search *Context) score() eval.Eval {
-	return eval.PeSTO(search.Board)
+	return search.evaluator.Accumulate(search.board.SideToMove)
 }
 
 // draw returns a randomized draw score to prevent threefold-repetition
@@ -225,7 +249,7 @@ func depthBonus(depth int) eval.Move {
 
 // fetchHistory returns a pointer to the history entry of the given move.
 func (search *Context) fetchHistory(move move.Move) *eval.Move {
-	return &search.history[search.Board.SideToMove][move.Source()][move.Target()]
+	return &search.history[search.board.SideToMove][move.Source()][move.Target()]
 }
 
 // Limits contains the various limits which decide how long a search can

@@ -27,7 +27,7 @@ func NewD(engine *context.Engine) cmd.Command {
 		Name: "d",
 		Run: func(interaction cmd.Interaction) error {
 			// print the current board with ascii art
-			interaction.Reply(engine.Search.Board.String())
+			interaction.Reply(engine.Search.String())
 			return nil
 		},
 	}

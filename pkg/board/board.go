@@ -31,6 +31,32 @@ import (
 	"laptudirm.com/x/mess/pkg/board/zobrist"
 )
 
+func New(config ...boardUpdater) *Board {
+	var board Board
+
+	board.efficientlyUpdatable = &dummyEU{}
+
+	for _, updater := range config {
+		updater(&board)
+	}
+
+	return &board
+}
+
+type boardUpdater func(*Board)
+
+func EU(eu EfficientlyUpdatable) boardUpdater {
+	return func(b *Board) {
+		b.efficientlyUpdatable = eu
+	}
+}
+
+func FEN(fen [6]string) boardUpdater {
+	return func(b *Board) {
+		b.UpdateWithFEN(fen)
+	}
+}
+
 // Board represents the state of a chessboard at a given position. It
 // contains two representations of the chess board: a 8x8 mailbox which is
 // used to easily look up what piece occupies a given square, and a
@@ -60,6 +86,8 @@ type Board struct {
 	SideToMove      piece.Color
 	EnPassantTarget square.Square
 	CastlingRights  castling.Rights
+
+	efficientlyUpdatable EfficientlyUpdatable
 
 	// UtilityInfo stores a pointer to the information
 	// generated during move generates, which includes many
@@ -155,6 +183,8 @@ func (b *Board) ClearSquare(s square.Square) {
 	b.PieceBBs[p.Type()].Unset(s)       // piece bitboard
 	b.Position[s] = piece.NoPiece       // mailbox board
 	b.Hash ^= zobrist.PieceSquare[p][s] // zobrist hash
+
+	b.efficientlyUpdatable.ClearSquare(s, p)
 }
 
 // FillSquare fills the given square with the given piece. Callers should
@@ -169,6 +199,8 @@ func (b *Board) FillSquare(s square.Square, p piece.Piece) {
 	b.PieceBBs[t].Set(s)                // piece bitboard
 	b.Position[s] = p                   // mailbox board
 	b.Hash ^= zobrist.PieceSquare[p][s] // zobrist hash
+
+	b.efficientlyUpdatable.FillSquare(s, p)
 }
 
 // IsInCheck checks if the side with the given color is in check.
@@ -237,3 +269,13 @@ func (b *Board) NonPawnMaterial(c piece.Color) bitboard.Board {
 	return (b.PieceBBs[piece.Knight] | b.PieceBBs[piece.Bishop] |
 		b.PieceBBs[piece.Rook] | b.PieceBBs[piece.Queen]) & b.ColorBBs[c]
 }
+
+type EfficientlyUpdatable interface {
+	FillSquare(square.Square, piece.Piece)
+	ClearSquare(square.Square, piece.Piece)
+}
+
+type dummyEU struct{}
+
+func (eu *dummyEU) FillSquare(square.Square, piece.Piece)  {}
+func (eu *dummyEU) ClearSquare(square.Square, piece.Piece) {}

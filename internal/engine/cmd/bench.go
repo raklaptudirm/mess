@@ -19,7 +19,6 @@ import (
 	realtime "time"
 
 	"laptudirm.com/x/mess/internal/engine/context"
-	"laptudirm.com/x/mess/pkg/board"
 	"laptudirm.com/x/mess/pkg/search"
 	"laptudirm.com/x/mess/pkg/search/time"
 	"laptudirm.com/x/mess/pkg/uci/cmd"
@@ -116,7 +115,7 @@ func NewBench(engine *context.Engine) cmd.Command {
 					nodes += report.Nodes // add to total node count
 					interaction.Reply(report)
 				}, 16)
-				context.Board = board.NewBoard(strings.Fields(fen))
+				context.UpdatePosition(*(*[6]string)(strings.Fields(fen)))
 
 				// search position
 				_, _, err := context.Search(limits)

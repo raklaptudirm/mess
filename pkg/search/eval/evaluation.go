@@ -21,7 +21,13 @@ import (
 	"math"
 
 	"laptudirm.com/x/mess/pkg/board"
+	"laptudirm.com/x/mess/pkg/board/piece"
 )
+
+type EfficientlyUpdatable interface {
+	board.EfficientlyUpdatable
+	Accumulate(piece.Color) Eval
+}
 
 // Func represents a board evaluation function.
 type Func func(*board.Board) Eval
