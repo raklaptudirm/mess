@@ -35,9 +35,9 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 	search.stats.Nodes++
 
 	// node properties
-	isCheck := search.Board.IsInCheck(search.Board.SideToMove)
+	isCheck := search.board.IsInCheck(search.board.SideToMove)
 	isPVNode := beta-alpha != 1 // beta = alpha + 1 during PVS
-	isNullMove := search.Board.Plys > 0 && search.Board.History[search.Board.Plys-1].Move == move.Null
+	isNullMove := search.board.Plys > 0 && search.board.History[search.board.Plys-1].Move == move.Null
 
 	// Check Extension: If position is in check, extend search depth so
 	// that we don't push anything important over the horizon. This also
@@ -54,9 +54,9 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		// will be trashed and the previous iteration's pv will be used
 		return 0
 
-	case search.Board.DrawClock >= 100,
-		plys == 0 && search.Board.IsThreefoldRepetition(),
-		plys != 0 && search.Board.IsRepetition():
+	case search.board.DrawClock >= 100,
+		plys == 0 && search.board.IsThreefoldRepetition(),
+		plys != 0 && search.board.IsRepetition():
 		// position is draw due to 50-move rule or threefold-repetition
 		return search.draw()
 
@@ -71,7 +71,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 	}
 
 	// generate all moves
-	moves := search.Board.GenerateMoves(false)
+	moves := search.board.GenerateMoves(false)
 	if len(moves) == 0 {
 		// position is mated; checkmate if king is in check
 		return util.Ternary(isCheck, eval.MatedIn(plys), eval.Draw)
@@ -90,7 +90,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 	var posEval eval.Eval
 
 	// check for transposition table hits
-	if entry, hit := search.tt.Probe(search.Board.Hash); hit {
+	if entry, hit := search.tt.Probe(search.board.Hash); hit {
 		// use pv move for move ordering in any case
 		bestMove = entry.Move
 
@@ -157,13 +157,13 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		// do nothing than to move. Therefore, NMP is not used in endgame positions
 		// containing only pawns, where zugzwang positions occur most frequently.
 		if !isNullMove && depth >= 3 && posEval >= beta &&
-			search.Board.NonPawnMaterial(search.Board.SideToMove) != bitboard.Empty {
+			search.board.NonPawnMaterial(search.board.SideToMove) != bitboard.Empty {
 
 			reduction := 5 + util.Min(4, depth/5) + util.Min(3, int((posEval-beta)/214))
 
-			search.Board.MakeMove(move.Null)
+			search.board.MakeMove(move.Null)
 			score := -search.negamax(plys+1, depth-reduction, -beta, -beta+1, &move.Variation{})
-			search.Board.UnmakeMove()
+			search.board.UnmakeMove()
 
 			if score >= beta {
 				if score >= eval.WinInMaxPly {
@@ -184,10 +184,10 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 	// move ordering; score the generated moves
 	list := move.ScoreMoves(moves, eval.OfMove(eval.ModeEvalInfo{
-		Board:   &search.Board.Position,
+		Board:   &search.board.Position,
 		PVMove:  bestMove,
 		Killers: search.killers[plys],
-		History: &search.history[search.Board.SideToMove],
+		History: &search.history[search.board.SideToMove],
 	}))
 
 	for i := 0; i < list.Length; i++ {
@@ -197,12 +197,12 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 		if bestScore > eval.LoseInMaxPly {
 			// Static Exchange Evaluation Pruning (SEE Pruning):
-			if depth < 6 && !eval.SEE(search.Board, move, util.Ternary(move.IsQuiet(), seeQuietMargin, seeNoisyMargin)) {
+			if depth < 6 && !eval.SEE(search.board, move, util.Ternary(move.IsQuiet(), seeQuietMargin, seeNoisyMargin)) {
 				continue
 			}
 		}
 
-		search.Board.MakeMove(move)
+		search.board.MakeMove(move)
 
 		var score eval.Eval
 
@@ -238,7 +238,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 			score = -search.negamax(plys+1, depth-1, -beta, -alpha, &childPV)
 		}
 
-		search.Board.UnmakeMove()
+		search.board.UnmakeMove()
 
 		// update score and bounds
 		if score > bestScore {
@@ -291,7 +291,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 		// update transposition table
 		search.tt.Store(tt.Entry{
-			Hash:  search.Board.Hash,
+			Hash:  search.board.Hash,
 			Value: tt.EvalFrom(bestScore, plys),
 			Move:  bestMove,
 			Depth: depth,
