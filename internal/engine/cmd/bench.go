@@ -95,7 +95,7 @@ func NewBench(engine *context.Engine) cmd.Command {
 
 	// search limits
 	limits := search.Limits{
-		Depth:    9, // make this higher as engine gets faster
+		Depth:    12, // make this higher as engine gets faster
 		Infinite: true,
 		Time:     &time.MoveManager{Duration: math.MaxInt32},
 	}
