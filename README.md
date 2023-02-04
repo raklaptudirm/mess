@@ -28,11 +28,15 @@ Mess's code structure is extremely modular and thus it may be used as a library 
 developing chess engines in go. The [`./pkg`](./pkg) directory will contain all the
 packages that are available for use publicly.
 
-Mess is currently a work in progress and not very strong compared to strong humans or the
-other chess engines out there. It is suggested that you use a different and more stronger
-engine for analysing your games.
-
 # Installation
+
+### Prebuilt Binaries
+
+Prebuilt binaries for mess can be found in the releases section of this repository.
+Binaries are only provided for release versions of Mess. Binaries have been provided for
+all the major operating systems, including Windows, Linux, and Darwin.
+
+A list of all of Mess's releases can be found [here](https://github.com/raklaptudirm/mess/releases).
 
 ### Prerequisites
 
