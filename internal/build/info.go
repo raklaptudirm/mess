@@ -16,4 +16,4 @@
 
 package build
 
-var Version = "v0.0.2"
+var Version = "v0.1.0"
