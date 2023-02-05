@@ -196,7 +196,7 @@ func (s *moveGenState) CalculateCheckmask() {
 
 	if bishops != bitboard.Empty {
 		bishopSq := bishops.FirstOne()
-		s.CheckMask |= bitboard.Between[kingSq][bishopSq] | bitboard.Squares[bishopSq]
+		s.CheckMask |= bitboard.Between[kingSq][bishopSq] | bitboard.Square(bishopSq)
 		s.CheckN++
 	}
 
@@ -207,7 +207,7 @@ func (s *moveGenState) CalculateCheckmask() {
 			s.CheckN++
 		} else {
 			rookSq := rooks.FirstOne()
-			s.CheckMask |= bitboard.Between[kingSq][rookSq] | bitboard.Squares[rookSq]
+			s.CheckMask |= bitboard.Between[kingSq][rookSq] | bitboard.Square(rookSq)
 			s.CheckN++
 		}
 	}
@@ -234,7 +234,7 @@ func (s *moveGenState) CalculatePinmask() {
 	// the king is considered as a rook for this and it's attack sets & with rooks and queens gives the bitboard
 	for rooks := (s.RooksBB(s.Them) | s.QueensBB(s.Them)) & attacks.Rook(kingSq, enemies); rooks != bitboard.Empty; {
 		rook := rooks.Pop()
-		possiblePin := bitboard.Between[kingSq][rook] | bitboard.Squares[rook]
+		possiblePin := bitboard.Between[kingSq][rook] | bitboard.Square(rook)
 
 		// if there is only one friendly piece blocking the ray, it is pinned
 		if (possiblePin & friends).Count() == 1 {
@@ -246,7 +246,7 @@ func (s *moveGenState) CalculatePinmask() {
 	// the king is considered as a bishop for this and it's attack sets & with bishops and queens gives the bitboard
 	for bishops := (s.BishopsBB(s.Them) | s.QueensBB(s.Them)) & attacks.Bishop(kingSq, enemies); bishops != bitboard.Empty; {
 		bishop := bishops.Pop()
-		possiblePin := bitboard.Between[kingSq][bishop] | bitboard.Squares[bishop]
+		possiblePin := bitboard.Between[kingSq][bishop] | bitboard.Square(bishop)
 
 		// if there is only one friendly piece blocking the ray, it is pinned
 		if (possiblePin & friends).Count() == 1 {

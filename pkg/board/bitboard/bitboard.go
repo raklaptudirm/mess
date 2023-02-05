@@ -22,6 +22,10 @@ import (
 	"laptudirm.com/x/mess/pkg/board/square"
 )
 
+func Square(s square.Square) Board {
+	return Board(1 << s)
+}
+
 // Board is a 64-bit bitboard
 type Board uint64
 
@@ -108,7 +112,7 @@ func (b Board) FirstOne() square.Square {
 
 // IsSet checks whether the given Square is set in the bitboard.
 func (b Board) IsSet(index square.Square) bool {
-	return b&Squares[index] != 0
+	return b&Square(index) != 0
 }
 
 // Set sets the given Square in the bitboard.
@@ -117,7 +121,7 @@ func (b *Board) Set(index square.Square) {
 		return
 	}
 
-	*b |= Squares[index]
+	*b |= Square(index)
 }
 
 // Unset clears the given Square in the bitboard.
@@ -126,5 +130,5 @@ func (b *Board) Unset(index square.Square) {
 		return
 	}
 
-	*b &^= Squares[index]
+	*b &^= Square(index)
 }

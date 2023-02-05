@@ -23,7 +23,7 @@ import (
 // occupancy, and occupancy mask on the given bitboard.Board.
 // https://www.chessprogramming.org/Hyperbola_Quintessence
 func Hyperbola(s square.Square, occ, mask Board) Board {
-	r := Squares[s]
+	r := Square(s)
 	o := occ & mask // masked occupancy
 	return ((o - 2*r) ^ reverse(reverse(o)-2*reverse(r))) & mask
 }

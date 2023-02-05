@@ -22,7 +22,6 @@ import (
 )
 
 type bitboardStruct struct {
-	Squares [square.N]bitboard.Board
 	Between [square.N][square.N]bitboard.Board
 }
 
@@ -32,15 +31,10 @@ var template string
 func main() {
 	var b bitboardStruct
 
-	// initialize Squares
-	for s := square.A8; s <= square.H1; s++ {
-		b.Squares[s] = 1 << s
-	}
-
 	// initialize Between
 	for s1 := square.A8; s1 <= square.H1; s1++ {
 		for s2 := square.A8; s2 <= square.H1; s2++ {
-			sqs := b.Squares[s1] | b.Squares[s2]
+			sqs := bitboard.Square(s1) | bitboard.Square(s2)
 			var mask bitboard.Board
 
 			switch {

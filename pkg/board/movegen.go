@@ -227,7 +227,7 @@ func (s *moveGenState) appendPawnCaptures() {
 	if s.EnPassantTarget != square.None {
 		epPawn := s.EnPassantTarget + s.Down
 
-		epMask := bitboard.Squares[s.EnPassantTarget] | bitboard.Squares[epPawn]
+		epMask := bitboard.Square(s.EnPassantTarget) | bitboard.Square(epPawn)
 		// check if en-passant leaves king in check
 		// this does not account for the double rook pin
 		if s.CheckMask&epMask == 0 {
@@ -235,7 +235,7 @@ func (s *moveGenState) appendPawnCaptures() {
 		}
 
 		kingSq := s.Kings[s.SideToMove]
-		kingMask := bitboard.Squares[kingSq] & s.EnPassantRankBB
+		kingMask := bitboard.Square(kingSq) & s.EnPassantRankBB
 
 		enemyRooksQueens := (s.RooksBB(s.Them) | s.QueensBB(s.Them)) & s.EnPassantRankBB
 
@@ -254,7 +254,7 @@ func (s *moveGenState) appendPawnCaptures() {
 			// check for horizontal rook pin
 			// remove the ep pawn and the enemy pawn from the blocker mask
 			// and check if a rook ray from the king hits any rook or queen
-			pawnsMask := bitboard.Squares[from] | bitboard.Squares[epPawn]
+			pawnsMask := bitboard.Square(from) | bitboard.Square(epPawn)
 			if isPossiblePin && attacks.Rook(kingSq, s.Occupied&^pawnsMask)&enemyRooksQueens != 0 {
 				break
 			}

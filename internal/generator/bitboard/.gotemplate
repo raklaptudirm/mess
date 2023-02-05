@@ -30,7 +30,3 @@ package bitboard
 var Between = [64][64]Board{ {{- range .Between }}
 	{ {{ range . }}{{ printf "%0#16v" . }}, {{ end }} },{{ end }}
 }
-
-// Squares contains bitboards for each square where only that square's bit
-// is set. Squares[square] is equivalent to Board(1 << square).
-var Squares = [64]Board{ {{ range .Squares }}{{ printf "%#v" .}}, {{ end }}}

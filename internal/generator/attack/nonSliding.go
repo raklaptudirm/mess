@@ -19,19 +19,19 @@ import (
 )
 
 func whitePawnAttacksFrom(s square.Square) bitboard.Board {
-	pawnUp := bitboard.Squares[s].North()
+	pawnUp := bitboard.Square(s).North()
 	return pawnUp.East() | pawnUp.West()
 }
 
 func blackPawnAttacksFrom(s square.Square) bitboard.Board {
-	pawnUp := bitboard.Squares[s].South()
+	pawnUp := bitboard.Square(s).South()
 	return pawnUp.East() | pawnUp.West()
 }
 
 // knightAttacksFrom generates an attack bitboard containing all the
 // possible squares a knight can move to from the given square.
 func knightAttacksFrom(from square.Square) bitboard.Board {
-	knight := bitboard.Squares[from]
+	knight := bitboard.Square(from)
 
 	knightNorth := knight.North().North()
 	knightSouth := knight.South().South()
@@ -51,7 +51,7 @@ func knightAttacksFrom(from square.Square) bitboard.Board {
 // kingAttacksFrom generates an attack bitboard containing all the
 // possible squares a king can move to from the given square.
 func kingAttacksFrom(from square.Square) bitboard.Board {
-	king := bitboard.Squares[from]
+	king := bitboard.Square(from)
 
 	kingNorth := king.North()
 	kingSouth := king.South()
