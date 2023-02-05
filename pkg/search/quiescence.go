@@ -78,7 +78,6 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 				alpha = score
 
 				if alpha >= beta {
-					search.storeKiller(plys, m)
 					break // fail high
 				}
 			}
