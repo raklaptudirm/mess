@@ -34,6 +34,9 @@ import (
 func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.Variation) eval.Eval {
 	search.stats.Nodes++
 
+	// update highest reached depth
+	search.stats.SelDepth = util.Max(search.stats.SelDepth, plys)
+
 	// node properties
 	isCheck := search.board.IsInCheck(search.board.SideToMove)
 	isPVNode := beta-alpha != 1 // beta = alpha + 1 during PVS

@@ -42,7 +42,7 @@ func (search *Context) GenerateReport() Report {
 
 	return Report{
 		Depth:    search.stats.Depth,
-		SelDepth: search.stats.Depth, // TODO: implement seldepth calculation
+		SelDepth: search.stats.SelDepth,
 
 		Nodes: search.stats.Nodes,
 		Nps:   float64(search.stats.Nodes) / util.Max(0.001, searchTime.Seconds()),
