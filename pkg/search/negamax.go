@@ -104,19 +104,18 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		// entry depth is >= current depth (not worse quality)
 		if !isPVNode && !isNullMove && entry.Depth >= depth {
 			search.stats.TTHits++
-			value := entry.Value.Eval(plys)
 
-			switch entry.Type {
-			case tt.ExactEntry:
+			// check if the tt entry can be used to exit the search early
+			// on this node. If we have an exact value, we can safely
+			// return it. If we have a new upper bound or lower bound,
+			// check if it causes a beta cutoff.
+			switch value := entry.Value.Eval(plys); {
+			case entry.Type == tt.ExactEntry, // exact score
+				entry.Type == tt.LowerBound && value >= beta,  // fail high
+				entry.Type == tt.UpperBound && alpha >= value: // fail high
+				// exit search early cause we have an exact
+				// score or a beta cutoff from the tt entry
 				return value
-			case tt.LowerBound:
-				alpha = util.Max(alpha, value)
-			case tt.UpperBound:
-				beta = util.Min(beta, value)
-			}
-
-			if alpha >= beta {
-				return value // fail high
 			}
 		}
 	} else {
