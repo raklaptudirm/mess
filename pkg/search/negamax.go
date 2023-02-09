@@ -198,7 +198,10 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		move := list.PickMove(i)
 
 		if bestScore > eval.LoseInMaxPly {
-			// Static Exchange Evaluation Pruning (SEE Pruning):
+			// Static Exchange Evaluation Pruning (SEE Pruning): If the static exchange
+			// evaluation score of a move is less than a given threshold, we can safely
+			// prune that move since we will take too large a material hit to come back
+			// from.
 			if depth < 6 && !eval.SEE(search.board, move, util.Ternary(move.IsQuiet(), seeQuietMargin, seeNoisyMargin)) {
 				continue
 			}
