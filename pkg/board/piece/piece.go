@@ -68,20 +68,20 @@ const (
 	NoPiece Piece = 0
 
 	// white pieces
-	WhitePawn   Piece = Piece(Pawn)
-	WhiteKnight Piece = Piece(Pawn) + 1
-	WhiteBishop Piece = Piece(Pawn) + 2
-	WhiteRook   Piece = Piece(Pawn) + 3
-	WhiteQueen  Piece = Piece(Pawn) + 4
-	WhiteKing   Piece = Piece(Pawn) + 5
+	WhitePawn   Piece = Piece(White)<<3 | Piece(Pawn)
+	WhiteKnight Piece = Piece(White)<<3 | Piece(Knight)
+	WhiteBishop Piece = Piece(White)<<3 | Piece(Bishop)
+	WhiteRook   Piece = Piece(White)<<3 | Piece(Rook)
+	WhiteQueen  Piece = Piece(White)<<3 | Piece(Queen)
+	WhiteKing   Piece = Piece(White)<<3 | Piece(King)
 
 	// black pieces
-	BlackPawn   Piece = Piece(Pawn) + 8
-	BlackKnight Piece = Piece(Pawn) + 9
-	BlackBishop Piece = Piece(Pawn) + 10
-	BlackRook   Piece = Piece(Pawn) + 11
-	BlackQueen  Piece = Piece(Pawn) + 12
-	BlackKing   Piece = Piece(Pawn) + 13
+	BlackPawn   Piece = Piece(Black)<<3 | Piece(Pawn)
+	BlackKnight Piece = Piece(Black)<<3 | Piece(Knight)
+	BlackBishop Piece = Piece(Black)<<3 | Piece(Bishop)
+	BlackRook   Piece = Piece(Black)<<3 | Piece(Rook)
+	BlackQueen  Piece = Piece(Black)<<3 | Piece(Queen)
+	BlackKing   Piece = Piece(Black)<<3 | Piece(King)
 )
 
 // N is the number of chess piece-color combinations there are. Ideally it
@@ -110,23 +110,17 @@ func (p Piece) Type() Type {
 
 // Color returns the piece color of the given Piece.
 func (p Piece) Color() Color {
-	if p == NoPiece {
-		panic("color of piece: can't find color of NoPiece")
-	}
-
 	return Color(p >> colorOffset)
 }
 
 // Is checks if the type of the given Piece matches the given type.
 func (p Piece) Is(target Type) bool {
-	t := p.Type()
-	return t == target
+	return p.Type() == target
 }
 
 // IsColor checks if the color of the given Piece matches the given Color.
 func (p Piece) IsColor(target Color) bool {
-	c := p.Color()
-	return c == target
+	return p.Color() == target
 }
 
 // Type represents the type/kind of chess piece.
