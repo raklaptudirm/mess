@@ -34,6 +34,8 @@ import (
 // these values have been taken from the Stockfish chess engine
 var magicSeeds = [8]uint64{255, 16645, 15100, 12281, 32803, 55013, 10316, 728}
 
+// NewTable generates a new Magic Hash Table from the given moveFunc. It
+// automatically generates the magics and thus is a slow function.
 func NewTable(maskN int, moveFunc MoveFunc) *Table {
 	var t Table
 
@@ -42,41 +44,60 @@ func NewTable(maskN int, moveFunc MoveFunc) *Table {
 	var rand util.PRNG
 
 	for s := square.A8; s <= square.H1; s++ {
-		magic := &t.Magics[s]
+		magic := &t.Magics[s] // get magic entry for the current square
 
-		magic.BlockerMask = moveFunc(s, bitboard.Empty, true)
+		// calculate known info
+		magic.BlockerMask = moveFunc(s, bitboard.Empty, true) // relevant blocker mask
 		bitCount := magic.BlockerMask.Count()
-		magic.Shift = uint8(64 - bitCount)
+		magic.Shift = uint8(64 - bitCount) // index function shift amount
 
-		permutationsN := 1 << bitCount
+		// calculate number of permutations of the blocker mask
+		permutationsN := 1 << bitCount // 2^bitCount
 		permutations := make([]bitboard.Board, permutationsN)
+
+		// initialize blocker mask
 		blockers := bitboard.Empty
 
+		// generate all blocker mask permutations and store them, i.e. generate
+		// all subsets of the set of the current blocker mask. This is achieved
+		// using the Carry-Rippler Trick (https://bit.ly/3XlXipd)
 		for index := 0; blockers != bitboard.Empty || index == 0; index++ {
 			permutations[index] = blockers
 			blockers = (blockers - magic.BlockerMask) & magic.BlockerMask
 		}
 
+		// seed random number generator
 		rand.Seed(magicSeeds[s.Rank()])
 
 	searchingMagic:
-		for {
-			magic.Number = rand.SparseUint64()
+		for { // loop until a valid magic is found
 
+			// initialize table entry
 			t.Table[s] = make([]bitboard.Board, maskN)
 
+			// generate a magic candidate
+			magic.Number = rand.SparseUint64()
+
+			// try to index all permutations of the blocker
+			// mask using the new magic candidate
 			for i := 0; i < permutationsN; i++ {
 				blockers := permutations[i]
-				index := magic.Index(blockers)
-				attacks := moveFunc(s, blockers, false)
+
+				index := magic.Index(blockers)          // permutation index
+				attacks := moveFunc(s, blockers, false) // permutation attack set
 
 				if t.Table[s][index] != bitboard.Empty && t.Table[s][index] != attacks {
+					// the calculated index is not empty and the attack sets are not
+					// equal: we have a hash collision. Continue searching the magic
 					continue searchingMagic
 				}
 
+				// no hash collision: store the entry
 				t.Table[s][index] = attacks
 			}
 
+			// all permutations were successfully stored without hash collisions,
+			// so we have found a valid magic and can stop searching for others
 			break
 		}
 	}
@@ -90,27 +111,28 @@ type Table struct {
 	Table  [square.N][]bitboard.Board // the underlying move-list table
 }
 
-// MoveFunc is a sliding piece's move generation function. It takes the
-// piece square, blocker mask, and bool which reports if the function is
-// being used to generate blocker masks, so that it can mask out the edge
-// bits. It returns a bitboard with all the movable squares set.
-type MoveFunc func(square.Square, bitboard.Board, bool) bitboard.Board
-
 // Probe probes the magic hash table for the move bitboard given the
 // piece square and blocker mask. It returns the move bitboard.
 func (t *Table) Probe(s square.Square, blockerMask bitboard.Board) bitboard.Board {
 	return t.Table[s][t.Magics[s].Index(blockerMask)]
 }
 
-// Magic represents a single magic entry.
+// Magic represents a single magic entry. Each magic entry is used to
+// index all the attack sets for a given square.
 type Magic struct {
 	Number      uint64         // magic multiplication number
-	BlockerMask bitboard.Board // mask of important blockers
+	BlockerMask bitboard.Board // mask of relevant blockers
 	Shift       byte           // 64 - no of blocker permutations
 }
 
 // Index calculates the index of the given blocker mask given it's magic.
 func (magic Magic) Index(blockerMask bitboard.Board) uint64 {
-	blockerMask &= magic.BlockerMask // keep important bits
+	blockerMask &= magic.BlockerMask // remove irrelevant blockers
 	return (uint64(blockerMask) * magic.Number) >> magic.Shift
 }
+
+// MoveFunc is a sliding piece's move generation function. It takes the
+// piece square, blocker mask, and bool which reports if the function is
+// being used to generate blocker masks, so that it can mask out the edge
+// bits. It returns a bitboard with all the movable squares set.
+type MoveFunc func(square.Square, bitboard.Board, bool) bitboard.Board
