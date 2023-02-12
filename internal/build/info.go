@@ -17,4 +17,4 @@
 package build
 
 // Current version of Mess. Usually overwritten by the build script.
-var Version = "v0.0.0"
+var Version = "v0.1.0"
