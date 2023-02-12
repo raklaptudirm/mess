@@ -52,9 +52,12 @@ go install laptudirm.com/x/mess@latest
 
 ### Build from source
 ```bash
+# downloard mess (other methods also work)
 git clone https://github.com/rakarchive/mess.git
 cd mess
-go build . # creates a binary in your wd
+
+# building mess binary
+make EXE=path # creates binary in path
 ```
 
 # License
