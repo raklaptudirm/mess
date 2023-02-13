@@ -15,6 +15,8 @@
 // position for the best move.
 package search
 
+//go:generate go run laptudirm.com/x/mess/internal/generator/reductions
+
 import (
 	"errors"
 	realtime "time"
