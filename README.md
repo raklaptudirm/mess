@@ -30,8 +30,8 @@ packages that are available for use publicly.
 
 # Mess on Lichess
 
-> The MessChessEngine Bot is currently hosted on my laptop, and therefor might not
-be online always. The most reliable way to play against mess is to download the engine
+> The MessChessEngine Bot is currently hosted on my laptop, and therefore might not
+always be online. The most reliable way to play against mess is to download the engine
 and use it with an UCI-compliant graphical user interface.
 
 - 🖥️ [Watch Mess Play on Lichess](https://lichess.org/@/MessChessEngine/tv)
