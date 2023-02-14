@@ -75,7 +75,7 @@ func (m Move) String() string {
 
 	// add promotion indicator
 	if m.IsPromotion() {
-		s += m.ToPiece().String()
+		s += m.ToPiece().Type().String()
 	}
 
 	return s
