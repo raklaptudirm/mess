@@ -28,6 +28,15 @@ Mess's code structure is extremely modular and thus it may be used as a library 
 developing chess engines in go. The [`./pkg`](./pkg) directory will contain all the
 packages that are available for use publicly.
 
+# Mess on Lichess
+
+> The MessChessEngine Bot is currently hosted on my laptop, and therefor might not
+be online always. The most reliable way to play against mess is to download the engine
+and use it with an UCI-compliant graphical user interface.
+
+- 🖥️ [Watch Mess Play on Lichess](https://lichess.org/@/MessChessEngine/tv)
+- 🎮 [Challange Mess on Lichess](https://lichess.org/@/MessChessEngine)
+
 # Installation
 
 ### Prebuilt Binaries
