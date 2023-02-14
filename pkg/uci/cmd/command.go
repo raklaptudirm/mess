@@ -55,10 +55,6 @@ type Command struct {
 	// this is used as a token to identify if this command has been run
 	Name string
 
-	// If Parallel is true, the listener will not wait for the command
-	// to finish before accepting new commands.
-	Parallel bool
-
 	// Run is the actual work function for the command. It is provided
 	// with an interaction which contains the relevant information
 	// about the command interaction by the GUI.
@@ -70,7 +66,7 @@ type Command struct {
 }
 
 // RunWith runs the given Command with the given flags and Schema.
-func (c Command) RunWith(args []string, schema Schema) error {
+func (c Command) RunWith(args []string, parallelize bool, schema Schema) error {
 	values, err := c.Flags.Parse(args)
 	if err != nil {
 		return err
@@ -80,7 +76,8 @@ func (c Command) RunWith(args []string, schema Schema) error {
 		stdout:  schema.replyWriter,
 		Command: c,
 
-		Values: values,
+		Parallelize: parallelize,
+		Values:      values,
 	})
 }
 
@@ -90,6 +87,8 @@ type Interaction struct {
 	stdout io.Writer
 
 	Command // parent Command
+
+	Parallelize bool // whether to run command in parallel
 
 	// values provided for the command's flags
 	Values flag.Values

@@ -149,35 +149,42 @@ func NewGo(engine *context.Engine) cmd.Command {
 
 			// start searching
 			engine.Searching = true
-			// search in a separate thread that we don't block the repl
-			go func() {
-				defer func() {
-					// set search booleans to false
-					// since the search has ended
-					engine.Searching = false
-					engine.Pondering = false
-				}()
 
-				// start search
-				pv, _, err := engine.Search.Search(limits)
-				if err != nil {
-					interaction.Reply(err)
-					return
-				}
-
-				if bestMove, ponderMove := pv.Move(0), pv.Move(1); ponderMove == move.Null {
-					// just print bestmove since pondermove is null
-					interaction.Replyf("bestmove %s", bestMove)
-				} else {
-					// print bestmove and pondermove
-					interaction.Replyf("bestmove %s ponder %s", bestMove, ponderMove)
-				}
-			}()
+			if interaction.Parallelize {
+				// command should be parallelized: new goroutine
+				go searchPosition(limits, engine, interaction)
+			} else {
+				searchPosition(limits, engine, interaction)
+			}
 
 			return nil
 		},
 
 		Flags: schema,
+	}
+}
+
+func searchPosition(limits search.Limits, engine *context.Engine, interaction cmd.Interaction) {
+	defer func() {
+		// set search booleans to false
+		// since the search has ended
+		engine.Searching = false
+		engine.Pondering = false
+	}()
+
+	// start search
+	pv, _, err := engine.Search.Search(limits)
+	if err != nil {
+		interaction.Reply(err)
+		return
+	}
+
+	if bestMove, ponderMove := pv.Move(0), pv.Move(1); ponderMove == move.Null {
+		// just print bestmove since pondermove is null
+		interaction.Replyf("bestmove %s", bestMove)
+	} else {
+		// print bestmove and pondermove
+		interaction.Replyf("bestmove %s ponder %s", bestMove, ponderMove)
 	}
 }
 

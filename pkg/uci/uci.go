@@ -109,23 +109,8 @@ func (c *Client) RunWith(args []string, parallelize bool) error {
 		return fmt.Errorf("%s: command not found", name)
 	}
 
-	// check if command should be run in parallel
-	if parallelize && cmd.Parallel {
-		// this command's execution should not block the repl
-		// so it's execution is started in a separate goroutine
-		go func() {
-			if err := cmd.RunWith(args, c.commands); err != nil {
-				c.Println(err)
-			}
-		}()
-
-		// any errors returned by the parallelized command will be
-		// printed by it's goroutine
-		return nil
-	}
-
 	// run command with given arguments
-	return cmd.RunWith(args, c.commands)
+	return cmd.RunWith(args, parallelize, c.commands)
 }
 
 // Print acts as fmt.Print on the client's stdout.
