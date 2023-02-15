@@ -110,9 +110,11 @@ func NewBench(engine *context.Engine) cmd.Command {
 				// report position info
 				interaction.Replyf("Position %d/%d: %s", i+1, benchN, fen)
 
+				var newNodes int
+
 				// setup position to search on
 				context := search.NewContext(func(report search.Report) {
-					nodes += report.Nodes // add to total node count
+					newNodes = report.Nodes // add to total node count
 					interaction.Reply(report)
 				}, 16)
 				context.UpdatePosition(*(*[6]string)(strings.Fields(fen)))
@@ -122,6 +124,8 @@ func NewBench(engine *context.Engine) cmd.Command {
 				if err != nil {
 					return err
 				}
+
+				nodes += newNodes
 
 				// newline separator between each position
 				interaction.Reply()
