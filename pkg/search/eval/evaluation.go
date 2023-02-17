@@ -24,8 +24,16 @@ import (
 	"laptudirm.com/x/mess/pkg/board/piece"
 )
 
+// EfficientlyUpdatable is an extension of board.EfficientlyUpdatable
+// which represents an efficiently updatable evaluation function.
 type EfficientlyUpdatable interface {
+	// eval.EfficientlyUpdatable implements board.EfficientlyUpdatable
+	// so that it can be efficiently updatable by a board.Board
 	board.EfficientlyUpdatable
+
+	// Accumulate the efficiently updatable variables and return the
+	// evaluation of the position from the perspective of the given
+	// color.
 	Accumulate(piece.Color) Eval
 }
 
