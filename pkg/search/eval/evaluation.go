@@ -29,9 +29,6 @@ type EfficientlyUpdatable interface {
 	Accumulate(piece.Color) Eval
 }
 
-// Func represents a board evaluation function.
-type Func func(*board.Board) Eval
-
 // MatedIn returns the evaluation for being mated in the given plys.
 func MatedIn(plys int) Eval {
 	// prefer the longer lines when getting mated
