@@ -18,7 +18,7 @@ package tt
 
 import (
 	"math/bits"
-	"reflect"
+	"unsafe"
 
 	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/board/zobrist"
@@ -26,7 +26,7 @@ import (
 )
 
 // EntrySize stores the size in bytes of a tt entry.
-var EntrySize = int(reflect.TypeOf(Entry{}).Size())
+var EntrySize = int(unsafe.Sizeof(Entry{}))
 
 // NewTable creates a new transposition table with a size equal to or
 // less than the given number of megabytes.
