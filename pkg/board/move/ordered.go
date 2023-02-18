@@ -22,28 +22,28 @@ type eval interface {
 
 // ScoreMoves scores each move in the provided move-list according to the
 // provided scorer function and returns an OrderedMoveList containing them.
-func ScoreMoves[T eval](moveList []Move, scorer func(Move) T) OrderedMoveList[T] {
-	ordered := make([]OrderedMove[T], len(moveList))
+func ScoreMoves[T eval](moveList []Move, scorer func(Move) T) OrderedList[T] {
+	ordered := make([]Ordered[T], len(moveList))
 
 	for i, move := range moveList {
 		ordered[i] = NewOrdered(move, scorer(move))
 	}
 
-	return OrderedMoveList[T]{
+	return OrderedList[T]{
 		moves:  ordered,
 		Length: len(moveList),
 	}
 }
 
-// OrderedMoveList represents an ordered/ranked move list.
-type OrderedMoveList[T eval] struct {
-	moves  []OrderedMove[T] // moves will be sorted later
-	Length int              // number of moves in move-list
+// OrderedList represents an ordered/ranked move list.
+type OrderedList[T eval] struct {
+	moves  []Ordered[T] // moves will be sorted later
+	Length int          // number of moves in move-list
 }
 
 // PickMove finds the best move (move with the highest eval) from the
 // unsorted moves and puts it at the index position.
-func (list *OrderedMoveList[T]) PickMove(index int) Move {
+func (list *OrderedList[T]) PickMove(index int) Move {
 	// perform a single selection sort iteration
 	// the full array is not sorted as most of the moves
 	// will not be searched due to alpha-beta pruning
@@ -63,26 +63,26 @@ func (list *OrderedMoveList[T]) PickMove(index int) Move {
 	return list.moves[index].Move()
 }
 
-func (list *OrderedMoveList[T]) swap(i, j int) {
+func (list *OrderedList[T]) swap(i, j int) {
 	list.moves[i], list.moves[j] = list.moves[j], list.moves[i]
 }
 
 // NewOrdered creates a new ordered move with the provided move and
 // evaluation. The evaluation's type should belong to eval.
-func NewOrdered[T eval](m Move, eval T) OrderedMove[T] {
+func NewOrdered[T eval](m Move, eval T) Ordered[T] {
 	// [ evaluation 32 bits ] [ move 32 bits ]
-	return OrderedMove[T](uint64(eval)<<32 | uint64(m))
+	return Ordered[T](uint64(eval)<<32 | uint64(m))
 }
 
-// An OrderedMove represents a move that can be ranked in a move-list.
-type OrderedMove[T eval] uint64
+// An Ordered represents a move that can be ranked in a move-list.
+type Ordered[T eval] uint64
 
 // Eval returns the OrderedMove's eval.
-func (m OrderedMove[T]) Eval() T {
+func (m Ordered[T]) Eval() T {
 	return T(m >> 32)
 }
 
 // Move returns the OrderedMove's move.
-func (m OrderedMove[T]) Move() Move {
+func (m Ordered[T]) Move() Move {
 	return Move(m & 0xFFFFFFFF)
 }
