@@ -133,15 +133,3 @@ func (search *Context) start(limits Limits) {
 	// start search timer
 	search.stats.SearchStart = realtime.Now()
 }
-
-// score return the static evaluation of the current context's internal
-// board. Any changes to the evaluation function should be done here.
-func (search *Context) score() eval.Eval {
-	return search.evaluator.Accumulate(search.board.SideToMove)
-}
-
-// draw returns a randomized draw score to prevent threefold-repetition
-// blindness while searching.
-func (search *Context) draw() eval.Eval {
-	return eval.RandDraw(search.stats.Nodes)
-}
