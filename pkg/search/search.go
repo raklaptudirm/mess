@@ -27,7 +27,6 @@ import (
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/pkg/search/eval"
-	"laptudirm.com/x/mess/pkg/search/time"
 	"laptudirm.com/x/mess/pkg/search/tt"
 )
 
@@ -106,32 +105,6 @@ func (search *Context) ResizeTT(mbs int) {
 	search.tt.Resize(mbs)
 }
 
-func (search *Context) UpdatePosition(fen [6]string) {
-	search.board.UpdateWithFEN(fen)
-}
-
-func (search *Context) MakeMoves(moves ...string) {
-	for _, m := range moves {
-		search.board.MakeMove(search.board.NewMoveFromString(m))
-	}
-}
-
-func (search *Context) String() string {
-	return search.board.String()
-}
-
-func (search *Context) STM() piece.Color {
-	return search.board.SideToMove
-}
-
-// UpdateLimits updates the search limits while a search is in progress.
-// The caller should make sure that a search is indeed in progress before
-// calling UpdateLimits.
-func (search *Context) UpdateLimits(limits Limits) {
-	search.limits = limits           // update limits
-	search.limits.Time.GetDeadline() // get search deadline
-}
-
 // Stop stops any ongoing search on the given context. The main search
 // function will immediately return after this function is called.
 func (search *Context) Stop() {
@@ -159,113 +132,4 @@ func (search *Context) start(limits Limits) {
 
 	// start search timer
 	search.stats.SearchStart = realtime.Now()
-}
-
-// shouldStop checks the various limits provided for the search and
-// reports if the search should be stopped at that moment.
-func (search *Context) shouldStop() bool {
-
-	// the depth limit is kept up in the iterative deepening
-	// loop so it's breaching isn't tested in this function
-
-	switch {
-	case search.stopped:
-		// search already stopped
-		// no checking necessary
-		return true
-
-	case search.stats.Nodes&2047 != 0, search.limits.Infinite:
-		// only check once every 2048 nodes to prevent
-		// spending too much time here
-
-		// if search is infinite never stop
-
-		return false
-
-	case search.stats.Nodes > search.limits.Nodes, search.limits.Time.Expired():
-		// node limit or time limit crossed
-		search.Stop()
-		return true
-
-	default:
-		// no search stopping clause reached
-		return false
-	}
-}
-
-func (search *Context) report(report Report) {
-	search.reporter(report)
-}
-
-// score return the static evaluation of the current context's internal
-// board. Any changes to the evaluation function should be done here.
-func (search *Context) score() eval.Eval {
-	return search.evaluator.Accumulate(search.board.SideToMove)
-}
-
-// draw returns a randomized draw score to prevent threefold-repetition
-// blindness while searching.
-func (search *Context) draw() eval.Eval {
-	return eval.RandDraw(search.stats.Nodes)
-}
-
-// storeKiller tries to store the given move from the given depth as one
-// of the two killer moves.
-func (search *Context) storeKiller(plys int, killer move.Move) {
-	if killer.IsCapture() {
-		// killer moves are quiet
-		return
-	}
-
-	switch search.killers[plys][0] {
-	case move.Null:
-		// no killer move 1, store this
-		search.killers[plys][0] = killer
-
-	case killer:
-		// move already stored, no
-		// need to store it again
-
-	default:
-		// different move in killer 1
-		// move it to killer 2 position
-		search.killers[plys][1] = search.killers[plys][0]
-		search.killers[plys][0] = killer // new killer 1
-	}
-}
-
-// updateHistory updates the history score of the given move with the given
-// bonus. It also verifies that the move is a quiet move.
-func (search *Context) updateHistory(m move.Move, bonus eval.Move) {
-	if !m.IsCapture() {
-		entry := search.fetchHistory(m)
-		hhBonus := bonus - *entry*util.Abs(bonus)/32768
-		*entry += hhBonus
-	}
-}
-
-// depthBonus returns the the history bonus for a particular depth.
-func depthBonus(depth int) eval.Move {
-	return eval.Move(util.Min(2000, depth*155))
-}
-
-// fetchHistory returns a pointer to the history entry of the given move.
-func (search *Context) fetchHistory(move move.Move) *eval.Move {
-	return &search.history[search.board.SideToMove][move.Source()][move.Target()]
-}
-
-// Limits contains the various limits which decide how long a search can
-// run for. It should be passed to the main search function when starting
-// a new search.
-type Limits struct {
-	// search tree limits
-	Nodes int
-	Depth int
-
-	// TODO: implement searching selected moves
-	// Moves []move.Move
-
-	// search time limits
-	Infinite bool
-	Time     time.Manager
 }
