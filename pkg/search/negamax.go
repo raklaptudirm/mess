@@ -181,8 +181,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 	lmrDepth := util.Ternary(isPVNode, 4, 2)
 	historyBonus := depthBonus(depth)
-	seeQuietMargin := eval.Eval(-64 * depth)
-	seeNoisyMargin := eval.Eval(-19 * depth * depth)
+	seeQuietMargin, seeNoisyMargin := seeMargins(depth)
 
 	// move ordering; score the generated moves
 	list := move.ScoreMoves(moves, eval.OfMove(eval.ModeEvalInfo{

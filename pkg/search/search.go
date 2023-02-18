@@ -209,51 +209,6 @@ func (search *Context) draw() eval.Eval {
 	return eval.RandDraw(search.stats.Nodes)
 }
 
-// storeKiller tries to store the given move from the given depth as one
-// of the two killer moves.
-func (search *Context) storeKiller(plys int, killer move.Move) {
-	if killer.IsCapture() {
-		// killer moves are quiet
-		return
-	}
-
-	switch search.killers[plys][0] {
-	case move.Null:
-		// no killer move 1, store this
-		search.killers[plys][0] = killer
-
-	case killer:
-		// move already stored, no
-		// need to store it again
-
-	default:
-		// different move in killer 1
-		// move it to killer 2 position
-		search.killers[plys][1] = search.killers[plys][0]
-		search.killers[plys][0] = killer // new killer 1
-	}
-}
-
-// updateHistory updates the history score of the given move with the given
-// bonus. It also verifies that the move is a quiet move.
-func (search *Context) updateHistory(m move.Move, bonus eval.Move) {
-	if !m.IsCapture() {
-		entry := search.fetchHistory(m)
-		hhBonus := bonus - *entry*util.Abs(bonus)/32768
-		*entry += hhBonus
-	}
-}
-
-// depthBonus returns the the history bonus for a particular depth.
-func depthBonus(depth int) eval.Move {
-	return eval.Move(util.Min(2000, depth*155))
-}
-
-// fetchHistory returns a pointer to the history entry of the given move.
-func (search *Context) fetchHistory(move move.Move) *eval.Move {
-	return &search.history[search.board.SideToMove][move.Source()][move.Target()]
-}
-
 // Limits contains the various limits which decide how long a search can
 // run for. It should be passed to the main search function when starting
 // a new search.
