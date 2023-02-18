@@ -51,7 +51,7 @@ func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
 		search.pvScore = score
 
 		// print some info for the GUI
-		search.report(search.GenerateReport())
+		search.reporter(search.GenerateReport())
 	}
 
 	if search.stats.Depth < search.limits.Depth && search.limits.Infinite {

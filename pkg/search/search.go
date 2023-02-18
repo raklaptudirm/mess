@@ -193,10 +193,6 @@ func (search *Context) shouldStop() bool {
 	}
 }
 
-func (search *Context) report(report Report) {
-	search.reporter(report)
-}
-
 // score return the static evaluation of the current context's internal
 // board. Any changes to the evaluation function should be done here.
 func (search *Context) score() eval.Eval {
