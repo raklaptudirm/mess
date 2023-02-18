@@ -15,10 +15,10 @@ package cmd
 
 import (
 	"math"
-	"strings"
 	realtime "time"
 
 	"laptudirm.com/x/mess/internal/engine/context"
+	"laptudirm.com/x/mess/pkg/formats/fen"
 	"laptudirm.com/x/mess/pkg/search"
 	"laptudirm.com/x/mess/pkg/search/time"
 	"laptudirm.com/x/mess/pkg/uci/cmd"
@@ -106,9 +106,9 @@ func NewBench(engine *context.Engine) cmd.Command {
 			nodes := 0 // number of nodes searched
 			startTime := realtime.Now()
 
-			for i, fen := range benchFens {
+			for i, fenString := range benchFens {
 				// report position info
-				interaction.Replyf("Position %d/%d: %s", i+1, benchN, fen)
+				interaction.Replyf("Position %d/%d: %s", i+1, benchN, fenString)
 
 				var newNodes int
 
@@ -117,7 +117,7 @@ func NewBench(engine *context.Engine) cmd.Command {
 					newNodes = report.Nodes // add to total node count
 					interaction.Reply(report)
 				}, 16)
-				context.UpdatePosition(*(*[6]string)(strings.Fields(fen)))
+				context.UpdatePosition(fen.FromString(fenString))
 
 				// search position
 				_, _, err := context.Search(limits)

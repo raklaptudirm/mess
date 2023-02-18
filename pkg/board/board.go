@@ -29,6 +29,7 @@ import (
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/pkg/board/zobrist"
+	"laptudirm.com/x/mess/pkg/formats/fen"
 )
 
 func New(config ...boardUpdater) *Board {
@@ -51,7 +52,7 @@ func EU(eu EfficientlyUpdatable) boardUpdater {
 	}
 }
 
-func FEN(fen [6]string) boardUpdater {
+func FEN(fen fen.String) boardUpdater {
 	return func(b *Board) {
 		b.UpdateWithFEN(fen)
 	}

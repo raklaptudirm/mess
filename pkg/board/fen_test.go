@@ -1,10 +1,10 @@
 package board_test
 
 import (
-	"strings"
 	"testing"
 
 	"laptudirm.com/x/mess/pkg/board"
+	"laptudirm.com/x/mess/pkg/formats/fen"
 )
 
 func TestFEN(t *testing.T) {
@@ -21,10 +21,10 @@ func TestFEN(t *testing.T) {
 	for n, test := range tests {
 		t.Run(test, func(t *testing.T) {
 			// go magic
-			fen := (*(*[6]string)(strings.Fields(test)))
+			fen := fen.FromString(test)
 
 			b := board.New(board.FEN(fen))
-			newFEN := b.FEN()
+			newFEN := b.FEN().String()
 			if test != newFEN {
 				t.Errorf("test %d: wrong fen\n%s\n%s\n", n, test, newFEN)
 			}

@@ -13,7 +13,10 @@
 
 package search
 
-import "laptudirm.com/x/mess/pkg/board/piece"
+import (
+	"laptudirm.com/x/mess/pkg/board/piece"
+	"laptudirm.com/x/mess/pkg/formats/fen"
+)
 
 // String returns a human-readable ascii art representation of the search
 // board, along with it's fen string and zobrist hash.
@@ -22,7 +25,7 @@ func (search *Context) String() string {
 }
 
 // UpdatePosition updates the search board with the given fen.
-func (search *Context) UpdatePosition(fen [6]string) {
+func (search *Context) UpdatePosition(fen fen.String) {
 	search.board.UpdateWithFEN(fen)
 }
 

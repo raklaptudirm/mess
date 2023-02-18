@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"laptudirm.com/x/mess/pkg/board"
+	"laptudirm.com/x/mess/pkg/formats/fen"
 )
 
 // perft tests adapted from Ethereal Chess Engine
@@ -143,22 +144,22 @@ rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3 ; 5 11139762`
 func TestPerft(t *testing.T) {
 	testStrings := strings.Split(perftTests, "\n")
 	var tests []struct {
-		fen   [6]string
+		fen   fen.String
 		depth int
 		perft int
 	}
 
 	for _, testString := range testStrings {
-		fen, perftInfo, _ := strings.Cut(testString, " ; ")
+		fenString, perftInfo, _ := strings.Cut(testString, " ; ")
 		depthStr, perftStr, _ := strings.Cut(perftInfo, " ")
 		depth, _ := strconv.Atoi(depthStr)
 		perft, _ := strconv.Atoi(perftStr)
 		tests = append(tests, struct {
-			fen   [6]string
+			fen   fen.String
 			depth int
 			perft int
 		}{
-			fen:   *(*[6]string)(strings.Fields(fen)),
+			fen:   fen.FromString(fenString),
 			depth: depth, perft: perft,
 		})
 	}

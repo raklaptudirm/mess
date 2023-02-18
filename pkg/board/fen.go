@@ -21,13 +21,14 @@ import (
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/pkg/board/zobrist"
+	"laptudirm.com/x/mess/pkg/formats/fen"
 )
 
-var StartFEN = *(*[6]string)(strings.Fields("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"))
+var StartFEN = fen.FromString("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
 // NewBoard creates an instance of a *Board from a given fen string.
 // https://www.chessprogramming.org/Forsyth-Edwards_Notation
-func (board *Board) UpdateWithFEN(fen [6]string) {
+func (board *Board) UpdateWithFEN(fen fen.String) {
 	// empty board
 	for s := square.A8; s <= square.H1; s++ {
 		board.ClearSquare(s)
@@ -83,13 +84,13 @@ func (board *Board) UpdateWithFEN(fen [6]string) {
 }
 
 // FEN returns the fen string of the current Board position.
-func (b *Board) FEN() string {
-	var fenString string
-	fenString += b.Position.FEN() + " "
-	fenString += b.SideToMove.String() + " "
-	fenString += b.CastlingRights.String() + " "
-	fenString += b.EnPassantTarget.String() + " "
-	fenString += strconv.Itoa(b.DrawClock) + " "
-	fenString += strconv.Itoa(b.FullMoves)
+func (b *Board) FEN() fen.String {
+	var fenString fen.String
+	fenString[0] = b.Position.FEN()
+	fenString[1] = b.SideToMove.String()
+	fenString[2] = b.CastlingRights.String()
+	fenString[3] = b.EnPassantTarget.String()
+	fenString[4] = strconv.Itoa(b.DrawClock)
+	fenString[5] = strconv.Itoa(b.FullMoves)
 	return fenString
 }

@@ -18,6 +18,7 @@ import (
 
 	"laptudirm.com/x/mess/internal/engine/context"
 	"laptudirm.com/x/mess/pkg/board"
+	"laptudirm.com/x/mess/pkg/formats/fen"
 	"laptudirm.com/x/mess/pkg/uci/cmd"
 	"laptudirm.com/x/mess/pkg/uci/flag"
 )
@@ -63,8 +64,8 @@ func NewPosition(engine *context.Engine) cmd.Command {
 }
 
 // parsePositionFlags parses the position data from the given flags.
-func parsePositionFlags(values flag.Values) ([6]string, []string, error) {
-	var fen [6]string
+func parsePositionFlags(values flag.Values) (fen.String, []string, error) {
+	var fenString fen.String
 
 	// parse base position
 	switch {
@@ -73,11 +74,11 @@ func parsePositionFlags(values flag.Values) ([6]string, []string, error) {
 		return board.StartFEN, nil, errors.New("position: both startpos and fen flags found")
 
 	case values["startpos"].Set:
-		fen = board.StartFEN
+		fenString = board.StartFEN
 
 	case values["fen"].Set:
 		// parse fen string for base position
-		fen = *(*[6]string)(values["fen"].Value.([]string))
+		fenString = fen.FromSlice(values["fen"].Value.([]string))
 
 	default:
 		// one of fen or startpos have to be there
@@ -85,8 +86,8 @@ func parsePositionFlags(values flag.Values) ([6]string, []string, error) {
 	}
 
 	if values["moves"].Set {
-		return fen, values["moves"].Value.([]string), nil
+		return fenString, values["moves"].Value.([]string), nil
 	}
 
-	return fen, nil, nil
+	return fenString, nil, nil
 }
