@@ -105,10 +105,6 @@ func (search *Context) ResizeTT(mbs int) {
 	search.tt.Resize(mbs)
 }
 
-func (search *Context) STM() piece.Color {
-	return search.board.SideToMove
-}
-
 // Stop stops any ongoing search on the given context. The main search
 // function will immediately return after this function is called.
 func (search *Context) Stop() {

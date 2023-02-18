@@ -13,6 +13,8 @@
 
 package search
 
+import "laptudirm.com/x/mess/pkg/board/piece"
+
 // String returns a human-readable ascii art representation of the search
 // board, along with it's fen string and zobrist hash.
 func (search *Context) String() string {
@@ -29,4 +31,9 @@ func (search *Context) MakeMoves(moves ...string) {
 	for _, m := range moves {
 		search.board.MakeMove(search.board.NewMoveFromString(m))
 	}
+}
+
+// STM returns the search board's side to move.
+func (search *Context) STM() piece.Color {
+	return search.board.SideToMove
 }
