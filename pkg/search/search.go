@@ -106,20 +106,6 @@ func (search *Context) ResizeTT(mbs int) {
 	search.tt.Resize(mbs)
 }
 
-func (search *Context) UpdatePosition(fen [6]string) {
-	search.board.UpdateWithFEN(fen)
-}
-
-func (search *Context) MakeMoves(moves ...string) {
-	for _, m := range moves {
-		search.board.MakeMove(search.board.NewMoveFromString(m))
-	}
-}
-
-func (search *Context) String() string {
-	return search.board.String()
-}
-
 func (search *Context) STM() piece.Color {
 	return search.board.SideToMove
 }
