@@ -27,7 +27,6 @@ import (
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/pkg/search/eval"
-	"laptudirm.com/x/mess/pkg/search/time"
 	"laptudirm.com/x/mess/pkg/search/tt"
 )
 
@@ -110,14 +109,6 @@ func (search *Context) STM() piece.Color {
 	return search.board.SideToMove
 }
 
-// UpdateLimits updates the search limits while a search is in progress.
-// The caller should make sure that a search is indeed in progress before
-// calling UpdateLimits.
-func (search *Context) UpdateLimits(limits Limits) {
-	search.limits = limits           // update limits
-	search.limits.Time.GetDeadline() // get search deadline
-}
-
 // Stop stops any ongoing search on the given context. The main search
 // function will immediately return after this function is called.
 func (search *Context) Stop() {
@@ -147,38 +138,6 @@ func (search *Context) start(limits Limits) {
 	search.stats.SearchStart = realtime.Now()
 }
 
-// shouldStop checks the various limits provided for the search and
-// reports if the search should be stopped at that moment.
-func (search *Context) shouldStop() bool {
-
-	// the depth limit is kept up in the iterative deepening
-	// loop so it's breaching isn't tested in this function
-
-	switch {
-	case search.stopped:
-		// search already stopped
-		// no checking necessary
-		return true
-
-	case search.stats.Nodes&2047 != 0, search.limits.Infinite:
-		// only check once every 2048 nodes to prevent
-		// spending too much time here
-
-		// if search is infinite never stop
-
-		return false
-
-	case search.stats.Nodes > search.limits.Nodes, search.limits.Time.Expired():
-		// node limit or time limit crossed
-		search.Stop()
-		return true
-
-	default:
-		// no search stopping clause reached
-		return false
-	}
-}
-
 // score return the static evaluation of the current context's internal
 // board. Any changes to the evaluation function should be done here.
 func (search *Context) score() eval.Eval {
@@ -189,20 +148,4 @@ func (search *Context) score() eval.Eval {
 // blindness while searching.
 func (search *Context) draw() eval.Eval {
 	return eval.RandDraw(search.stats.Nodes)
-}
-
-// Limits contains the various limits which decide how long a search can
-// run for. It should be passed to the main search function when starting
-// a new search.
-type Limits struct {
-	// search tree limits
-	Nodes int
-	Depth int
-
-	// TODO: implement searching selected moves
-	// Moves []move.Move
-
-	// search time limits
-	Infinite bool
-	Time     time.Manager
 }
