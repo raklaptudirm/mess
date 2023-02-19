@@ -101,7 +101,7 @@ func SEE(b *board.Board, m move.Move, threshold Eval) bool {
 		sideToMove = sideToMove.Other() // switch sides after capture
 
 		// lose the current capturer
-		balance = -balance - 1 - seeValue[attacker]
+		balance = -balance - seeValue[attacker]
 
 		if balance >= threshold {
 			// capture is winning even if the current capturer is lost
