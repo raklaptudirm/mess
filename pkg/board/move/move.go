@@ -37,28 +37,36 @@ const MaxN = 1024
 const Null Move = 0
 
 const (
-	// bit offsets of infos
-	sourceOffset    = 0
-	targetOffset    = 6
-	fromPieceOffset = 12
-	toPieceOffset   = 16
+	// bit width of each field
+	sourceWidth = 6
+	targetWidth = 6
+	fPieceWidth = 4
+	tPieceWidth = 4
+	tacticWidth = 1
 
-	// bit masks of infos
-	sourceMask    = 0x3f
-	targetMask    = 0xfc0
-	fromPieceMask = 0xf000
-	toPieceMask   = 0xf0000
-	captureMask   = 0x100000
+	// bit offsets of each field
+	sourceOffset = 0
+	targetOffset = sourceOffset + sourceWidth
+	fPieceOffset = targetOffset + targetWidth
+	tPieceOffset = fPieceOffset + fPieceWidth
+	tacticOffset = tPieceOffset + tPieceWidth
+
+	// bit masks of each field
+	sourceMask = (1 << sourceWidth) - 1
+	targetMask = (1 << targetWidth) - 1
+	fPieceMask = (1 << fPieceWidth) - 1
+	tPieceMask = (1 << tPieceWidth) - 1
+	tacticMask = (1 << tacticWidth) - 1
 )
 
 // New creates a new Move value which is populated with the provided data.
-func New(source, target square.Square, from piece.Piece, isCapture bool) Move {
+func New(source, target square.Square, fPiece piece.Piece, isCapture bool) Move {
 	m := Move(source) << sourceOffset
 	m |= Move(target) << targetOffset
-	m |= Move(from) << fromPieceOffset
-	m |= Move(from) << toPieceOffset
+	m |= Move(fPiece) << fPieceOffset
+	m |= Move(fPiece) << tPieceOffset
 	if isCapture {
-		m |= captureMask
+		m |= tacticMask << tacticOffset
 	}
 	return m
 }
@@ -83,36 +91,36 @@ func (m Move) String() string {
 
 // SetPromotion sets the promotion field of the move to the given piece.
 func (m Move) SetPromotion(p piece.Piece) Move {
-	m &^= toPieceMask
-	m |= Move(p) << toPieceOffset
+	m &^= tPieceMask << tPieceOffset
+	m |= Move(p) << tPieceOffset
 	return m
 }
 
 // Source returns the source square of the move.
 func (m Move) Source() square.Square {
-	return square.Square((m & sourceMask) >> sourceOffset)
+	return square.Square((m >> sourceOffset) & sourceMask)
 }
 
 // Target returns the target square of the move.
 func (m Move) Target() square.Square {
-	return square.Square((m & targetMask) >> targetOffset)
+	return square.Square((m >> targetOffset) & targetMask)
 }
 
 // FromPiece returns the piece that is being moved.
 func (m Move) FromPiece() piece.Piece {
-	return piece.Piece((m & fromPieceMask) >> fromPieceOffset)
+	return piece.Piece((m >> fPieceOffset) & fPieceMask)
 }
 
 // ToPiece returns the piece after moving. This is the same as FromPiece
 // for normal moves, and is only useful in promotions, where it returns
 // the promoted piece.
 func (m Move) ToPiece() piece.Piece {
-	return piece.Piece((m & toPieceMask) >> toPieceOffset)
+	return piece.Piece((m >> tPieceOffset) & tPieceMask)
 }
 
 // IsCapture checks whether the move is a capture.
 func (m Move) IsCapture() bool {
-	return m&captureMask != 0
+	return (m>>tacticOffset)&tacticMask != 0
 }
 
 // IsPromotion checks if the move is a promotion.
