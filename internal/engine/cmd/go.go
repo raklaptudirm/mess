@@ -22,7 +22,6 @@ import (
 	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/search"
-	"laptudirm.com/x/mess/pkg/search/time"
 	"laptudirm.com/x/mess/pkg/uci/cmd"
 	"laptudirm.com/x/mess/pkg/uci/flag"
 )
@@ -143,7 +142,6 @@ func NewGo(engine *context.Engine) cmd.Command {
 					Depth:    search.MaxDepth,
 					Nodes:    math.MaxInt,
 					Infinite: true,
-					Time:     &time.MoveManager{Duration: math.MaxInt32},
 				}
 			}
 
@@ -231,21 +229,19 @@ func parseSearchLimits(engine *context.Engine, values flag.Values) (search.Limit
 			return limits, err
 		}
 
-		limits.Time = &time.MoveManager{Duration: t}
+		limits.MoveTime = t
 
 	case timeSet:
-		tc := &time.NormalManager{Us: engine.Search.STM()}
-
 		var err error
 
 		// parse times
 
-		tc.Time[piece.White], err = strconv.Atoi(values["wtime"].Value.(string))
+		limits.Time[piece.White], err = strconv.Atoi(values["wtime"].Value.(string))
 		if err != nil {
 			return limits, err
 		}
 
-		tc.Time[piece.Black], err = strconv.Atoi(values["btime"].Value.(string))
+		limits.Time[piece.Black], err = strconv.Atoi(values["btime"].Value.(string))
 		if err != nil {
 			return limits, err
 		}
@@ -258,12 +254,12 @@ func parseSearchLimits(engine *context.Engine, values flag.Values) (search.Limit
 
 			// parse increments
 
-			tc.Increment[piece.White], err = strconv.Atoi(values["winc"].Value.(string))
+			limits.Increment[piece.White], err = strconv.Atoi(values["winc"].Value.(string))
 			if err != nil {
 				return limits, err
 			}
 
-			tc.Increment[piece.Black], err = strconv.Atoi(values["binc"].Value.(string))
+			limits.Increment[piece.Black], err = strconv.Atoi(values["binc"].Value.(string))
 			if err != nil {
 				return limits, err
 			}
@@ -271,13 +267,11 @@ func parseSearchLimits(engine *context.Engine, values flag.Values) (search.Limit
 
 		// parse moves to next time control
 		if values["movestogo"].Set {
-			tc.MovesToGo, err = strconv.Atoi(values["movestogo"].Value.(string))
+			limits.MovesToGo, err = strconv.Atoi(values["movestogo"].Value.(string))
 			if err != nil {
 				return limits, err
 			}
 		}
-
-		limits.Time = tc
 
 	case values["infinite"].Set:
 		limits.Infinite = true
@@ -287,7 +281,7 @@ func parseSearchLimits(engine *context.Engine, values flag.Values) (search.Limit
 
 	default:
 		// movetime manager with a very large value: effectively infinite
-		limits.Time = &time.MoveManager{Duration: math.MaxInt32}
+		limits.MoveTime = math.MaxInt32
 	}
 
 	return limits, nil

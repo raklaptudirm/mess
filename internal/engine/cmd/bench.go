@@ -14,13 +14,11 @@
 package cmd
 
 import (
-	"math"
 	realtime "time"
 
 	"laptudirm.com/x/mess/internal/engine/context"
 	"laptudirm.com/x/mess/pkg/formats/fen"
 	"laptudirm.com/x/mess/pkg/search"
-	"laptudirm.com/x/mess/pkg/search/time"
 	"laptudirm.com/x/mess/pkg/uci/cmd"
 )
 
@@ -97,7 +95,6 @@ func NewBench(engine *context.Engine) cmd.Command {
 	limits := search.Limits{
 		Depth:    12, // make this higher as engine gets faster
 		Infinite: true,
-		Time:     &time.MoveManager{Duration: math.MaxInt32},
 	}
 
 	return cmd.Command{
