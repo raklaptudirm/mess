@@ -13,7 +13,10 @@
 
 package search
 
-import "laptudirm.com/x/mess/pkg/search/time"
+import (
+	"laptudirm.com/x/mess/pkg/board/piece"
+	"laptudirm.com/x/mess/pkg/search/time"
+)
 
 // Limits contains the various limits which decide how long a search can
 // run for. It should be passed to the main search function when starting
@@ -27,16 +30,35 @@ type Limits struct {
 	// Moves []move.Move
 
 	// search time limits
-	Infinite bool
-	Time     time.Manager
+	Infinite        bool
+	MoveTime        int
+	Time, Increment [piece.ColorN]int
+	MovesToGo       int
 }
 
 // UpdateLimits updates the search limits while a search is in progress.
 // The caller should make sure that a search is indeed in progress before
 // calling UpdateLimits.
 func (search *Context) UpdateLimits(limits Limits) {
-	search.limits = limits           // update limits
-	search.limits.Time.GetDeadline() // get search deadline
+	search.limits = limits // update limits
+
+	switch {
+	case limits.Infinite:
+		return
+
+	case limits.MoveTime != 0:
+		search.time = &time.MoveManager{Duration: limits.MoveTime}
+
+	default:
+		search.time = &time.NormalManager{
+			Time:      limits.Time,
+			Increment: limits.Increment,
+			MovesToGo: limits.MovesToGo,
+			Us:        search.sideToMove,
+		}
+	}
+
+	search.time.GetDeadline() // get search deadline
 }
 
 // shouldStop checks the various limits provided for the search and
@@ -60,7 +82,7 @@ func (search *Context) shouldStop() bool {
 
 		return false
 
-	case search.stats.Nodes > search.limits.Nodes, search.limits.Time.Expired():
+	case search.stats.Nodes > search.limits.Nodes, search.time.Expired():
 		// node limit or time limit crossed
 		search.Stop()
 		return true

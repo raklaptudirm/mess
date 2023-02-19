@@ -21,12 +21,12 @@ import (
 	"errors"
 	realtime "time"
 
-	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/board"
 	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/pkg/search/eval"
+	"laptudirm.com/x/mess/pkg/search/time"
 	"laptudirm.com/x/mess/pkg/search/tt"
 )
 
@@ -56,9 +56,10 @@ func NewContext(reporter Reporter, ttSize int) *Context {
 // new Context should be used for different games.
 type Context struct {
 	// search state
-	board   *board.Board
-	tt      *tt.Table
-	stopped bool
+	board      *board.Board
+	sideToMove piece.Color
+	tt         *tt.Table
+	stopped    bool
 
 	evaluator eval.EfficientlyUpdatable
 
@@ -71,6 +72,7 @@ type Context struct {
 	reporter Reporter
 
 	// search limits
+	time   time.Manager
 	limits Limits
 
 	// move ordering stuff
@@ -113,22 +115,19 @@ func (search *Context) Stop() {
 
 // start initializes search variables during the start of a search.
 func (search *Context) start(limits Limits) {
-	// init limits
-	limits.Depth = util.Min(limits.Depth, MaxDepth)
-	search.limits = limits
-
 	// reset principal variation
 	search.pv.Clear()
 
 	// reset stats
 	search.stats = Stats{}
+	search.sideToMove = search.board.SideToMove
 
 	// age the transposition table
 	search.tt.NextEpoch()
 
 	// start search
-	search.stopped = false           // search not stopped
-	search.limits.Time.GetDeadline() // get search deadline
+	search.UpdateLimits(limits)
+	search.stopped = false // search not stopped
 
 	// start search timer
 	search.stats.SearchStart = realtime.Now()

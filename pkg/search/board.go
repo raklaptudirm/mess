@@ -14,7 +14,6 @@
 package search
 
 import (
-	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/formats/fen"
 )
 
@@ -34,9 +33,4 @@ func (search *Context) MakeMoves(moves ...string) {
 	for _, m := range moves {
 		search.board.MakeMove(search.board.NewMoveFromString(m))
 	}
-}
-
-// STM returns the search board's side to move.
-func (search *Context) STM() piece.Color {
-	return search.board.SideToMove
 }
