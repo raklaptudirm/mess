@@ -52,7 +52,7 @@ func devBuild() error {
 	// version is latest tag-commits after tag-current commit hash
 	version, err := util.RunWithOutput("git", "describe", "--tags")
 	if err != nil {
-		return err
+		return build("v0.0.0")
 	}
 
 	return build(version)
@@ -62,7 +62,7 @@ func releaseBuild() error {
 	// version is latest tag
 	version, err := util.RunWithOutput("git", "describe", "--tags", "--abbrev=0")
 	if err != nil {
-		return err
+		return build("v0.0.0")
 	}
 
 	return build(version)

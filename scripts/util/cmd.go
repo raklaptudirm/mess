@@ -29,7 +29,6 @@ func RunQuiet(args ...string) error {
 func RunWithOutput(args ...string) (string, error) {
 	cmd := exec.Command(args[0], args[1:]...)
 
-	cmd.Stderr = os.Stderr   // print any errors
 	out, err := cmd.Output() // copy the stdout
 
 	return strings.TrimSuffix(string(out), "\n"), err
