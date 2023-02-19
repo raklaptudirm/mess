@@ -100,7 +100,10 @@ func SEE(b *board.Board, m move.Move, threshold Eval) bool {
 		occupied.Unset(source)          // remove the capturing piece
 		sideToMove = sideToMove.Other() // switch sides after capture
 
-		if balance = -balance - 1 - seeValue[attacker]; balance >= threshold {
+		// lose the current capturer
+		balance = -balance - 1 - seeValue[attacker]
+
+		if balance >= threshold {
 			// capture is winning even if the current capturer is lost
 			// so we can end the exchange evaluation safely
 			break
