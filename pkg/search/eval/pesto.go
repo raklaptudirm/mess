@@ -30,8 +30,8 @@ var stackedPawnPenaltyEG [7]Eval
 
 func init() {
 	for i := 2; i < 6; i++ {
-		stackedPawnPenaltyMG[i] = Eval(util.Pow(5, i))
-		stackedPawnPenaltyEG[i] = Eval(util.Pow(7, i))
+		stackedPawnPenaltyMG[i] = Eval(15 * (i - 1))
+		stackedPawnPenaltyEG[i] = Eval(20 * (i - 1))
 	}
 }
 
