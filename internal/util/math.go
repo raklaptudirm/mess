@@ -15,9 +15,12 @@ package util
 
 // Type number represents every value that can be represented as an number.
 type number interface {
+	integer | ~float32 | ~float64
+}
+
+type integer interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
-		~float32 | ~float64
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
 }
 
 // Max returns the larger value between the integers a and b.
@@ -51,4 +54,22 @@ func Abs[T number](x T) T {
 // n is returned, otherwise the closest limit is returned.
 func Clamp[T number](n, min, max T) T {
 	return Max(min, Min(n, max))
+}
+
+func Pow[T integer](base, exp T) T {
+	pow := T(1)
+	for {
+		if exp&1 != 0 {
+			pow *= base
+		}
+
+		exp >>= 1
+		if exp == 0 {
+			break
+		}
+
+		base *= base
+	}
+
+	return pow
 }
