@@ -17,6 +17,7 @@ import (
 	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/search/eval"
+	"laptudirm.com/x/mess/pkg/search/tt"
 )
 
 // quiescence search is a type of limited search which only evaluates 'quiet'
@@ -35,6 +36,24 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 
 	case plys >= MaxDepth:
 		return search.score()
+	}
+
+	// check for transposition table hits
+	if entry, hit := search.tt.Probe(search.board.Hash); hit {
+		search.stats.TTHits++
+
+		// check if the tt entry can be used to exit the search early
+		// on this node. If we have an exact value, we can safely
+		// return it. If we have a new upper bound or lower bound,
+		// check if it causes a beta cutoff.
+		switch value := entry.Value.Eval(plys); {
+		case entry.Type == tt.ExactEntry, // exact score
+			entry.Type == tt.LowerBound && value >= beta,  // fail high
+			entry.Type == tt.UpperBound && alpha >= value: // fail high
+			// exit search early cause we have an exact
+			// score or a beta cutoff from the tt entry
+			return value
+		}
 	}
 
 	bestScore := search.score() // standing pat
@@ -82,6 +101,16 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 				}
 			}
 		}
+	}
+
+	if !search.stopped {
+		// update transposition table
+		search.tt.Store(tt.Entry{
+			Hash:  search.board.Hash,
+			Value: tt.EvalFrom(bestScore, plys),
+			Depth: 0,
+			Type:  tt.ExactEntry,
+		})
 	}
 
 	return bestScore
