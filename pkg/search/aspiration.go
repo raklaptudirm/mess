@@ -34,7 +34,7 @@ func (search *Context) aspirationWindow(depth int, prevEval eval.Eval) (eval.Eva
 	initialDepth := depth
 
 	// aspiration window size
-	var windowSize eval.Eval = 50
+	var windowSize eval.Eval = 10
 
 	// only do aspiration search at greater than depth 5
 	if depth >= 5 {
