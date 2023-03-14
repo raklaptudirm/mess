@@ -31,8 +31,10 @@ func (search *Context) aspirationWindow(depth int, prevEval eval.Eval) (eval.Eva
 	alpha := eval.Eval(-eval.Inf)
 	beta := eval.Eval(eval.Inf)
 
+	initialDepth := depth
+
 	// aspiration window size
-	var windowSize eval.Eval = 50
+	var windowSize eval.Eval = 10
 
 	// only do aspiration search at greater than depth 5
 	if depth >= 5 {
@@ -53,14 +55,23 @@ func (search *Context) aspirationWindow(depth int, prevEval eval.Eval) (eval.Eva
 		result := search.negamax(0, depth, alpha, beta, &pv)
 
 		switch {
-		// out of bounds check: <= alpha
+		// result <= alpha: search failed low
 		case result <= alpha:
 			beta = (alpha + beta) / 2
 			alpha = util.Max(alpha-windowSize, -eval.Inf)
 
-		// out of bounds check: >= beta
+			// reset reduced depth
+			depth = initialDepth
+
+		// result >= beta: search failed high
 		case result >= beta:
 			beta = util.Min(beta+windowSize, eval.Inf)
+
+			// unless we are mating, reduce depth
+			if util.Abs(result) <= eval.Inf/2 &&
+				depth > 1 { // don't reduce too much
+				depth--
+			}
 
 		// exact score is inside bounds
 		default:
