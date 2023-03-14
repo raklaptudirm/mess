@@ -68,7 +68,8 @@ func (search *Context) aspirationWindow(depth int, prevEval eval.Eval) (eval.Eva
 			beta = util.Min(beta+windowSize, eval.Inf)
 
 			// unless we are mating, reduce depth
-			if util.Abs(result) <= eval.Inf/2 {
+			if util.Abs(result) <= eval.Inf/2 &&
+				depth > 1 { // don't reduce too much
 				depth--
 			}
 
