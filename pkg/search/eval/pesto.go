@@ -25,14 +25,6 @@ import (
 // phaseInc is the effect that each piece type has on the game phase.
 var phaseInc = [piece.TypeN]Eval{0, 0, 1, 1, 2, 4, 0}
 
-var stackedPawnPenalty [7]Score
-
-func init() {
-	for i := 2; i < 6; i++ {
-		stackedPawnPenalty[i] = S(Eval(15*(i-1)), Eval(20*(i-1)))
-	}
-}
-
 // OTSePUE (back-acronym of Efficiently Updatable PeSTO) is an efficiently
 // updatable PeSTO evaluation function.
 type OTSePUE struct {
@@ -54,7 +46,7 @@ func (pesto *OTSePUE) FillSquare(s square.Square, p piece.Piece) {
 
 	// add the value of the new piece to
 	// the middle and end game evaluations
-	pesto.score[color].Bonus(table[p][s])
+	pesto.score[color] += table[p][s]
 
 	// increase phase by the piece's weight
 	pesto.phase += phaseInc[pType]
@@ -71,7 +63,7 @@ func (pesto *OTSePUE) ClearSquare(s square.Square, p piece.Piece) {
 
 	// remove the value of the new piece to
 	// the middle and end game evaluations
-	pesto.score[color].Penalty(table[p][s])
+	pesto.score[color] -= table[p][s]
 
 	// decrease phase by the piece's weight
 	pesto.phase -= phaseInc[pType]
@@ -86,13 +78,12 @@ func (pesto *OTSePUE) ClearSquare(s square.Square, p piece.Piece) {
 func (pesto *OTSePUE) Accumulate(stm piece.Color) Eval {
 	xstm := stm.Other()
 
-	score := pesto.score[stm]
-	score.Penalty(pesto.score[xstm])
+	score := pesto.score[stm] - pesto.score[xstm]
 
 	// stacked pawn penalties
 	for file := square.FileA; file <= square.FileH; file++ {
-		score.Penalty(stackedPawnPenalty[pesto.PawnN[stm][file]])
-		score.Bonus(stackedPawnPenalty[pesto.PawnN[xstm][file]])
+		score -= stackedPawnPenalty[pesto.PawnN[stm][file]]
+		score += stackedPawnPenalty[pesto.PawnN[xstm][file]]
 	}
 
 	// calculate the effect that effect that the score
@@ -104,23 +95,19 @@ func (pesto *OTSePUE) Accumulate(stm piece.Color) Eval {
 
 	// add the effective scores of each game phase to
 	// find the final evaluation of the position
-	return (score.MG*mgPhase + score.EG*egPhase) / 24
+	return (score.MG()*mgPhase + score.EG()*egPhase) / 24
 }
 
 func S(mg, eg Eval) Score {
-	return Score{MG: mg, EG: eg}
+	return Score(uint64(eg)<<32) + Score(mg)
 }
 
-type Score struct {
-	MG, EG Eval
+type Score int64
+
+func (score Score) MG() Eval {
+	return Eval(int32(uint32(uint64(score))))
 }
 
-func (score *Score) Bonus(bonus Score) {
-	score.MG += bonus.MG
-	score.EG += bonus.EG
-}
-
-func (score *Score) Penalty(penalty Score) {
-	score.MG -= penalty.MG
-	score.EG -= penalty.EG
+func (score Score) EG() Eval {
+	return Eval(int32(uint32(uint64(score+(1<<32)) >> 32)))
 }

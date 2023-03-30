@@ -23,7 +23,8 @@ import (
 )
 
 type pestoStruct struct {
-	Table [piece.N][square.N]eval.Score
+	Table       [piece.N][square.N]eval.Score
+	StackedPawn [7]eval.Score
 }
 
 //go:embed .gotemplate
@@ -31,6 +32,13 @@ var template string
 
 func main() {
 	var pesto pestoStruct
+
+	for i := 2; i < 6; i++ {
+		pesto.StackedPawn[i] = eval.S(
+			eval.Eval(15*(i-1)),
+			eval.Eval(20*(i-1)),
+		)
+	}
 
 	// initialize PESTO tables
 	for s := square.A8; s < square.N; s++ {

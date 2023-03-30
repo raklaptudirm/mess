@@ -30,6 +30,8 @@ import (
 
 // PeSTO tables
 
+var stackedPawnPenalty = [7]Score{ {{ range .StackedPawn }}{{ printf "%0#16x" . }}, {{ end }} }
+
 var table = [piece.N][square.N]Score{ {{- range .Table }}
-	{ {{ range . }}{{ printf "{ MG: %#v, EG: %#v }" .MG .EG }}, {{ end }} },{{ end }}
+	{ {{ range . }}{{ printf "%0#16x" . }}, {{ end }} },{{ end }}
 }
