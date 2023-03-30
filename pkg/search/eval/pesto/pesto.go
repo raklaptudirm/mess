@@ -48,7 +48,13 @@ func (pesto *EfficientlyUpdatable) FillSquare(s square.Square, p piece.Piece) {
 	pesto.phase += phaseInc[pType]
 
 	if pType == piece.Pawn {
-		pesto.pawnN[color][s.File()]++
+		file := s.File()
+		pawnN := pesto.pawnN[color][file]
+
+		pesto.score[color] -= stackedPawnPenalty[pawnN]   // un-give old penalty
+		pesto.score[color] += stackedPawnPenalty[pawnN+1] // give new penalty
+
+		pesto.pawnN[color][file]++
 	}
 }
 
@@ -62,27 +68,21 @@ func (pesto *EfficientlyUpdatable) ClearSquare(s square.Square, p piece.Piece) {
 	pesto.phase -= phaseInc[pType]
 
 	if pType == piece.Pawn {
-		pesto.pawnN[color][s.File()]--
+		file := s.File()
+		pawnN := pesto.pawnN[color][file]
+
+		pesto.score[color] -= stackedPawnPenalty[pawnN]   // un-give old penalty
+		pesto.score[color] += stackedPawnPenalty[pawnN-1] // give new penalty
+
+		pesto.pawnN[color][file]--
 	}
 }
 
 // Accumulate accumulates the efficiently updated variables into the
 // evaluation of the position from the perspective of the given side.
 func (pesto *EfficientlyUpdatable) Accumulate(stm piece.Color) eval.Eval {
-	xtm := stm.Other()
-
-	// create copy of stm and xstm scores
-	stmScore := pesto.score[stm]
-	xtmScore := pesto.score[xtm]
-
-	// penalty for having stacked pawns
-	for file := square.FileA; file <= square.FileH; file++ {
-		stmScore -= stackedPawnPenalty[pesto.pawnN[stm][file]]
-		xtmScore -= stackedPawnPenalty[pesto.pawnN[xtm][file]]
-	}
-
 	// score from side to move's perspective
-	score := stmScore - xtmScore
+	score := pesto.score[stm] - pesto.score[stm.Other()]
 
 	// linearly interpolate between the end game and middle game
 	// evaluations using phase/startposPhase as the contribution
