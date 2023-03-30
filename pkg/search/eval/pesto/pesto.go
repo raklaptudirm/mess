@@ -11,19 +11,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package eval
+package pesto
 
 import (
 	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/board"
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
+	"laptudirm.com/x/mess/pkg/search/eval"
 )
 
 //go:generate go run laptudirm.com/x/mess/internal/generator/pesto
 
 // phaseInc is the effect that each piece type has on the game phase.
-var phaseInc = [piece.TypeN]Eval{0, 0, 1, 1, 2, 4, 0}
+var phaseInc = [piece.TypeN]eval.Eval{0, 0, 1, 1, 2, 4, 0}
 
 // OTSePUE (back-acronym of Efficiently Updatable PeSTO) is an efficiently
 // updatable PeSTO evaluation function.
@@ -31,13 +32,13 @@ type OTSePUE struct {
 	Board *board.Board
 
 	score [piece.ColorN]Score // middle-game and end-game evaluations of both sides
-	phase Eval                // the game phase to lerp between middle and end game
+	phase eval.Eval           // the game phase to lerp between middle and end game
 
 	PawnN [piece.ColorN][square.FileN]int
 }
 
 // compile time check that OTSePUE implements eval.EfficientlyUpdatable
-var _ EfficientlyUpdatable = (*OTSePUE)(nil)
+var _ eval.EfficientlyUpdatable = (*OTSePUE)(nil)
 
 // FillSquare adds the given piece to the given square of a chessboard.
 func (pesto *OTSePUE) FillSquare(s square.Square, p piece.Piece) {
@@ -75,7 +76,7 @@ func (pesto *OTSePUE) ClearSquare(s square.Square, p piece.Piece) {
 
 // Accumulate accumulates the efficiently updated variables into the
 // evaluation of the position from the perspective of the given side.
-func (pesto *OTSePUE) Accumulate(stm piece.Color) Eval {
+func (pesto *OTSePUE) Accumulate(stm piece.Color) eval.Eval {
 	xstm := stm.Other()
 
 	score := pesto.score[stm] - pesto.score[xstm]
@@ -98,16 +99,16 @@ func (pesto *OTSePUE) Accumulate(stm piece.Color) Eval {
 	return (score.MG()*mgPhase + score.EG()*egPhase) / 24
 }
 
-func S(mg, eg Eval) Score {
+func S(mg, eg eval.Eval) Score {
 	return Score(uint64(eg)<<32) + Score(mg)
 }
 
 type Score int64
 
-func (score Score) MG() Eval {
-	return Eval(int32(uint32(uint64(score))))
+func (score Score) MG() eval.Eval {
+	return eval.Eval(int32(uint32(uint64(score))))
 }
 
-func (score Score) EG() Eval {
-	return Eval(int32(uint32(uint64(score+(1<<32)) >> 32)))
+func (score Score) EG() eval.Eval {
+	return eval.Eval(int32(uint32(uint64(score+(1<<32)) >> 32)))
 }
