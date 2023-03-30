@@ -36,7 +36,7 @@ const MaxDepth = 256
 
 // NewContext creates a new search Context.
 func NewContext(reporter Reporter, ttSize int) *Context {
-	evaluator := &pesto.OTSePUE{}
+	evaluator := &pesto.EfficientlyUpdatable{}
 
 	return &Context{
 		// default position
