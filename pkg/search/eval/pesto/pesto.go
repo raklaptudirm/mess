@@ -23,9 +23,6 @@ import (
 
 //go:generate go run laptudirm.com/x/mess/internal/generator/pesto
 
-// phaseInc is the effect that each piece type has on the game phase.
-var phaseInc = [piece.TypeN]eval.Eval{0, 0, 1, 1, 2, 4, 0}
-
 // OTSePUE (back-acronym of Efficiently Updatable PeSTO) is an efficiently
 // updatable PeSTO evaluation function.
 type OTSePUE struct {
@@ -91,24 +88,10 @@ func (pesto *OTSePUE) Accumulate(stm piece.Color) eval.Eval {
 	// of each phase will have on the final evaluation
 	// where (phase/24)*score is the value that the
 	// phase will give to the final evaluation
-	mgPhase := util.Min(pesto.phase, 24)
-	egPhase := 24 - mgPhase
+	mgPhase := util.Min(pesto.phase, startposPhase)
+	egPhase := startposPhase - mgPhase
 
 	// add the effective scores of each game phase to
 	// find the final evaluation of the position
-	return (score.MG()*mgPhase + score.EG()*egPhase) / 24
-}
-
-func S(mg, eg eval.Eval) Score {
-	return Score(uint64(eg)<<32) + Score(mg)
-}
-
-type Score int64
-
-func (score Score) MG() eval.Eval {
-	return eval.Eval(int32(uint32(uint64(score))))
-}
-
-func (score Score) EG() eval.Eval {
-	return eval.Eval(int32(uint32(uint64(score+(1<<32)) >> 32)))
+	return (score.MG()*mgPhase + score.EG()*egPhase) / startposPhase
 }
