@@ -84,14 +84,9 @@ func (pesto *OTSePUE) Accumulate(stm piece.Color) eval.Eval {
 		score += stackedPawnPenalty[pesto.PawnN[xstm][file]]
 	}
 
-	// calculate the effect that effect that the score
-	// of each phase will have on the final evaluation
-	// where (phase/24)*score is the value that the
-	// phase will give to the final evaluation
-	mgPhase := util.Min(pesto.phase, startposPhase)
-	egPhase := startposPhase - mgPhase
-
-	// add the effective scores of each game phase to
-	// find the final evaluation of the position
-	return (score.MG()*mgPhase + score.EG()*egPhase) / startposPhase
+	// linearly interpolate between the end game and middle game
+	// evaluations using phase/startposPhase as the contribution
+	// of the middle game to the final evaluation
+	phase := util.Min(pesto.phase, startposPhase)
+	return util.Lerp(score.EG(), score.MG(), phase, startposPhase)
 }
