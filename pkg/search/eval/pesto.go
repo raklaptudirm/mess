@@ -25,13 +25,11 @@ import (
 // phaseInc is the effect that each piece type has on the game phase.
 var phaseInc = [piece.TypeN]Eval{0, 0, 1, 1, 2, 4, 0}
 
-var stackedPawnPenaltyMG [7]Eval
-var stackedPawnPenaltyEG [7]Eval
+var stackedPawnPenalty [7]Score
 
 func init() {
 	for i := 2; i < 6; i++ {
-		stackedPawnPenaltyMG[i] = Eval(15 * (i - 1))
-		stackedPawnPenaltyEG[i] = Eval(20 * (i - 1))
+		stackedPawnPenalty[i] = S(Eval(15*(i-1)), Eval(20*(i-1)))
 	}
 }
 
@@ -40,8 +38,8 @@ func init() {
 type OTSePUE struct {
 	Board *board.Board
 
-	mg, eg [piece.ColorN]Eval // middle-game and end-game evaluations of both sides
-	phase  Eval               // the game phase to lerp between middle and end game
+	score [piece.ColorN]Score // middle-game and end-game evaluations of both sides
+	phase Eval                // the game phase to lerp between middle and end game
 
 	PawnN [piece.ColorN][square.FileN]int
 }
@@ -56,8 +54,7 @@ func (pesto *OTSePUE) FillSquare(s square.Square, p piece.Piece) {
 
 	// add the value of the new piece to
 	// the middle and end game evaluations
-	pesto.mg[color] += mgTable[p][s]
-	pesto.eg[color] += egTable[p][s]
+	pesto.score[color].Bonus(table[p][s])
 
 	// increase phase by the piece's weight
 	pesto.phase += phaseInc[pType]
@@ -74,8 +71,7 @@ func (pesto *OTSePUE) ClearSquare(s square.Square, p piece.Piece) {
 
 	// remove the value of the new piece to
 	// the middle and end game evaluations
-	pesto.mg[color] -= mgTable[p][s]
-	pesto.eg[color] -= egTable[p][s]
+	pesto.score[color].Penalty(table[p][s])
 
 	// decrease phase by the piece's weight
 	pesto.phase -= phaseInc[pType]
@@ -90,20 +86,13 @@ func (pesto *OTSePUE) ClearSquare(s square.Square, p piece.Piece) {
 func (pesto *OTSePUE) Accumulate(stm piece.Color) Eval {
 	xstm := stm.Other()
 
-	// find the middle and end game evaluations of the
-	// position from the perspective of the given side
-	mgScore := pesto.mg[stm] - pesto.mg[xstm]
-	egScore := pesto.eg[stm] - pesto.eg[xstm]
+	score := pesto.score[stm]
+	score.Penalty(pesto.score[xstm])
 
 	// stacked pawn penalties
 	for file := square.FileA; file <= square.FileH; file++ {
-		// middle game penalty
-		mgScore -= stackedPawnPenaltyMG[pesto.PawnN[stm][file]]
-		mgScore += stackedPawnPenaltyMG[pesto.PawnN[xstm][file]]
-
-		// end game penalty
-		egScore -= stackedPawnPenaltyEG[pesto.PawnN[stm][file]]
-		egScore += stackedPawnPenaltyEG[pesto.PawnN[xstm][file]]
+		score.Penalty(stackedPawnPenalty[pesto.PawnN[stm][file]])
+		score.Bonus(stackedPawnPenalty[pesto.PawnN[xstm][file]])
 	}
 
 	// calculate the effect that effect that the score
@@ -115,5 +104,23 @@ func (pesto *OTSePUE) Accumulate(stm piece.Color) Eval {
 
 	// add the effective scores of each game phase to
 	// find the final evaluation of the position
-	return (mgScore*mgPhase + egScore*egPhase) / 24
+	return (score.MG*mgPhase + score.EG*egPhase) / 24
+}
+
+func S(mg, eg Eval) Score {
+	return Score{MG: mg, EG: eg}
+}
+
+type Score struct {
+	MG, EG Eval
+}
+
+func (score *Score) Bonus(bonus Score) {
+	score.MG += bonus.MG
+	score.EG += bonus.EG
+}
+
+func (score *Score) Penalty(penalty Score) {
+	score.MG -= penalty.MG
+	score.EG -= penalty.EG
 }

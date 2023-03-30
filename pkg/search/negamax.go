@@ -161,7 +161,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		if !isNullMove && depth >= 3 && posEval >= beta &&
 			search.board.NonPawnMaterial(search.board.SideToMove) != bitboard.Empty {
 
-			reduction := 5 + util.Min(4, depth/5) + util.Min(3, int((posEval-beta)/214))
+			reduction := 5 + util.Min(4, depth/5) + util.Min(3, (int(posEval)-int(beta))/214)
 
 			search.board.MakeMove(move.Null)
 			score := -search.negamax(plys+1, depth-reduction, -beta, -beta+1, &move.Variation{})

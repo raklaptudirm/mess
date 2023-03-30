@@ -23,7 +23,7 @@ import (
 )
 
 type pestoStruct struct {
-	MG, EG [piece.N][square.N]eval.Eval
+	Table [piece.N][square.N]eval.Score
 }
 
 //go:embed .gotemplate
@@ -38,10 +38,15 @@ func main() {
 			white := piece.New(p, piece.White)
 			black := piece.New(p, piece.Black)
 
-			pesto.MG[white][s] = mgPieceValues[p] + mgPieceTable[p][s]
-			pesto.MG[black][s] = mgPieceValues[p] + mgPieceTable[p][s^56]
-			pesto.EG[white][s] = egPieceValues[p] + egPieceTable[p][s]
-			pesto.EG[black][s] = egPieceValues[p] + egPieceTable[p][s^56]
+			pesto.Table[white][s] = eval.S(
+				mgPieceValues[p]+mgPieceTable[p][s],
+				egPieceValues[p]+egPieceTable[p][s],
+			)
+
+			pesto.Table[black][s] = eval.S(
+				mgPieceValues[p]+mgPieceTable[p][s^56],
+				egPieceValues[p]+egPieceTable[p][s^56],
+			)
 		}
 	}
 

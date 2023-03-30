@@ -30,10 +30,6 @@ import (
 
 // PeSTO tables
 
-var mgTable = [piece.N][square.N]Eval{ {{- range .MG }}
-	{ {{ range . }}{{ printf "%#v" . }}, {{ end }} },{{ end }}
-}
-
-var egTable = [piece.N][square.N]Eval{ {{- range .EG }}
-	{ {{ range . }}{{ printf "%#v" . }}, {{ end }} },{{ end }}
+var table = [piece.N][square.N]Score{ {{- range .Table }}
+	{ {{ range . }}{{ printf "{ MG: %#v, EG: %#v }" .MG .EG }}, {{ end }} },{{ end }}
 }

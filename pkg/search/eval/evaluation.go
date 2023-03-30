@@ -51,7 +51,7 @@ func RandDraw(seed int) Eval {
 
 // Eval represents a relative centipawn evaluation where > 0 is better for
 // the side to move, while < 0 is better for the other side.
-type Eval int
+type Eval int32
 
 // constants representing useful relative evaluations
 const (
