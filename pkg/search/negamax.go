@@ -102,7 +102,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 
 		// only use entry if current node is not a pv node and
 		// entry depth is >= current depth (not worse quality)
-		if !isPVNode && !isNullMove && entry.Depth >= depth {
+		if !isPVNode && !isNullMove && int(entry.Depth) >= depth {
 			search.stats.TTHits++
 
 			// check if the tt entry can be used to exit the search early
@@ -298,7 +298,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 			Hash:  search.board.Hash,
 			Value: tt.EvalFrom(bestScore, plys),
 			Move:  bestMove,
-			Depth: depth,
+			Depth: uint8(depth),
 			Type:  entryType,
 		})
 	}
