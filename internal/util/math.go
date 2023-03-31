@@ -56,20 +56,8 @@ func Clamp[T number](n, min, max T) T {
 	return Max(min, Min(n, max))
 }
 
-func Pow[T integer](base, exp T) T {
-	pow := T(1)
-	for {
-		if exp&1 != 0 {
-			pow *= base
-		}
-
-		exp >>= 1
-		if exp == 0 {
-			break
-		}
-
-		base *= base
-	}
-
-	return pow
+// Lerp does a linear interpolation between the given start and stop
+// numbers by the ratio numerator/denominator(better precision for ints).
+func Lerp[T number](start, stop, numerator, denominator T) T {
+	return (stop*numerator + start*(denominator-numerator)) / denominator
 }

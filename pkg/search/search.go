@@ -26,6 +26,7 @@ import (
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/pkg/search/eval"
+	"laptudirm.com/x/mess/pkg/search/eval/pesto"
 	"laptudirm.com/x/mess/pkg/search/time"
 	"laptudirm.com/x/mess/pkg/search/tt"
 )
@@ -35,7 +36,7 @@ const MaxDepth = 256
 
 // NewContext creates a new search Context.
 func NewContext(reporter Reporter, ttSize int) *Context {
-	evaluator := &eval.OTSePUE{}
+	evaluator := &pesto.EfficientlyUpdatable{}
 
 	return &Context{
 		// default position

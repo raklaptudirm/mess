@@ -20,17 +20,26 @@ import (
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/pkg/search/eval"
+	"laptudirm.com/x/mess/pkg/search/eval/pesto"
 )
 
 type pestoStruct struct {
-	MG, EG [piece.N][square.N]eval.Eval
+	PeSTO       [piece.N][square.N]pesto.Score
+	StackedPawn [7]pesto.Score
 }
 
 //go:embed .gotemplate
 var template string
 
 func main() {
-	var pesto pestoStruct
+	var table pestoStruct
+
+	for i := 2; i < 6; i++ {
+		table.StackedPawn[i] = pesto.S(
+			eval.Eval(-15*(i-1)),
+			eval.Eval(-20*(i-1)),
+		)
+	}
 
 	// initialize PESTO tables
 	for s := square.A8; s < square.N; s++ {
@@ -38,12 +47,17 @@ func main() {
 			white := piece.New(p, piece.White)
 			black := piece.New(p, piece.Black)
 
-			pesto.MG[white][s] = mgPieceValues[p] + mgPieceTable[p][s]
-			pesto.MG[black][s] = mgPieceValues[p] + mgPieceTable[p][s^56]
-			pesto.EG[white][s] = egPieceValues[p] + egPieceTable[p][s]
-			pesto.EG[black][s] = egPieceValues[p] + egPieceTable[p][s^56]
+			table.PeSTO[white][s] = pesto.S(
+				mgPieceValues[p]+mgPieceTable[p][s],
+				egPieceValues[p]+egPieceTable[p][s],
+			)
+
+			table.PeSTO[black][s] = pesto.S(
+				mgPieceValues[p]+mgPieceTable[p][s^56],
+				egPieceValues[p]+egPieceTable[p][s^56],
+			)
 		}
 	}
 
-	generator.Generate("tables", template, pesto)
+	generator.Generate("tables", template, table)
 }
