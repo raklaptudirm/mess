@@ -111,16 +111,17 @@ type Entry struct {
 	// transposition table key collisions
 	Hash zobrist.Key
 
-	// depth this position was searched to
-	Depth uint8
-
-	Value Eval      // value of this position
-	Type  EntryType // entry type of the value
-	epoch uint8     // birth epoch of the entry
-
 	// best move in the position
 	// used during iterative deepening as pv move
 	Move move.Move
+
+	// evaluation info
+	Value Eval      // value of this position
+	Type  EntryType // bound type of the value
+
+	// entry metadata
+	Depth uint8 // depth the position was searched to
+	epoch uint8 // epoch/age of the entry from creation
 }
 
 // quality returns a quality measure of the given tt entry which will be
