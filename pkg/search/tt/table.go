@@ -44,7 +44,7 @@ func NewTable(mbs int) *Table {
 type Table struct {
 	table []Entry // hash table
 	size  int     // table size
-	epoch int     // table epoch
+	epoch uint8   // table epoch
 }
 
 // NextEpoch increases the epoch number of the given tt.
@@ -111,27 +111,28 @@ type Entry struct {
 	// transposition table key collisions
 	Hash zobrist.Key
 
-	// depth this position was searched to
-	Depth int
-
-	Value Eval      // value of this position
-	Type  EntryType // entry type of the value
-	epoch int       // birth epoch of the entry
-
 	// best move in the position
 	// used during iterative deepening as pv move
 	Move move.Move
+
+	// evaluation info
+	Value Eval      // value of this position
+	Type  EntryType // bound type of the value
+
+	// entry metadata
+	Depth uint8 // depth the position was searched to
+	epoch uint8 // epoch/age of the entry from creation
 }
 
 // quality returns a quality measure of the given tt entry which will be
 // used to determine whether a tt entry should be overwritten or not.
-func (entry *Entry) quality() int {
+func (entry *Entry) quality() uint8 {
 	return entry.epoch + entry.Depth/3
 }
 
 // EntryType represents the type of a transposition table entry's
 // value, whether it exists, it is upper bound, lower bound, or exact.
-type EntryType byte
+type EntryType uint8
 
 // constants representing various transposition table entry types
 const (

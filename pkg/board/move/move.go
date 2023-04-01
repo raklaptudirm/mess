@@ -27,7 +27,7 @@ import (
 // [20 isCapture bool 20] \
 // [19 toPiece piece.Piece 16][15 fromPiece piece.Piece 12] \
 // [11 target square.Square 6][05 source square.Square  00]
-type Move uint
+type Move uint32
 
 // MaxN is the maximum number of plys in a chess game.
 const MaxN = 1024
