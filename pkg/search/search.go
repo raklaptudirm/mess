@@ -37,10 +37,13 @@ const MaxDepth = 256
 // NewContext creates a new search Context.
 func NewContext(reporter Reporter, ttSize int) *Context {
 	evaluator := &pesto.EfficientlyUpdatable{}
+	chessboard := board.New(board.EU(evaluator))
+	evaluator.Board = chessboard
+	chessboard.UpdateWithFEN(board.StartFEN)
 
 	return &Context{
 		// default position
-		board: board.New(board.EU(evaluator), board.FEN(board.StartFEN)),
+		board: chessboard,
 
 		evaluator: evaluator,
 
