@@ -152,7 +152,12 @@ var rookMobility = [15]Score{
 	S(19, 73), S(37, 60), S(97, 15),
 }
 
+var rookSemiOpenFile = S(10, 9)
+var rookFullOpenFile = S(34, 8)
+
 func (pesto *EfficientlyUpdatable) evaluateRooks(color piece.Color) Score {
+	them := color.Other()
+
 	rookPiece := piece.New(piece.Rook, color)
 	tempRooks := pesto.Board.RooksBB(color)
 
@@ -162,6 +167,16 @@ func (pesto *EfficientlyUpdatable) evaluateRooks(color piece.Color) Score {
 		rook := tempRooks.Pop()
 		score += table[rookPiece][rook]
 		pesto.phase += phaseInc[piece.Rook]
+
+		file := bitboard.Files[rook.File()]
+
+		if pesto.Board.PawnsBB(color)&file == bitboard.Empty {
+			if pesto.Board.PawnsBB(them)&file == bitboard.Empty {
+				score += rookFullOpenFile
+			} else {
+				score += rookSemiOpenFile
+			}
+		}
 
 		attacks := attacks.Rook(rook, pesto.occupiedMinusRooks[color])
 		count := (attacks & pesto.mobilityAreas[color]).Count()
