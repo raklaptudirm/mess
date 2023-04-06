@@ -26,6 +26,10 @@ func PawnPush(pawns bitboard.Board, color piece.Color) bitboard.Board {
 	return pawns.Up(color)
 }
 
+func Pawns(pawns bitboard.Board, color piece.Color) bitboard.Board {
+	return PawnsLeft(pawns, color) | PawnsRight(pawns, color)
+}
+
 // PawnsLeft gives the result after every pawn captures left in the given BB.
 func PawnsLeft(pawns bitboard.Board, color piece.Color) bitboard.Board {
 	return pawns.Up(color).West()
