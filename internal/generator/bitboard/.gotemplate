@@ -30,3 +30,7 @@ package bitboard
 var Between = [64][64]Board{ {{- range .Between }}
 	{ {{ range . }}{{ printf "%0#16v" . }}, {{ end }} },{{ end }}
 }
+
+var KingAreas = [2][64]Board{ {{- range .KingAreas }}
+	{ {{ range . }}{{ printf "%0#16v" . }}, {{ end }} },{{ end }}
+}
