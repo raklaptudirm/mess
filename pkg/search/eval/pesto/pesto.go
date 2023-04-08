@@ -34,9 +34,14 @@ type EfficientlyUpdatable struct {
 	// general information
 	occupied bitboard.Board
 
-	pawnAttacks   [piece.ColorN]bitboard.Board
-	blockedPawns  [piece.ColorN]bitboard.Board
-	mobilityAreas [piece.ColorN]bitboard.Board
+	kingAreas          [piece.ColorN]bitboard.Board
+	kingAttacksCount   [piece.ColorN]int
+	kingAttackersCount [piece.ColorN]int
+
+	pawnAttacks    [piece.ColorN]bitboard.Board
+	pawnAttacksBy2 [piece.ColorN]bitboard.Board
+	blockedPawns   [piece.ColorN]bitboard.Board
+	mobilityAreas  [piece.ColorN]bitboard.Board
 
 	occupiedMinusBishops [piece.ColorN]bitboard.Board
 	occupiedMinusRooks   [piece.ColorN]bitboard.Board
@@ -112,6 +117,8 @@ var knightMobility = [9]Score{
 }
 
 func (pesto *EfficientlyUpdatable) evaluateKnights(color piece.Color) Score {
+	them := color.Other()
+
 	knightPiece := piece.New(piece.Knight, color)
 	tempKnights := pesto.Board.KnightsBB(color)
 
@@ -131,6 +138,12 @@ func (pesto *EfficientlyUpdatable) evaluateKnights(color piece.Color) Score {
 
 		count := (attacks & pesto.mobilityAreas[color]).Count()
 		score += knightMobility[count]
+
+		attacks &= pesto.kingAreas[them] & ^pesto.pawnAttacksBy2[them]
+		if attacks != bitboard.Empty {
+			pesto.kingAttacksCount[them] += attacks.Count()
+			pesto.kingAttackersCount[them]++
+		}
 	}
 
 	return score
@@ -144,6 +157,8 @@ var bishopMobility = [14]Score{
 }
 
 func (pesto *EfficientlyUpdatable) evaluateBishops(color piece.Color) Score {
+	them := color.Other()
+
 	bishopPiece := piece.New(piece.Bishop, color)
 	tempBishops := pesto.Board.BishopsBB(color)
 
@@ -163,6 +178,12 @@ func (pesto *EfficientlyUpdatable) evaluateBishops(color piece.Color) Score {
 
 		count := (attacks & pesto.mobilityAreas[color]).Count()
 		score += bishopMobility[count]
+
+		attacks &= pesto.kingAreas[them] & ^pesto.pawnAttacksBy2[them]
+		if attacks != bitboard.Empty {
+			pesto.kingAttacksCount[them] += attacks.Count()
+			pesto.kingAttackersCount[them]++
+		}
 	}
 
 	return score
@@ -210,6 +231,12 @@ func (pesto *EfficientlyUpdatable) evaluateRooks(color piece.Color) Score {
 
 		count := (attacks & pesto.mobilityAreas[color]).Count()
 		score += rookMobility[count]
+
+		attacks &= pesto.kingAreas[them] & ^pesto.pawnAttacksBy2[them]
+		if attacks != bitboard.Empty {
+			pesto.kingAttacksCount[them] += attacks.Count()
+			pesto.kingAttackersCount[them]++
+		}
 	}
 
 	return score
@@ -226,6 +253,8 @@ var queenMobility = [28]Score{
 }
 
 func (pesto *EfficientlyUpdatable) evaluateQueens(color piece.Color) Score {
+	them := color.Other()
+
 	queenPiece := piece.New(piece.Queen, color)
 	tempQueens := pesto.Board.QueensBB(color)
 
@@ -245,21 +274,93 @@ func (pesto *EfficientlyUpdatable) evaluateQueens(color piece.Color) Score {
 
 		count := (attacks & pesto.mobilityAreas[color]).Count()
 		score += queenMobility[count]
+
+		attacks &= pesto.kingAreas[them] & ^pesto.pawnAttacksBy2[them]
+		if attacks != bitboard.Empty {
+			pesto.kingAttacksCount[them] += attacks.Count()
+			pesto.kingAttackersCount[them]++
+		}
 	}
 
 	return score
 }
 
-func (pesto *EfficientlyUpdatable) evaluateKing(color piece.Color) Score {
-	kingPiece := piece.New(piece.King, color)
-	king := (pesto.Board.KingBB(color)).FirstOne()
+var KingDefenders = [12]Score{
+	S(-37, -3), S(-17, 2), S(0, 6), S(11, 8),
+	S(21, 8), S(32, 0), S(38, -14), S(10, -5),
+	S(12, 6), S(12, 6), S(12, 6), S(12, 6),
+}
+
+var SafetyAttackValue = S(45, 34)
+var SafetyWeakSquares = S(42, 41)
+var SafetyNoEnemyQueens = S(-237, -259)
+var SafetySafeQueenCheck = S(93, 83)
+var SafetySafeRookCheck = S(90, 98)
+var SafetySafeBishopCheck = S(59, 59)
+var SafetySafeKnightCheck = S(112, 117)
+var SafetyAdjustment = S(-74, -26)
+
+func (pesto *EfficientlyUpdatable) evaluateKing(us piece.Color) Score {
+	them := us.Other()
+	enemyQueens := pesto.Board.QueensBB(them)
+
+	score := Score(0)
+
+	defenders := pesto.Board.PawnsBB(us) |
+		pesto.Board.KnightsBB(us) |
+		pesto.Board.BishopsBB(us)
+
+	kingPiece := piece.New(piece.King, us)
+	king := (pesto.Board.KingBB(us)).FirstOne()
+	score += table[kingPiece][king]
+
+	defenders &= pesto.kingAreas[us]
+	score += KingDefenders[Score(defenders.Count())]
+
+	if pesto.kingAttackersCount[us] > 1-enemyQueens.Count() {
+		weak := pesto.attacked[them] &
+			^pesto.attackedBy2[us] &
+			(^pesto.attacked[us] | pesto.attackedBy[us][piece.Queen] | pesto.attackedBy[us][piece.King])
+
+		scaledAttackCount := 9 * pesto.kingAttacksCount[us] / pesto.kingAreas[us].Count()
+
+		safe := ^pesto.Board.ColorBBs[them] &
+			(^pesto.attacked[us] | (weak & pesto.attackedBy2[them]))
+
+		knightThreats := attacks.Knight[king]
+		bishopThreats := attacks.Bishop(king, pesto.occupied)
+		rookThreats := attacks.Rook(king, pesto.occupied)
+		queenThreats := bishopThreats | rookThreats
+
+		knightChecks := knightThreats & safe & pesto.attackedBy[them][piece.Knight]
+		bishopChecks := bishopThreats & safe & pesto.attackedBy[them][piece.Bishop]
+		rookChecks := rookThreats & safe & pesto.attackedBy[them][piece.Rook]
+		queenChecks := queenThreats & safe & pesto.attackedBy[them][piece.Queen]
+
+		safety := Score(0)
+
+		safety += SafetyAttackValue*Score(scaledAttackCount) +
+			SafetyWeakSquares*Score((weak&pesto.kingAreas[us]).Count()) +
+			util.Ternary(enemyQueens == bitboard.Empty, SafetyNoEnemyQueens, 0) +
+			SafetySafeKnightCheck*Score(knightChecks.Count()) +
+			SafetySafeBishopCheck*Score(bishopChecks.Count()) +
+			SafetySafeRookCheck*Score(rookChecks.Count()) +
+			SafetySafeQueenCheck*Score(queenChecks.Count()) +
+			SafetyAdjustment
+
+		mg, eg := safety.MG(), safety.EG()
+		score += S(
+			-mg*util.Max(0, mg)/720,
+			-util.Max(0, eg)/20,
+		)
+	}
 
 	attacks := attacks.King[king]
-	pesto.attackedBy2[color] = attacks & pesto.attacked[color]
-	pesto.attacked[color] |= attacks
-	pesto.attackedBy[color][piece.King] |= attacks
+	pesto.attackedBy2[us] = attacks & pesto.attacked[us]
+	pesto.attacked[us] |= attacks
+	pesto.attackedBy[us][piece.King] |= attacks
 
-	return table[kingPiece][king]
+	return score
 }
 
 var ThreatWeakPawn = S(-11, -38)
@@ -348,6 +449,15 @@ func (pesto *EfficientlyUpdatable) initialize() {
 	blackKing := pesto.Board.KingBB(piece.Black)
 	whiteKing := pesto.Board.KingBB(piece.White)
 
+	pesto.kingAreas[piece.Black] = bitboard.KingAreas[piece.Black][blackKing.FirstOne()]
+	pesto.kingAreas[piece.White] = bitboard.KingAreas[piece.White][whiteKing.FirstOne()]
+
+	pesto.kingAttackersCount[piece.Black] = 0
+	pesto.kingAttackersCount[piece.White] = 0
+
+	pesto.kingAttacksCount[piece.Black] = 0
+	pesto.kingAttacksCount[piece.White] = 0
+
 	blackPawns := pesto.Board.PawnsBB(piece.Black)
 	whitePawns := pesto.Board.PawnsBB(piece.White)
 
@@ -356,6 +466,8 @@ func (pesto *EfficientlyUpdatable) initialize() {
 
 	pesto.pawnAttacks[piece.Black] = blackPawnsAdvanced.East() | blackPawnsAdvanced.West()
 	pesto.pawnAttacks[piece.White] = whitePawnsAdvanced.East() | whitePawnsAdvanced.West()
+	pesto.pawnAttacksBy2[piece.Black] = blackPawnsAdvanced.East() & blackPawnsAdvanced.West()
+	pesto.pawnAttacksBy2[piece.White] = whitePawnsAdvanced.East() & whitePawnsAdvanced.West()
 
 	pesto.blockedPawns[piece.White] = pesto.occupied.South() & whitePawns
 	pesto.blockedPawns[piece.Black] = pesto.occupied.North() & blackPawns

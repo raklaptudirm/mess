@@ -18,11 +18,14 @@ import (
 
 	"laptudirm.com/x/mess/internal/generator"
 	"laptudirm.com/x/mess/pkg/board/bitboard"
+	"laptudirm.com/x/mess/pkg/board/move/attacks"
+	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 )
 
 type bitboardStruct struct {
-	Between [square.N][square.N]bitboard.Board
+	Between   [square.N][square.N]bitboard.Board
+	KingAreas [piece.ColorN][square.N]bitboard.Board
 }
 
 //go:embed .gotemplate
@@ -53,6 +56,20 @@ func main() {
 			}
 
 			b.Between[s1][s2] = bitboard.Hyperbola(s1, sqs, mask) & bitboard.Hyperbola(s2, sqs, mask)
+		}
+	}
+
+	for s := square.A8; s <= square.H1; s++ {
+		attacks := attacks.King[s] | bitboard.Square(s)
+
+		b.KingAreas[piece.White][s] = attacks | attacks.North()
+		b.KingAreas[piece.Black][s] = attacks | attacks.South()
+
+		switch s.File() {
+		case square.FileA:
+			b.KingAreas[piece.White][s] |= b.KingAreas[piece.White][s].East()
+		case square.FileH:
+			b.KingAreas[piece.White][s] |= b.KingAreas[piece.White][s].West()
 		}
 	}
 
