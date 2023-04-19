@@ -228,22 +228,22 @@ var KingDefenders = [12]Score{
 // king-safety terms
 var (
 	// safety term for attacks in the king area
-	SafetyAttackValue = S(45, 34)
+	SafetyAttackValue = S(-45, -34)
 
 	// safety term for weak squares in the king area
-	SafetyWeakSquares = S(42, 41)
+	SafetyWeakSquares = S(-42, -41)
 
 	// safety term for the absence of enemy queens
-	SafetyNoEnemyQueens = S(-237, -259)
+	SafetyNoEnemyQueens = S(237, 259)
 
 	// safety terms for safe checks from enemies
-	SafetySafeQueenCheck  = S(93, 83)
-	SafetySafeRookCheck   = S(90, 98)
-	SafetySafeBishopCheck = S(59, 59)
-	SafetySafeKnightCheck = S(112, 117)
+	SafetySafeQueenCheck  = S(-93, -83)
+	SafetySafeRookCheck   = S(-90, -98)
+	SafetySafeBishopCheck = S(-59, -59)
+	SafetySafeKnightCheck = S(-112, -117)
 
 	// constant term for safety adjustment
-	SafetyAdjustment = S(-74, -26)
+	SafetyAdjustment = S(74, 26)
 )
 
 // evaluateKing returns evaluates our king and king-safety.
@@ -325,8 +325,8 @@ func (pesto *EfficientlyUpdatable) evaluateKing(us piece.Color) Score {
 
 		// convert safety to score with non-linear function
 		score += S(
-			-mg*util.Max(0, mg)/720,
-			-util.Max(0, eg)/20,
+			-mg*util.Min(0, mg)/720,
+			util.Min(0, eg)/20,
 		)
 	}
 

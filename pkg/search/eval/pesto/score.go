@@ -31,5 +31,5 @@ func (score Score) MG() eval.Eval {
 
 // EG return the given score's end game evaluation.
 func (score Score) EG() eval.Eval {
-	return eval.Eval(int32(uint32(uint64(score+(1<<32)) >> 32)))
+	return eval.Eval(int32(uint32(uint64(score+(1<<31)) >> 32)))
 }
