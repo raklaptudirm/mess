@@ -68,8 +68,10 @@ func main() {
 		switch s.File() {
 		case square.FileA:
 			b.KingAreas[piece.White][s] |= b.KingAreas[piece.White][s].East()
+			b.KingAreas[piece.Black][s] |= b.KingAreas[piece.Black][s].East()
 		case square.FileH:
 			b.KingAreas[piece.White][s] |= b.KingAreas[piece.White][s].West()
+			b.KingAreas[piece.Black][s] |= b.KingAreas[piece.Black][s].West()
 		}
 	}
 
