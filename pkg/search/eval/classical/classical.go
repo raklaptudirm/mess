@@ -23,8 +23,6 @@ import (
 	"laptudirm.com/x/mess/pkg/search/eval"
 )
 
-//go:generate go run laptudirm.com/x/mess/internal/generator/classical
-
 // EfficientlyUpdatable (back-acronym of Efficiently Updatable PeSTO) is an efficiently
 // updatable PeSTO evaluation function.
 type EfficientlyUpdatable struct {
@@ -105,7 +103,7 @@ func (classical *EfficientlyUpdatable) evaluatePawns(us piece.Color) Score {
 
 	// penalty for having stacked pawns
 	for file := square.FileA; file <= square.FileH; file++ {
-		score += stackedPawnPenalty[(tempPawns & bitboard.Files[file]).Count()]
+		score += Terms.StackedPawns[(tempPawns & bitboard.Files[file]).Count()]
 	}
 
 	// evaluate every pawn
@@ -114,48 +112,12 @@ func (classical *EfficientlyUpdatable) evaluatePawns(us piece.Color) Score {
 		pawn := tempPawns.Pop()
 
 		// add psqt evaluation
-		score += table[pawnPiece][pawn]
+		score += Terms.PieceSquare[pawnPiece][pawn]
 		classical.phase += phaseInc[piece.Pawn]
 	}
 
 	return score
 }
-
-// terms for the mobility of pieces
-var Mobility = [piece.TypeN][]Score{
-	piece.Knight: {
-		S(-104, -139), S(-45, -114), S(-22, -37), S(-8, 3),
-		S(6, 15), S(11, 34), S(19, 38), S(30, 37),
-		S(43, 17),
-	},
-	piece.Bishop: {
-		S(-99, -186), S(-46, -124), S(-16, -54), S(-4, -14),
-		S(6, 1), S(14, 20), S(17, 35), S(19, 39),
-		S(19, 49), S(27, 48), S(26, 48), S(52, 32),
-		S(55, 47), S(83, 2),
-	},
-	piece.Rook: {
-		S(-127, -148), S(-56, -127), S(-25, -85), S(-12, -28),
-		S(-10, 2), S(-12, 27), S(-11, 42), S(-4, 46),
-		S(4, 52), S(9, 55), S(11, 64), S(19, 68),
-		S(19, 73), S(37, 60), S(97, 15),
-	},
-	piece.Queen: {
-		S(-111, -273), S(-253, -401), S(-127, -228), S(-46, -236),
-		S(-20, -173), S(-9, -86), S(-1, -35), S(2, -1),
-		S(8, 8), S(10, 31), S(15, 37), S(17, 55),
-		S(20, 46), S(23, 57), S(22, 58), S(21, 64),
-		S(24, 62), S(16, 65), S(13, 63), S(18, 48),
-		S(25, 30), S(38, 8), S(34, -12), S(28, -29),
-		S(10, -44), S(7, -79), S(-42, -30), S(-23, -50),
-	},
-}
-
-// Bonuses for a rook being on an open file.
-var (
-	RookSemiOpenFile = S(10, 9) // no friendly pawns in the file
-	RookFullOpenFile = S(34, 8) // no pawns in the file
-)
 
 // evaluatePieces evaluates our major and minor pieces.
 func (classical *EfficientlyUpdatable) evaluatePieces(us piece.Color) Score {
@@ -176,7 +138,7 @@ func (classical *EfficientlyUpdatable) evaluatePieces(us piece.Color) Score {
 		pt := pc.Type()
 
 		// add psqt evaluation
-		score += table[pc][sq]
+		score += Terms.PieceSquare[pc][sq]
 		classical.phase += phaseInc[pt]
 
 		// specialized evaluation terms for various pieces
@@ -188,10 +150,10 @@ func (classical *EfficientlyUpdatable) evaluatePieces(us piece.Color) Score {
 			switch bitboard.Empty {
 			// no pawns on rook file: open file
 			case classical.Board.PieceBBs[piece.Pawn] & file:
-				score += RookFullOpenFile
+				score += Terms.RookFullOpenFile
 			// no friendly pawns on rook file: semi-open file
 			case classical.Board.PawnsBB(us) & file:
-				score += RookSemiOpenFile
+				score += Terms.RookSemiOpenFile
 			}
 		}
 
@@ -205,7 +167,7 @@ func (classical *EfficientlyUpdatable) evaluatePieces(us piece.Color) Score {
 
 		// add mobility evaluation
 		count := (attacks & classical.mobilityAreas[us]).Count()
-		score += Mobility[pt][count]
+		score += Terms.Mobility[pt][count]
 
 		// update data for king attackers
 		kingAttacks := attacks & classical.kingAreas[them] & ^classical.pawnAttacksBy2[them]
@@ -217,34 +179,6 @@ func (classical *EfficientlyUpdatable) evaluatePieces(us piece.Color) Score {
 
 	return score
 }
-
-// Bonuses/Penalties for having many/few pieces defending the king.
-var KingDefenders = [12]Score{
-	S(-37, -3), S(-17, 2), S(0, 6), S(11, 8),
-	S(21, 8), S(32, 0), S(38, -14), S(10, -5),
-	S(12, 6), S(12, 6), S(12, 6), S(12, 6),
-}
-
-// king-safety terms
-var (
-	// safety term for attacks in the king area
-	SafetyAttackValue = S(-45, -34)
-
-	// safety term for weak squares in the king area
-	SafetyWeakSquares = S(-42, -41)
-
-	// safety term for the absence of enemy queens
-	SafetyNoEnemyQueens = S(237, 259)
-
-	// safety terms for safe checks from enemies
-	SafetySafeQueenCheck  = S(-93, -83)
-	SafetySafeRookCheck   = S(-90, -98)
-	SafetySafeBishopCheck = S(-59, -59)
-	SafetySafeKnightCheck = S(-112, -117)
-
-	// constant term for safety adjustment
-	SafetyAdjustment = S(74, 26)
-)
 
 // evaluateKing returns evaluates our king and king-safety.
 func (classical *EfficientlyUpdatable) evaluateKing(us piece.Color) Score {
@@ -258,7 +192,7 @@ func (classical *EfficientlyUpdatable) evaluateKing(us piece.Color) Score {
 	king := (classical.Board.KingBB(us)).FirstOne()
 
 	// psqt evaluation of the king
-	score += table[kingPiece][king]
+	score += Terms.PieceSquare[kingPiece][king]
 
 	// defenders of king including pawns and minor pieces
 	defenders := classical.Board.PawnsBB(us) |
@@ -267,7 +201,7 @@ func (classical *EfficientlyUpdatable) evaluateKing(us piece.Color) Score {
 
 	// king defenders evaluation
 	defenders &= classical.kingAreas[us]
-	score += KingDefenders[defenders.Count()]
+	score += Terms.KingDefenders[defenders.Count()]
 
 	// do safety evaluation if we have two attackers, or one
 	// attacker with the potential for an enemy queen to join
@@ -302,24 +236,24 @@ func (classical *EfficientlyUpdatable) evaluateKing(us piece.Color) Score {
 		safety := Score(0)
 
 		// safety penalty for attacks in the king area
-		safety += SafetyAttackValue * Score(scaledAttackCount)
+		safety += Terms.SafetyAttackValue * Score(scaledAttackCount)
 
 		// safety penalty for weak squares in the king area
-		safety += SafetyWeakSquares * Score((weak & classical.kingAreas[us]).Count())
+		safety += Terms.SafetyWeakSquares * Score((weak & classical.kingAreas[us]).Count())
 
 		// safety penalty for safe checks from enemies
-		safety += SafetySafeKnightCheck * Score(knightChecks.Count())
-		safety += SafetySafeBishopCheck * Score(bishopChecks.Count())
-		safety += SafetySafeRookCheck * Score(rookChecks.Count())
-		safety += SafetySafeQueenCheck * Score(queenChecks.Count())
+		safety += Terms.SafetySafeKnightCheck * Score(knightChecks.Count())
+		safety += Terms.SafetySafeBishopCheck * Score(bishopChecks.Count())
+		safety += Terms.SafetySafeRookCheck * Score(rookChecks.Count())
+		safety += Terms.SafetySafeQueenCheck * Score(queenChecks.Count())
 
 		// safety bonus for no enemy queens
 		if enemyQueens == bitboard.Empty {
-			safety += SafetyNoEnemyQueens
+			safety += Terms.SafetyNoEnemyQueens
 		}
 
 		// constant safety adjustment
-		safety += SafetyAdjustment
+		safety += Terms.SafetyAdjustment
 
 		mg, eg := safety.MG(), safety.EG()
 
@@ -340,29 +274,6 @@ func (classical *EfficientlyUpdatable) evaluateKing(us piece.Color) Score {
 
 	return score
 }
-
-// threat terms
-var (
-	// threat term for weak pawns
-	ThreatWeakPawn = S(-11, -38)
-
-	// threat terms for attacked minors
-	ThreatMinorAttackedByPawn  = S(-55, -83)
-	ThreatMinorAttackedByMinor = S(-25, -45)
-	ThreatMinorAttackedByMajor = S(-30, -55)
-	ThreatMinorAttackedByKing  = S(-43, -21)
-
-	// threat terms for attacked majors
-	ThreatRookAttackedByLesser = S(-48, -28)
-	ThreatRookAttackedByKing   = S(-33, -18)
-	ThreatQueenAttackedByOne   = S(-50, -7)
-
-	// threat term for overloaded pieces
-	ThreatOverloadedPieces = S(-7, -16)
-
-	// threat term for pawn push threats
-	ThreatByPawnPush = S(15, 32)
-)
 
 // evaluateThreats evaluates various threats against our pieces.
 func (classical *EfficientlyUpdatable) evaluateThreats(us piece.Color) Score {
@@ -404,46 +315,46 @@ func (classical *EfficientlyUpdatable) evaluateThreats(us piece.Color) Score {
 
 	// penalty for pawns which can't be traded off and are poorly defended
 	poorlySupportedPawns := pawns & ^attacksByPawns & poorlyDefended
-	score += Score(poorlySupportedPawns.Count()) * ThreatWeakPawn
+	score += Score(poorlySupportedPawns.Count()) * Terms.ThreatWeakPawn
 
 	// penalty for minors attacked by pawns
 	minorsAttackedByPawns := (knights | bishops) & attacksByPawns
-	score += Score(minorsAttackedByPawns.Count()) * ThreatMinorAttackedByPawn
+	score += Score(minorsAttackedByPawns.Count()) * Terms.ThreatMinorAttackedByPawn
 
 	// penalty for minors attacked by minors
 	minorsAttackedByMinors := (knights | bishops) & attacksByMinors
-	score += Score(minorsAttackedByMinors.Count()) * ThreatMinorAttackedByMinor
+	score += Score(minorsAttackedByMinors.Count()) * Terms.ThreatMinorAttackedByMinor
 
 	// penalty for minors attacked by majors
 	minorsAttackedByMajors := (knights | bishops) & attacksByMajors
-	score += Score(minorsAttackedByMajors.Count()) * ThreatMinorAttackedByMajor
+	score += Score(minorsAttackedByMajors.Count()) * Terms.ThreatMinorAttackedByMajor
 
 	// penalty for rooks attacked by lesser pieces
 	rooksAttackedByLesser := rooks & (attacksByPawns | attacksByMinors)
-	score += Score(rooksAttackedByLesser.Count()) * ThreatRookAttackedByLesser
+	score += Score(rooksAttackedByLesser.Count()) * Terms.ThreatRookAttackedByLesser
 
 	// penalty for weak minors attacked by the king
 	weakMinorsAttackedByKing := weakMinors & attacksByKing
-	score += Score(weakMinorsAttackedByKing.Count()) * ThreatMinorAttackedByKing
+	score += Score(weakMinorsAttackedByKing.Count()) * Terms.ThreatMinorAttackedByKing
 
 	// penalty for weak rooks attacked by the king
 	weakRooksAttackedByKing := rooks & poorlyDefended & attacksByKing
-	score += Score(weakRooksAttackedByKing.Count()) * ThreatRookAttackedByKing
+	score += Score(weakRooksAttackedByKing.Count()) * Terms.ThreatRookAttackedByKing
 
 	// penalty for attacked queens
 	attackedQueens := queens & classical.attacked[them]
-	score += Score(attackedQueens.Count()) * ThreatQueenAttackedByOne
+	score += Score(attackedQueens.Count()) * Terms.ThreatQueenAttackedByOne
 
 	// overloaded pieces are attacked and defended by exactly one piece
 	overloaded := (knights | bishops | rooks | queens) &
 		classical.attacked[us] & ^classical.attackedBy2[us] &
 		classical.attacked[them] & ^classical.attackedBy2[them]
-	score += Score(overloaded.Count()) * ThreatOverloadedPieces
+	score += Score(overloaded.Count()) * Terms.ThreatOverloadedPieces
 
 	// bonus for giving threats to non-pawn enemy with safe pawn pushes
 	// squares that are already threatened by our pawns is not considered
 	pushThreat := attacks.Pawns(safePush, us) & (enemies &^ classical.attackedBy[us][piece.Pawn])
-	score += Score(pushThreat.Count()) * ThreatByPawnPush
+	score += Score(pushThreat.Count()) * Terms.ThreatByPawnPush
 
 	return score
 }
