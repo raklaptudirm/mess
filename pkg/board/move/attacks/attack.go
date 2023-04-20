@@ -21,6 +21,28 @@ import (
 	"laptudirm.com/x/mess/pkg/board/square"
 )
 
+// Of returns the attack set of the given piece on the given square
+// and with the given blocker set. The blocker set is unused while
+// calculating the attacks sets of non-sliding pieces.
+func Of(p piece.Piece, s square.Square, blockers bitboard.Board) bitboard.Board {
+	switch p.Type() {
+	case piece.Pawn:
+		return Pawn[p.Color()][s]
+	case piece.Knight:
+		return Knight[s]
+	case piece.Bishop:
+		return Bishop(s, blockers)
+	case piece.Rook:
+		return Rook(s, blockers)
+	case piece.Queen:
+		return Queen(s, blockers)
+	case piece.King:
+		return King[s]
+	default:
+		panic("attacks.Of: unknown piece type")
+	}
+}
+
 // PawnPush gives the result after pushing every pawn in the given BB.
 func PawnPush(pawns bitboard.Board, color piece.Color) bitboard.Board {
 	return pawns.Up(color)

@@ -20,22 +20,22 @@ import (
 	"laptudirm.com/x/mess/pkg/board/piece"
 	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/pkg/search/eval"
-	"laptudirm.com/x/mess/pkg/search/eval/pesto"
+	"laptudirm.com/x/mess/pkg/search/eval/classical"
 )
 
-type pestoStruct struct {
-	PeSTO       [piece.N][square.N]pesto.Score
-	StackedPawn [7]pesto.Score
+type classicalStruct struct {
+	PeSTO       [piece.N][square.N]classical.Score
+	StackedPawn [7]classical.Score
 }
 
 //go:embed .gotemplate
 var template string
 
 func main() {
-	var table pestoStruct
+	var table classicalStruct
 
 	for i := 2; i < 6; i++ {
-		table.StackedPawn[i] = pesto.S(
+		table.StackedPawn[i] = classical.S(
 			eval.Eval(-15*(i-1)),
 			eval.Eval(-20*(i-1)),
 		)
@@ -47,12 +47,12 @@ func main() {
 			white := piece.New(p, piece.White)
 			black := piece.New(p, piece.Black)
 
-			table.PeSTO[white][s] = pesto.S(
+			table.PeSTO[white][s] = classical.S(
 				mgPieceValues[p]+mgPieceTable[p][s],
 				egPieceValues[p]+egPieceTable[p][s],
 			)
 
-			table.PeSTO[black][s] = pesto.S(
+			table.PeSTO[black][s] = classical.S(
 				mgPieceValues[p]+mgPieceTable[p][s^56],
 				egPieceValues[p]+egPieceTable[p][s^56],
 			)
