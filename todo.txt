@@ -1,0 +1,3 @@
+Current Benchmarks:
+2.2 Mnps
+150 ns/op

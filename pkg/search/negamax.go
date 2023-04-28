@@ -14,6 +14,9 @@
 package search
 
 import (
+	"fmt"
+	"os"
+
 	"laptudirm.com/x/mess/internal/util"
 	"laptudirm.com/x/mess/pkg/board/bitboard"
 	"laptudirm.com/x/mess/pkg/board/move"
@@ -32,6 +35,13 @@ import (
 // is enough to mark a position as worse compared to an already found one.
 // https://www.chessprogramming.org/Alpha-Beta
 func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.Variation) eval.Eval {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(search.board)
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}()
 	search.stats.Nodes++
 
 	// update highest reached depth

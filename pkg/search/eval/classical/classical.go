@@ -29,14 +29,19 @@ type EfficientlyUpdatable struct {
 	// the board to evaluate
 	Board *board.Board
 
+	// evaluation tracing
+	ShouldTrace bool
+	Trace       EvaluationTrace
+
 	// the game phase to lerp between middle and end game
-	phase eval.Eval
+	Phase eval.Eval
 
 	// occupancy bitboards
 	occupied      bitboard.Board
 	occupiedMinus [piece.ColorN][piece.TypeN]bitboard.Board
 
 	// king attackers information
+	kingSafety         [piece.ColorN]Score
 	kingAreas          [piece.ColorN]bitboard.Board // area near the king
 	kingAttacksCount   [piece.ColorN]int            // attacks in the king area
 	kingAttackersCount [piece.ColorN]int            // attackers to the king area
@@ -69,24 +74,32 @@ func (classical *EfficientlyUpdatable) ClearSquare(s square.Square, p piece.Piec
 // Accumulate accumulates the efficiently updated variables into the
 // evaluation of the position from the perspective of the given side.
 func (classical *EfficientlyUpdatable) Accumulate(stm piece.Color) eval.Eval {
-	xtm := stm.Other()
-
 	// initialize various tables
 	classical.initialize()
 
 	// piece evaluation terms
-	score := classical.evaluatePawns(stm) - classical.evaluatePawns(xtm)   // pawns and structure
-	score += classical.evaluatePieces(stm) - classical.evaluatePieces(xtm) // major and minor pieces
-	score += classical.evaluateKing(stm) - classical.evaluateKing(xtm)     // king and king-safety
+	score := classical.evaluatePawns(piece.White) - classical.evaluatePawns(piece.Black)   // pawns and structure
+	score += classical.evaluatePieces(piece.White) - classical.evaluatePieces(piece.Black) // major and minor pieces
+	score += classical.evaluateKing(piece.White) - classical.evaluateKing(piece.Black)     // king and king-safety
 
 	// other evaluation terms
-	score += classical.evaluateThreats(stm) - classical.evaluateThreats(xtm) // threats
+	score += classical.evaluateThreats(piece.White) - classical.evaluateThreats(piece.Black) // threats
+
+	if classical.ShouldTrace {
+		classical.Trace.Evaluation = score
+	}
+
+	score += classical.kingSafety[piece.White] - classical.kingSafety[piece.Black]
 
 	// linearly interpolate between the end game and middle game
 	// evaluations using phase/startposPhase as the contribution
 	// of the middle game to the final evaluation
-	phase := util.Min(classical.phase, startposPhase)
-	return util.Lerp(score.EG(), score.MG(), phase, startposPhase)
+	phase := util.Min(classical.Phase, MaxPhase)
+	eval := util.Lerp(score.EG(), score.MG(), phase, MaxPhase)
+	if stm == piece.Black {
+		eval = -eval
+	}
+	return eval
 }
 
 // evaluatePawns returns the static evaluation of our pawns.
@@ -103,7 +116,12 @@ func (classical *EfficientlyUpdatable) evaluatePawns(us piece.Color) Score {
 
 	// penalty for having stacked pawns
 	for file := square.FileA; file <= square.FileH; file++ {
-		score += Terms.StackedPawns[(tempPawns & bitboard.Files[file]).Count()]
+		pawnN := (tempPawns & bitboard.Files[file]).Count()
+		score += Terms.StackedPawns[pawnN]
+
+		if classical.ShouldTrace {
+			classical.Trace.StackedPawns[pawnN][us]++
+		}
 	}
 
 	// evaluate every pawn
@@ -113,7 +131,10 @@ func (classical *EfficientlyUpdatable) evaluatePawns(us piece.Color) Score {
 
 		// add psqt evaluation
 		score += Terms.PieceSquare[pawnPiece][pawn]
-		classical.phase += phaseInc[piece.Pawn]
+
+		if classical.ShouldTrace {
+			classical.Trace.PieceSquare[pawnPiece][pawn][us]++
+		}
 	}
 
 	return score
@@ -139,7 +160,13 @@ func (classical *EfficientlyUpdatable) evaluatePieces(us piece.Color) Score {
 
 		// add psqt evaluation
 		score += Terms.PieceSquare[pc][sq]
-		classical.phase += phaseInc[pt]
+
+		if classical.ShouldTrace {
+			classical.Trace.PieceSquare[pc][sq][us]++
+		}
+
+		// update game phase
+		classical.Phase += phaseInc[pt]
 
 		// specialized evaluation terms for various pieces
 		switch pt {
@@ -151,9 +178,17 @@ func (classical *EfficientlyUpdatable) evaluatePieces(us piece.Color) Score {
 			// no pawns on rook file: open file
 			case classical.Board.PieceBBs[piece.Pawn] & file:
 				score += Terms.RookFullOpenFile
+
+				if classical.ShouldTrace {
+					classical.Trace.RookFullOpenFile[us]++
+				}
 			// no friendly pawns on rook file: semi-open file
 			case classical.Board.PawnsBB(us) & file:
 				score += Terms.RookSemiOpenFile
+
+				if classical.ShouldTrace {
+					classical.Trace.RookSemiOpenFile[us]++
+				}
 			}
 		}
 
@@ -168,6 +203,10 @@ func (classical *EfficientlyUpdatable) evaluatePieces(us piece.Color) Score {
 		// add mobility evaluation
 		count := (attacks & classical.mobilityAreas[us]).Count()
 		score += Terms.Mobility[pt][count]
+
+		if classical.ShouldTrace {
+			classical.Trace.Mobility[pt][count][us]++
+		}
 
 		// update data for king attackers
 		kingAttacks := attacks & classical.kingAreas[them] & ^classical.pawnAttacksBy2[them]
@@ -194,14 +233,25 @@ func (classical *EfficientlyUpdatable) evaluateKing(us piece.Color) Score {
 	// psqt evaluation of the king
 	score += Terms.PieceSquare[kingPiece][king]
 
+	if classical.ShouldTrace {
+		classical.Trace.PieceSquare[kingPiece][king][us]++
+	}
+
 	// defenders of king including pawns and minor pieces
 	defenders := classical.Board.PawnsBB(us) |
 		classical.Board.KnightsBB(us) |
 		classical.Board.BishopsBB(us)
+	defenders &= classical.kingAreas[us]
 
 	// king defenders evaluation
-	defenders &= classical.kingAreas[us]
-	score += Terms.KingDefenders[defenders.Count()]
+	defenderN := defenders.Count()
+	score += Terms.KingDefenders[defenderN]
+
+	if classical.ShouldTrace {
+		classical.Trace.KingDefenders[defenderN][us]++
+	}
+
+	classical.kingSafety[us] = 0
 
 	// do safety evaluation if we have two attackers, or one
 	// attacker with the potential for an enemy queen to join
@@ -239,7 +289,8 @@ func (classical *EfficientlyUpdatable) evaluateKing(us piece.Color) Score {
 		safety += Terms.SafetyAttackValue * Score(scaledAttackCount)
 
 		// safety penalty for weak squares in the king area
-		safety += Terms.SafetyWeakSquares * Score((weak & classical.kingAreas[us]).Count())
+		weakN := (weak & classical.kingAreas[us]).Count()
+		safety += Terms.SafetyWeakSquares * Score(weakN)
 
 		// safety penalty for safe checks from enemies
 		safety += Terms.SafetySafeKnightCheck * Score(knightChecks.Count())
@@ -250,18 +301,31 @@ func (classical *EfficientlyUpdatable) evaluateKing(us piece.Color) Score {
 		// safety bonus for no enemy queens
 		if enemyQueens == bitboard.Empty {
 			safety += Terms.SafetyNoEnemyQueens
+
+			if classical.ShouldTrace {
+				classical.Trace.SafetyNoEnemyQueens[us] = 1
+			}
 		}
 
 		// constant safety adjustment
 		safety += Terms.SafetyAdjustment
 
-		mg, eg := safety.MG(), safety.EG()
+		if classical.ShouldTrace {
+			classical.Trace.SafetyAttackValue[us] = scaledAttackCount
 
-		// convert safety to score with non-linear function
-		score += S(
-			-mg*util.Min(0, mg)/720,
-			util.Min(0, eg)/20,
-		)
+			classical.Trace.SafetyWeakSquares[us] = weakN
+
+			classical.Trace.SafetySafeKnightCheck[us] = knightChecks.Count()
+			classical.Trace.SafetySafeBishopCheck[us] = bishopChecks.Count()
+			classical.Trace.SafetySafeRookCheck[us] = rookChecks.Count()
+			classical.Trace.SafetySafeQueenCheck[us] = queenChecks.Count()
+
+			classical.Trace.SafetyAdjustment[us] = 1
+
+			classical.Trace.Safety[us] = safety
+		}
+
+		classical.kingSafety[us] = NonLinearSafety(safety)
 	}
 
 	// calculate the attacks of the king
@@ -356,12 +420,37 @@ func (classical *EfficientlyUpdatable) evaluateThreats(us piece.Color) Score {
 	pushThreat := attacks.Pawns(safePush, us) & (enemies &^ classical.attackedBy[us][piece.Pawn])
 	score += Score(pushThreat.Count()) * Terms.ThreatByPawnPush
 
+	if classical.ShouldTrace {
+		classical.Trace.ThreatWeakPawn[us] += poorlySupportedPawns.Count()
+		classical.Trace.ThreatMinorAttackedByPawn[us] += minorsAttackedByPawns.Count()
+		classical.Trace.ThreatMinorAttackedByMinor[us] += minorsAttackedByMinors.Count()
+		classical.Trace.ThreatMinorAttackedByMajor[us] += minorsAttackedByMajors.Count()
+		classical.Trace.ThreatRookAttackedByLesser[us] += rooksAttackedByLesser.Count()
+		classical.Trace.ThreatMinorAttackedByKing[us] += weakMinorsAttackedByKing.Count()
+		classical.Trace.ThreatRookAttackedByKing[us] += weakRooksAttackedByKing.Count()
+		classical.Trace.ThreatQueenAttackedByOne[us] += attackedQueens.Count()
+		classical.Trace.ThreatOverloadedPieces[us] += overloaded.Count()
+		classical.Trace.ThreatByPawnPush[us] += pushThreat.Count()
+	}
+
 	return score
 }
 
 // initialize empties and initializes various variables related to evaluation.
 func (classical *EfficientlyUpdatable) initialize() {
-	classical.phase = 0
+	// clear trace
+	if classical.ShouldTrace {
+		classical.Trace = EvaluationTrace{}
+		// allocate slices for the mobility factors
+		classical.Trace.EvaluationTerms.Mobility = [piece.TypeN][][piece.ColorN]int{
+			piece.Knight: make([][2]int, 9),
+			piece.Bishop: make([][2]int, 14),
+			piece.Rook:   make([][2]int, 15),
+			piece.Queen:  make([][2]int, 28),
+		}
+	}
+
+	classical.Phase = 0
 
 	black := classical.Board.ColorBBs[piece.Black]
 	white := classical.Board.ColorBBs[piece.White]
@@ -421,4 +510,14 @@ func (classical *EfficientlyUpdatable) initialize() {
 	classical.attackedBy[piece.White][piece.Bishop] = bitboard.Empty
 	classical.attackedBy[piece.White][piece.Rook] = bitboard.Empty
 	classical.attackedBy[piece.White][piece.Queen] = bitboard.Empty
+}
+
+func NonLinearSafety(safety Score) Score {
+	mg, eg := safety.MG(), safety.EG()
+
+	// convert safety to score with non-linear function
+	return S(
+		-mg*util.Min(0, mg)/720,
+		util.Min(0, eg)/20,
+	)
 }

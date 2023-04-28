@@ -36,7 +36,7 @@ var phaseInc = [piece.TypeN]eval.Eval{
 	piece.Queen:  queenPhaseInc,
 }
 
-// startposPhase is the phase of the starting position.
-const startposPhase = 16*pawnPhaseInc +
+// MaxPhase is the phase of the starting position.
+const MaxPhase = 16*pawnPhaseInc +
 	4*knightPhaseInc + 4*bishopPhaseInc +
 	4*rookPhaseInc + 2*queenPhaseInc
