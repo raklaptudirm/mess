@@ -68,6 +68,10 @@ func (classical *EfficientlyUpdatable) FillSquare(s square.Square, p piece.Piece
 func (classical *EfficientlyUpdatable) ClearSquare(s square.Square, p piece.Piece) {
 }
 
+// Tempo is the bonus given to the side to move for
+// having the ability to make a move on the board.
+var Tempo eval.Eval = 20
+
 // Accumulate accumulates the efficiently updated variables into the
 // evaluation of the position from the perspective of the given side.
 func (classical *EfficientlyUpdatable) Accumulate(stm piece.Color) eval.Eval {
@@ -88,7 +92,7 @@ func (classical *EfficientlyUpdatable) Accumulate(stm piece.Color) eval.Eval {
 	// evaluations using phase/startposPhase as the contribution
 	// of the middle game to the final evaluation
 	phase := util.Min(classical.phase, startposPhase)
-	return util.Lerp(score.EG(), score.MG(), phase, startposPhase)
+	return Tempo + util.Lerp(score.EG(), score.MG(), phase, startposPhase)
 }
 
 // evaluatePawns returns the static evaluation of our pawns.
