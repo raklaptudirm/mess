@@ -24,8 +24,16 @@ import (
 )
 
 type bitboardStruct struct {
-	Between   [square.N][square.N]bitboard.Board
+	Between [square.N][square.N]bitboard.Board
+
 	KingAreas [piece.ColorN][square.N]bitboard.Board
+
+	AdjacentFiles [square.FileN]bitboard.Board
+
+	PassedPawnMask [piece.ColorN][square.N]bitboard.Board
+
+	ForwardFileMask  [piece.ColorN][square.N]bitboard.Board
+	ForwardRanksMask [piece.ColorN][square.RankN]bitboard.Board
 }
 
 //go:embed .gotemplate
@@ -73,6 +81,35 @@ func main() {
 			b.KingAreas[piece.White][s] |= b.KingAreas[piece.White][s].West()
 			b.KingAreas[piece.Black][s] |= b.KingAreas[piece.Black][s].West()
 		}
+	}
+
+	for file := square.File(0); file < square.FileN; file++ {
+		bb := bitboard.Files[file]
+		b.AdjacentFiles[file] = bb.East() | bb.West()
+	}
+
+	for rank := square.Rank(0); rank < square.RankN; rank++ {
+		for rank2 := rank; rank2 >= 0; rank2-- {
+			b.ForwardRanksMask[piece.White][rank] |= bitboard.Ranks[rank2]
+		}
+
+		for rank2 := rank; rank2 < square.RankN; rank2++ {
+			b.ForwardRanksMask[piece.Black][rank] |= bitboard.Ranks[rank2]
+		}
+	}
+
+	for sq := square.Square(0); sq < square.N; sq++ {
+		b.PassedPawnMask[piece.White][sq] = b.ForwardRanksMask[piece.White][sq.Rank()] &
+			(b.AdjacentFiles[sq.File()] | bitboard.Files[sq.File()])
+		b.PassedPawnMask[piece.Black][sq] = b.ForwardRanksMask[piece.Black][sq.Rank()] &
+			(b.AdjacentFiles[sq.File()] | bitboard.Files[sq.File()])
+	}
+
+	for sq := square.Square(0); sq < square.N; sq++ {
+		b.ForwardFileMask[piece.White][sq] = bitboard.Files[sq.File()] &
+			b.ForwardRanksMask[piece.White][sq.Rank()]
+		b.ForwardFileMask[piece.Black][sq] = bitboard.Files[sq.File()] &
+			b.ForwardRanksMask[piece.Black][sq.Rank()]
 	}
 
 	generator.Generate("bitboards", template, b)
