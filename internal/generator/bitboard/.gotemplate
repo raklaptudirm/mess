@@ -34,3 +34,17 @@ var Between = [64][64]Board{ {{- range .Between }}
 var KingAreas = [2][64]Board{ {{- range .KingAreas }}
 	{ {{ range . }}{{ printf "%0#16v" . }}, {{ end }} },{{ end }}
 }
+
+var AdjacentFiles = [8]Board{ {{ range .AdjacentFiles }}{{ printf "%0#16v" . }}, {{ end }} }
+
+var PassedPawnMask = [2][64]Board{ {{- range .PassedPawnMask }}
+	{ {{ range . }}{{ printf "%0#16v" . }}, {{ end }} },{{ end }}
+}
+
+var ForwardFileMask = [2][64]Board{ {{- range .ForwardFileMask }}
+	{ {{ range . }}{{ printf "%0#16v" . }}, {{ end }} },{{ end }}
+}
+
+var ForwardRanksMask  = [2][8]Board{ {{- range .ForwardRanksMask }}
+	{ {{ range . }}{{ printf "%0#16v" . }}, {{ end }} },{{ end }}
+}

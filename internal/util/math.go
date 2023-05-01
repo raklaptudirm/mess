@@ -61,3 +61,13 @@ func Clamp[T number](n, min, max T) T {
 func Lerp[T number](start, stop, numerator, denominator T) T {
 	return (stop*numerator + start*(denominator-numerator)) / denominator
 }
+
+// Btoi converts the given boolean value to a number. The number is
+// equivalent to 1 if the value is true and 0 if it is false.
+func Btoi[T number](condition bool) T {
+	if condition {
+		return 1
+	}
+
+	return 0
+}

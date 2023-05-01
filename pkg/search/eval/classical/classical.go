@@ -95,10 +95,25 @@ func (classical *EfficientlyUpdatable) Accumulate(stm piece.Color) eval.Eval {
 	return Tempo + util.Lerp(score.EG(), score.MG(), phase, startposPhase)
 }
 
+// Penalties for having stacked pawns
+var PawnStacked = [2][square.FileN]Score{
+	{ // can't be traded off
+		S(10, -29), S(-2, -26), S(0, -23), S(0, -20),
+		S(3, -20), S(5, -26), S(4, -30), S(8, -31),
+	},
+	{ // can be traded off
+		S(3, -14), S(0, -15), S(-6, -9), S(-7, -10),
+		S(-4, -9), S(-2, -10), S(0, -13), S(0, -17),
+	},
+}
+
 // evaluatePawns returns the static evaluation of our pawns.
 func (classical *EfficientlyUpdatable) evaluatePawns(us piece.Color) Score {
-	pawnPiece := piece.New(piece.Pawn, us)   // piece representing one of our pawns
-	tempPawns := classical.Board.PawnsBB(us) // bitboard to temporarily store our pawns
+	myPawns := classical.Board.PawnsBB(us)
+	theirPawns := classical.Board.PawnsBB(us.Other())
+
+	pawnPiece := piece.New(piece.Pawn, us) // piece representing one of our pawns
+	tempPawns := myPawns                   // bitboard to temporarily store our pawns
 
 	score := Score(0)
 
@@ -106,11 +121,6 @@ func (classical *EfficientlyUpdatable) evaluatePawns(us piece.Color) Score {
 	classical.attackedBy2[us] |= classical.pawnAttacks[us] & classical.attacked[us]
 	classical.attacked[us] |= classical.pawnAttacks[us]
 	classical.attackedBy[us][piece.Pawn] = classical.pawnAttacks[us]
-
-	// penalty for having stacked pawns
-	for file := square.FileA; file <= square.FileH; file++ {
-		score += stackedPawnPenalty[(tempPawns & bitboard.Files[file]).Count()]
-	}
 
 	// evaluate every pawn
 	for tempPawns != bitboard.Empty {
@@ -120,6 +130,19 @@ func (classical *EfficientlyUpdatable) evaluatePawns(us piece.Color) Score {
 		// add psqt evaluation
 		score += table[pawnPiece][pawn]
 		classical.phase += phaseInc[piece.Pawn]
+
+		neighbors := bitboard.AdjacentFiles[pawn.File()] & myPawns
+		stoppers := bitboard.PassedPawnMask[us][pawn] & theirPawns
+		threats := attacks.Pawn[us][pawn] & theirPawns
+
+		// Stacked Pawns: Apply a penalty if the pawns are stacked. Different
+		// penalties are used when the pawn appears to be able to unstack by
+		// capturing or freely advancing on it's file and being traded away.
+		if (bitboard.Files[pawn.File()] & myPawns).Count() > 1 {
+			canUnstack := (stoppers != bitboard.Empty && (threats|neighbors) != bitboard.Empty) ||
+				stoppers&^bitboard.ForwardFileMask[us][pawn] != bitboard.Empty
+			score += PawnStacked[util.Btoi[int](canUnstack)][pawn.File()]
+		}
 	}
 
 	return score
