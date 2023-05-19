@@ -27,7 +27,6 @@ import (
 	"laptudirm.com/x/mess/pkg/board/square"
 	"laptudirm.com/x/mess/pkg/search/eval"
 	"laptudirm.com/x/mess/pkg/search/eval/classical"
-	"laptudirm.com/x/mess/pkg/search/time"
 	"laptudirm.com/x/mess/pkg/search/tt"
 )
 
@@ -76,7 +75,7 @@ type Context struct {
 	reporter Reporter
 
 	// search limits
-	time   time.Manager
+	time   TimeManager
 	limits Limits
 
 	// move ordering stuff

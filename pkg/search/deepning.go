@@ -52,6 +52,10 @@ func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
 
 		// print some info for the GUI
 		search.reporter(search.GenerateReport())
+
+		if search.time != nil && search.time.OptimisticExpired() {
+			break
+		}
 	}
 
 	if search.stats.Depth < search.limits.Depth && search.limits.Infinite {
