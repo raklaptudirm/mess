@@ -15,7 +15,6 @@ package search
 
 import (
 	"laptudirm.com/x/mess/pkg/board/piece"
-	"laptudirm.com/x/mess/pkg/search/time"
 )
 
 // Limits contains the various limits which decide how long a search can
@@ -47,14 +46,15 @@ func (search *Context) UpdateLimits(limits Limits) {
 		return
 
 	case limits.MoveTime != 0:
-		search.time = &time.MoveManager{Duration: limits.MoveTime}
+		search.time = &TimeManagerMovetime{Duration: limits.MoveTime}
 
 	default:
-		search.time = &time.NormalManager{
+		search.time = &TimeManagerNormal{
 			Time:      limits.Time,
 			Increment: limits.Increment,
 			MovesToGo: limits.MovesToGo,
 			Us:        search.sideToMove,
+			context:   search,
 		}
 	}
 
@@ -82,7 +82,7 @@ func (search *Context) shouldStop() bool {
 
 		return false
 
-	case search.stats.Nodes > search.limits.Nodes, search.time.Expired():
+	case search.stats.Nodes > search.limits.Nodes, search.time.PessimisticExpired():
 		// node limit or time limit crossed
 		search.Stop()
 		return true
