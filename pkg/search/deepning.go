@@ -53,7 +53,7 @@ func (search *Context) iterativeDeepening() (move.Variation, eval.Eval) {
 		// print some info for the GUI
 		search.reporter(search.GenerateReport())
 
-		if search.time.OptimisticExpired() {
+		if search.time != nil && search.time.OptimisticExpired() {
 			break
 		}
 	}
