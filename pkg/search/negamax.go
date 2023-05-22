@@ -168,13 +168,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 			search.board.UnmakeMove()
 
 			if score >= beta {
-				if score >= eval.WinInMaxPly {
-					// don't return mate evaluations
-					// from the null move search
-					return beta
-				}
-
-				return score
+				return beta
 			}
 		}
 	}
