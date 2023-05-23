@@ -127,13 +127,8 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 	// Internal Iterative Reduction (IIR): If a hash move is not found by
 	// probing the transposition table, do a shallower search, as our move
 	// ordering won't be as effective.
-	if bestMove == move.Null {
-		switch {
-		case depth >= 4:
-			depth -= 1
-		case depth >= 8:
-			depth -= 2
-		}
+	if depth >= 4 && bestMove == move.Null {
+		depth--
 	}
 
 	if !isPVNode && !isCheck {
