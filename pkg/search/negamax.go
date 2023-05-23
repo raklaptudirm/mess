@@ -191,6 +191,14 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		move := list.PickMove(i)
 
 		if !isPVNode && i > 0 {
+			// Late Move Pruning (LMP): If the depth is low enough, we can ignore most
+			// of the moves which are ordered towards the end of the move list as they
+			// probably won't raise alpha anyways. The depth constraint is to make sure
+			// that we don't miss anything at higher depths.
+			if depth <= 3 && i >= depth*10 {
+				break
+			}
+
 			// Static Exchange Evaluation Pruning (SEE Pruning): If the static exchange
 			// evaluation score of a move is less than a given threshold, we can safely
 			// prune that move since we will take too large a material hit to come back
