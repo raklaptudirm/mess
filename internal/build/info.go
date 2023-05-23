@@ -17,4 +17,4 @@
 package build
 
 // Current version of Mess. Usually overwritten by the build script.
-const Version = "v0.2.1"
+const Version = "v0.2.2"
