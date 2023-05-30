@@ -169,6 +169,39 @@ func (b *Board) IsThreefoldRepetition() bool {
 	return false
 }
 
+func (b *Board) IsInsufficientMaterial() bool {
+	// major pieces can mate a king just with the help of their own king,
+	// and pawns can promote and turn into any of the two major pieces
+	if b.PieceBBs[piece.Queen]|b.PieceBBs[piece.Rook]|b.PieceBBs[piece.Pawn] == bitboard.Empty {
+		var pieceN [piece.ColorN]int
+		pieceN[piece.White] = b.ColorBBs[piece.White].Count()
+		pieceN[piece.Black] = b.ColorBBs[piece.Black].Count()
+
+		loneWhiteKing := pieceN[piece.White] == 1
+		loneBlackKing := pieceN[piece.Black] == 1
+
+		switch {
+		// only kings left on board
+		case loneWhiteKing && loneBlackKing:
+			return true
+
+		// only one side has pieces and it's one minor piece
+		case loneWhiteKing || loneBlackKing:
+			strongerSide := piece.White
+			if loneWhiteKing {
+				strongerSide = piece.Black
+			}
+
+			return pieceN[strongerSide] <= 2
+
+		// TODO: implement the more complicated insufficient material rules
+		default: // both sides have some minor pieces
+		}
+	}
+
+	return false
+}
+
 // ClearSquare removes the piece occupying the given square and updates the
 // dependent position information accordingly.
 func (b *Board) ClearSquare(s square.Square) {
