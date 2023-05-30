@@ -58,6 +58,7 @@ func (search *Context) negamax(plys, depth int, alpha, beta eval.Eval, pv *move.
 		return 0
 
 	case search.board.DrawClock >= 100,
+		search.board.IsInsufficientMaterial(),
 		plys == 0 && search.board.IsThreefoldRepetition(),
 		plys != 0 && search.board.IsRepetition():
 		// position is draw due to 50-move rule or threefold-repetition

@@ -31,6 +31,7 @@ func (search *Context) quiescence(plys int, alpha, beta eval.Eval) eval.Eval {
 		return 0 // return value doesn't matter
 
 	case search.board.DrawClock >= 100,
+		search.board.IsInsufficientMaterial(),
 		search.board.IsRepetition():
 		return search.draw()
 
