@@ -26,26 +26,23 @@ import (
 // the current position.
 func (b *Board) GenerateMoves(tacticalOnly bool) []move.Move {
 	// initialize movegen state
-	state := moveGenState{Board: b}
-	state.Init(tacticalOnly)
+	b.moveGenState.Init(tacticalOnly)
 
 	// append moves to movelist
-	if state.CheckN < 2 {
+	if b.moveGenState.CheckN < 2 {
 		// moves of other pieces are only possible
 		// if the king is not in double check
-		state.appendPawnMoves()
-		state.appendKnightMoves()
-		state.appendBishopMoves()
-		state.appendRookMoves()
-		state.appendQueenMoves()
+		b.moveGenState.appendPawnMoves()
+		b.moveGenState.appendKnightMoves()
+		b.moveGenState.appendBishopMoves()
+		b.moveGenState.appendRookMoves()
+		b.moveGenState.appendQueenMoves()
 	}
 
 	// king moves are always possible
-	state.appendKingMoves()
+	b.moveGenState.appendKingMoves()
 
-	b.UtilityInfo = &state
-
-	return state.MoveList
+	return b.moveGenState.MoveList
 }
 
 func (s *moveGenState) appendKingMoves() {
