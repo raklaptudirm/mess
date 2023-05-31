@@ -36,6 +36,7 @@ func New(config ...boardUpdater) *Board {
 	var board Board
 
 	board.efficientlyUpdatable = &dummyEU{}
+	board.moveGenState = moveGenState{Board: &board}
 
 	for _, updater := range config {
 		updater(&board)
@@ -90,14 +91,7 @@ type Board struct {
 
 	efficientlyUpdatable EfficientlyUpdatable
 
-	// UtilityInfo stores a pointer to the information
-	// generated during move generates, which includes many
-	// expensive but useful board properties.
-	//
-	// A call to GenerateMoves is required to ensure that this
-	// pointer carries up to date information, and it is the
-	// responsibility of the user to ensure that.
-	UtilityInfo *moveGenState
+	moveGenState moveGenState
 
 	// move counters
 	Plys      int
