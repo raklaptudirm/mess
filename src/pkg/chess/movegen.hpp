@@ -30,8 +30,8 @@ namespace Chess {
     namespace Moves {
         template<Color STM>
         class Generator {
-            Board* board;
-            Castling::Info* castling;
+            Board& board;
+            Castling::Info& castling;
 
             BitBoard friends;
             BitBoard enemies;
@@ -76,13 +76,13 @@ namespace Chess {
             }
 
             inline void generateCheckMask() {
-                switch (board->CheckNum()) {
+                switch (board.CheckNum()) {
                     case 0: checkmask = BitBoards::Full;  break;
                     case 2: checkmask = BitBoards::Empty; break;
                     default:
-                        const auto checkerBB = board->Checkers();
+                        const auto checkerBB = board.Checkers();
                         const auto checkerSq = checkerBB.LSB();
-                        const auto checkerPc = (*board)[checkerSq].Piece();
+                        const auto checkerPc = board[checkerSq].Piece();
 
                         if (checkerPc == Piece::Pawn || checkerPc == Piece::Knight)
                              checkmask = checkerBB;
@@ -91,9 +91,9 @@ namespace Chess {
             }
 
             inline void generatePinMasks() {
-                const BitBoard b = enemies & (*board)[Piece::Bishop];
-                const BitBoard r = enemies & (*board)[Piece::Rook  ];
-                const BitBoard q = enemies & (*board)[Piece::Queen ];
+                const BitBoard b = enemies & board[Piece::Bishop];
+                const BitBoard r = enemies & board[Piece::Rook  ];
+                const BitBoard q = enemies & board[Piece::Queen ];
 
                 // Fetch the possibly pinning Bishops, Rooks, and Queens.
                 const BitBoard pinningL = (r | q) & MoveTable::Rook  (king, enemies);
@@ -132,7 +132,7 @@ namespace Chess {
                 constexpr BitBoard DPRank = BitBoards::Rank(STM == Color::White ? Rank::Third  : Rank::Sixth);
                 constexpr BitBoard PRRank = BitBoards::Rank(STM == Color::White ? Rank::Eighth : Rank::First);
 
-                const BitBoard pawns = (*board)[Piece::Pawn] & friends;
+                const BitBoard pawns = board[Piece::Pawn] & friends;
 
                 /****************************
                  * Pawn Captures Generation *
@@ -157,7 +157,7 @@ namespace Chess {
                     serializePromotions<UE, QUIET, NOISY>(attacksE & PRRank & enemies);
                     serializePromotions<UW, QUIET, NOISY>(attacksW & PRRank & enemies);
 
-                    const Square epTarget = board->EPTarget();
+                    const Square epTarget = board.EPTarget();
                     if (epTarget != Square::None) {
                         const BitBoard target = BitBoard(epTarget);
                         const BitBoard passanters = MoveTable::Pawn<!STM>(epTarget) & attackers;
@@ -171,7 +171,7 @@ namespace Chess {
                                 const auto captured = epTarget >> -UP;
                                 if (king.Rank() == captured.Rank()) {
                                     const BitBoard pinners =
-                                        ((*board)[Piece::Rook] + (*board)[Piece::Queen]) & enemies;
+                                        (board[Piece::Rook] + board[Piece::Queen]) & enemies;
 
                                     const BitBoard vanishers = passanters + BitBoard(captured);
 
@@ -223,7 +223,7 @@ namespace Chess {
             // knightMoves generates legal moves for knights.
             inline void knightMoves() {
                 // Knights which are pinned either laterally or diagonally can't move.
-                const BitBoard knights = ((*board)[Piece::Knight] & friends) - (pinmaskL + pinmaskD);
+                const BitBoard knights = (board[Piece::Knight] & friends) - (pinmaskL + pinmaskD);
                 for (auto knight : knights) serialize(knight, MoveTable::Knight(knight));
             }
 
@@ -231,7 +231,7 @@ namespace Chess {
             inline void bishopMoves() {
                 // Consider both bishops and queens. Pieces which are pinned
                 // laterally can't make any diagonal moves, so remove those.
-                const BitBoard bishops = (((*board)[Piece::Bishop] + (*board)[Piece::Queen]) & friends) - pinmaskL;
+                const BitBoard bishops = ((board[Piece::Bishop] + board[Piece::Queen]) & friends) - pinmaskL;
 
                 // Pieces pinned diagonally can only make moves within
                 // the pinned diagonal, so remove all other targets.
@@ -247,7 +247,7 @@ namespace Chess {
             inline void rookMoves() {
                 // Consider both rooks and queens. Pieces which are pinned
                 // diagonally can't make any lateral moves, so remove them.
-                const BitBoard rooks = (((*board)[Piece::Rook] + (*board)[Piece::Queen]) & friends) - pinmaskD;
+                const BitBoard rooks = ((board[Piece::Rook] + board[Piece::Queen]) & friends) - pinmaskD;
 
                 // Pieces pinned laterally can only make moves within
                 // the pinned file/rank, so remove all other targets.
@@ -265,48 +265,48 @@ namespace Chess {
 
                 for (auto target : targets) {
                     // Check if king move is legal.
-                    if (!(*board).Attacked<!STM>(target, blockers))
+                    if (!board.Attacked<!STM>(target, blockers))
                         moves += Move(king, target, Move::Flag::Normal);
                 }
             }
 
             inline void castlingMoves() {
-                const auto pathH = castling->PathH<STM>();
+                const auto pathH = castling.PathH<STM>();
                 if (
-                    castling->Rights.Has(Castling::H<STM>()) &&
+                    castling.Rights.Has(Castling::H<STM>()) &&
                     occupied.IsDisjoint(pathH) &&
-                    !board->Attacked<!STM>(pathH, blockers)
+                    !board.Attacked<!STM>(pathH, blockers)
                 ) {
-                    moves += Move(king, castling->RookH<STM>(), Move::Flag::CastleHSide);
+                    moves += Move(king, castling.RookH<STM>(), Move::Flag::CastleHSide);
                 }
 
-                const auto pathA = castling->PathA<STM>();
+                const auto pathA = castling.PathA<STM>();
                 if (
-                    castling->Rights.Has(Castling::A<STM>()) &&
+                    castling.Rights.Has(Castling::A<STM>()) &&
                     occupied.IsDisjoint(pathA + (pathA >> Directions::West)) &&
-                    !board->Attacked<!STM>(pathA, blockers)
+                    !board.Attacked<!STM>(pathA, blockers)
                 ) {
-                    moves += Move(king, castling->RookA<STM>(), Move::Flag::CastleASide);
+                    moves += Move(king, castling.RookA<STM>(), Move::Flag::CastleASide);
                 }
             }
 
         public:
 
-            Generator(Board* b, Castling::Info* c) :
+            Generator(Board& b, Castling::Info& c) :
                 board(b), castling(c) {
                 UpdateContext(b, c);
             }
 
-            void UpdateContext(Board* b, Castling::Info* c) {
+            void UpdateContext(Board& b, Castling::Info& c) {
                 board = b;
                 castling = c;
 
                 // Initialize various BitBoards.
-                friends  = (*board)[ STM];
-                enemies  = (*board)[!STM];
+                friends  = board[ STM];
+                enemies  = board[!STM];
                 occupied = friends + enemies;
 
-                const auto kingBB = (*board)[Piece::King] & friends;
+                const auto kingBB = board[Piece::King] & friends;
 
                 blockers = occupied ^ kingBB;
 
@@ -320,7 +320,7 @@ namespace Chess {
             constexpr inline MoveList GenerateMoves() {
                 moves.Clear();
 
-                switch (board->CheckNum()) {
+                switch (board.CheckNum()) {
                     case 0:
                         castlingMoves();
                     case 1:
@@ -337,16 +337,16 @@ namespace Chess {
         };
 
         template<bool QUIET, bool NOISY>
-        MoveList Generate(Board *b) {
-            if (b->SideToMove() == Color::White) {
-                static auto generator = Generator<Color::White>(b, b->Castling());
+        MoveList Generate(Board& b) {
+            if (b.SideToMove() == Color::White) {
+                static auto generator = Generator<Color::White>(b, b.Castling());
 
-                generator.UpdateContext(b, b->Castling());
+                generator.UpdateContext(b, b.Castling());
                 return generator.GenerateMoves<QUIET, NOISY>();
             } else {
-                static auto generator = Generator<Color::Black>(b, b->Castling());
+                static auto generator = Generator<Color::Black>(b, b.Castling());
 
-                generator.UpdateContext(b, b->Castling());
+                generator.UpdateContext(b, b.Castling());
                 return generator.GenerateMoves<QUIET, NOISY>();
             }
         }

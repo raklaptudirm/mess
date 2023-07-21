@@ -110,7 +110,7 @@ namespace Chess {
             [[nodiscard]] constexpr inline bool     FisherRandom() const { return frc;        } // Is a Fisher Random Position.
             [[nodiscard]] constexpr inline BitBoard Checkers()     const { return checkers;   }
             [[nodiscard]] constexpr inline uint8    CheckNum()     const { return checkNum;   }
-            [[nodiscard]] constexpr inline Castling::Info* Castling() { return &castling; }
+            [[nodiscard]] constexpr inline Castling::Info& Castling() { return castling; }
 
 
             // Indexing with a Piece return's that Piece's BitBoard.
