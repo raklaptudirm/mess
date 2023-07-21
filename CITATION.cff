@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: Mess Chess Engine
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - family-names: Laptudirm
+    given-names: Rak
+    email: rak@laptudirm.com
+repository-code: 'https://github.com/raklaptudirm/mess'
+url: 'https://laptudirm.com/x/mess'
+abstract: An Original and Strong Chess Engine.
+keywords:
+  - chess
+  - artificial intelligence (AI)
+  - alpha-beta search
+license: Apache-2.0
