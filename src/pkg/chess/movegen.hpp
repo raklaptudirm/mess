@@ -30,8 +30,7 @@ namespace Chess {
     namespace Moves {
         template<Color STM>
         class Generator {
-            Board& board;
-            Castling::Info& castling;
+            const Board& board;
 
             BitBoard friends;
             BitBoard enemies;
@@ -271,36 +270,29 @@ namespace Chess {
             }
 
             inline void castlingMoves() {
-                const auto pathH = castling.PathH<STM>();
+                const auto pathH = board.CastlingInfo.PathH<STM>();
                 if (
-                    castling.Rights.Has(Castling::H<STM>()) &&
+                    board.CastlingInfo.Rights.Has(Castling::H<STM>()) &&
                     occupied.IsDisjoint(pathH) &&
                     !board.Attacked<!STM>(pathH, blockers)
                 ) {
-                    moves += Move(king, castling.RookH<STM>(), Move::Flag::CastleHSide);
+                    moves += Move(king, board.CastlingInfo.RookH<STM>(), Move::Flag::CastleHSide);
                 }
 
-                const auto pathA = castling.PathA<STM>();
+                const auto pathA = board.CastlingInfo.PathA<STM>();
                 if (
-                    castling.Rights.Has(Castling::A<STM>()) &&
+                    board.CastlingInfo.Rights.Has(Castling::A<STM>()) &&
                     occupied.IsDisjoint(pathA + (pathA >> Directions::West)) &&
                     !board.Attacked<!STM>(pathA, blockers)
                 ) {
-                    moves += Move(king, castling.RookA<STM>(), Move::Flag::CastleASide);
+                    moves += Move(king, board.CastlingInfo.RookA<STM>(), Move::Flag::CastleASide);
                 }
             }
 
         public:
 
-            Generator(Board& b, Castling::Info& c) :
-                board(b), castling(c) {
-                UpdateContext(b, c);
-            }
-
-            void UpdateContext(Board& b, Castling::Info& c) {
-                board = b;
-                castling = c;
-
+            explicit Generator(const Board& b) :
+                board(b) {
                 // Initialize various BitBoards.
                 friends  = board[ STM];
                 enemies  = board[!STM];
@@ -337,16 +329,12 @@ namespace Chess {
         };
 
         template<bool QUIET, bool NOISY>
-        MoveList Generate(Board& b) {
+        MoveList Generate(const Board& b) {
             if (b.SideToMove() == Color::White) {
-                static auto generator = Generator<Color::White>(b, b.Castling());
-
-                generator.UpdateContext(b, b.Castling());
+                auto generator = Generator<Color::White>(b);
                 return generator.GenerateMoves<QUIET, NOISY>();
             } else {
-                static auto generator = Generator<Color::Black>(b, b.Castling());
-
-                generator.UpdateContext(b, b.Castling());
+                auto generator = Generator<Color::Black>(b);
                 return generator.GenerateMoves<QUIET, NOISY>();
             }
         }

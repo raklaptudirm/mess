@@ -44,6 +44,8 @@ namespace Chess {
                 Hash CurrentHash; // Current Position Hash.
             };
 
+            Castling::Info CastlingInfo = Castling::Info();
+
         private:
 
             // 8x8 Mailbox board representation.
@@ -56,8 +58,6 @@ namespace Chess {
 
             Color sideToMove = Color ();
             Square epTarget  = Square();
-
-            Castling::Info castling = Castling::Info();
 
             uint16 plysCount = 0;
             uint8  drawClock = 0;
@@ -110,7 +110,6 @@ namespace Chess {
             [[nodiscard]] constexpr inline bool     FisherRandom() const { return frc;        } // Is a Fisher Random Position.
             [[nodiscard]] constexpr inline BitBoard Checkers()     const { return checkers;   }
             [[nodiscard]] constexpr inline uint8    CheckNum()     const { return checkNum;   }
-            [[nodiscard]] constexpr inline Castling::Info& Castling() { return castling; }
 
 
             // Indexing with a Piece return's that Piece's BitBoard.
@@ -215,7 +214,7 @@ namespace Chess {
                 assert(plysCount == 0); plysCount  = fen.PlysCount;
                 assert(drawClock == 0); drawClock  = fen.DrawClock;
 
-                castling = fen.CastlingInfo;
+                CastlingInfo = fen.CastlingInfo;
 
                 for (uint8 sq = 0; sq < Square::N; sq++)
                     if (fen.Mailbox[sq] != ColoredPiece::None)
@@ -246,7 +245,7 @@ namespace Chess {
 
                 if (history[plysCount].CurrentHash != hash) {
                     history[plysCount].CurrentHash      = hash;
-                    history[plysCount].CurrentRights    = castling.Rights;
+                    history[plysCount].CurrentRights    = CastlingInfo.Rights;
                     history[plysCount].CurrentEPTarget  = epTarget;
                     history[plysCount].CurrentDrawClock = drawClock;
                 }
@@ -260,9 +259,9 @@ namespace Chess {
                     epTarget = Square::None;
                 }
 
-                const Castling::Rights change = castling.Mask(source) + castling.Mask(target);
+                const Castling::Rights change = CastlingInfo.Mask(source) + CastlingInfo.Mask(target);
                 if (change != Castling::None) {
-                    castling.Rights -= change;
+                    CastlingInfo.Rights -= change;
                 }
 
                 remove(source);
@@ -387,7 +386,7 @@ namespace Chess {
                 epTarget  = history[plysCount].CurrentEPTarget;
                 drawClock = history[plysCount].CurrentDrawClock;
 
-                castling.Rights = history[plysCount].CurrentRights;
+                CastlingInfo.Rights = history[plysCount].CurrentRights;
 
                 hash = history[plysCount].CurrentHash;
 

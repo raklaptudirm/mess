@@ -23,7 +23,7 @@
 namespace Chess {
     class Move {
         private:
-            uint16 internal = 0;
+            uint16 internal;
 
             static constexpr int SOURCE_WIDTH = 6;
             static constexpr int TARGET_WIDTH = 6;
