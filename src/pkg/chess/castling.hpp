@@ -144,9 +144,6 @@ namespace Chess::Castling {
         }
 
         class Info {
-            public:
-                Castling::Rights Rights = None;
-
             private:
                 bool chess960 = false;
                 std::array<Square,   4> rooks = {};
@@ -156,21 +153,21 @@ namespace Chess::Castling {
             public:
                 constexpr inline Info() = default;
 
-                constexpr inline Info(std::string str, Square WhiteKing, Square BlackKing) {
+                constexpr static inline std::pair<Info, Rights> Parse(std::string str, Square WhiteKing, Square BlackKing) {
                     if (str == "-") {
-                        chess960 = false;
-                        *this = Info(
-                            None,
-                            Square::E1, File::H, File::A,
-                            Square::E8, File::H, File::A
-                        );
-                        return;
+                        return {
+                            Info(
+                                Square::E1, File::H, File::A,
+                                Square::E8, File::H, File::A,
+                                false
+                            ), None
+                        };
                     }
 
                     assert(0 < str.length() && str.length() <= 4);
 
                     const char id = str.at(0);
-                    chess960 = id != 'K' && id != 'Q' && id != 'k' && id != 'q';
+                    const auto chess960 = id != 'K' && id != 'Q' && id != 'k' && id != 'q';
 
                     Castling::Rights rights = None;
 
@@ -210,21 +207,21 @@ namespace Chess::Castling {
                         }
                     }
 
-                    //std::cout << "black H file:" << (uint64)static_cast<uint8>(blackH) << std::endl;
-
-                    *this = Info(
-                            rights,
+                    return {
+                        Info(
                             WhiteKing, whiteH, whiteA,
-                            BlackKing, blackH, blackA
-                    );
+                            BlackKing, blackH, blackA,
+                            chess960
+                        ), rights
+                    };
                 }
 
                 constexpr inline Info(
-                    Castling::Rights rights,
                     Square whiteKing, File whiteRookHFile, File whiteRookAFile,
-                    Square blackKing, File blackRookHFile, File blackRookAFile
+                    Square blackKing, File blackRookHFile, File blackRookAFile,
+                    bool isChess960
                 ) {
-                    Rights = rights;
+                    chess960 = isChess960;
 
                     const Square whiteRooKH = Square(whiteRookHFile, Rank::First);
                     const Square whiteRookA = Square(whiteRookAFile, Rank::First);
@@ -274,23 +271,7 @@ namespace Chess::Castling {
                 [[nodiscard]] constexpr inline BitBoard PathA() const {
                     return paths[offsetA<STM>()];
                 }
-
-                [[nodiscard]] constexpr inline std::string ToString() const {
-                    std::string str = "";
-
-                    if (Rights.Has(Castling::WhiteH)) str += "K";
-                    if (Rights.Has(Castling::WhiteA)) str += "Q";
-                    if (Rights.Has(Castling::BlackH)) str += "k";
-                    if (Rights.Has(Castling::BlackA)) str += "q";
-
-                    return str;
-                }
         };
-
-        constexpr inline std::ostream& operator<<(std::ostream& os, const Info& rights) {
-            os << rights.ToString();
-            return os;
-        }
 
         constexpr inline std::ostream& operator<<(std::ostream& os, const Rights& rights) {
             os << rights.ToString();

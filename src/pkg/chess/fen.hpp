@@ -37,6 +37,7 @@ namespace Chess {
             uint8  DrawClock;
 
             Castling::Info CastlingInfo;
+            Castling::Rights CastlingRights;
 
             bool FRC;
 
@@ -79,7 +80,9 @@ namespace Chess {
 
                 SideToMove = Color(fields[SIDE_TM_ID]);
 
-                CastlingInfo = Castling::Info(fields[CASTLING_ID], whiteKing, blackKing);
+                auto info = Castling::Info::Parse(fields[CASTLING_ID], whiteKing, blackKing);
+                CastlingInfo = info.first;
+                CastlingRights = info.second;
 
                 EPTarget = Square(fields[EP_TARGET_ID]);
 
