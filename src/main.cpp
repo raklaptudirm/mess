@@ -19,10 +19,10 @@ uint64 perft(Board& board, int8 depth) {
     // the legal move-list when depth is one. This saves a
     // lot of time cause it saves make moves and recursion.
     if (BULK_COUNT && !SPLIT_MOVES && depth == 1)
-        return Moves::Generate<true, true>(board).Length();
+        return Moves::Generate<true, true>(board.Position(), board.CastlingInfo).Length();
 
     // Generate legal move-list.
-    const auto moves = Moves::Generate<true, true>(board);
+    const auto moves = Moves::Generate<true, true>(board.Position(), board.CastlingInfo);
 
     // Variable to cumulate node count in.
     uint64 nodes = 0;
