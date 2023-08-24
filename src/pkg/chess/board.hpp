@@ -75,9 +75,7 @@ namespace Chess {
 
                 const auto UP = Directions::Up(position.SideToMove);
 
-                if (isCapture || sourcePiece.Piece() == Piece::Pawn)
-                    position.DrawClock = 0;
-                else position.DrawClock++;
+                position.DrawClock++;
 
                 if (position.EpTarget != Square::None) {
                     position.Hash -= Keys::EnPassantTarget(position.EpTarget);
@@ -85,12 +83,15 @@ namespace Chess {
                 }
 
                 const Castling::Rights change = CastlingInfo.Mask(source) + CastlingInfo.Mask(target);
-                if (change != Castling::None) {
-                    position.Rights -= change;
-                }
+                position.Rights -= change;
 
                 position.Remove(source);
-                if (isCapture) position.Remove(target);
+                if (isCapture) {
+                    position.Remove(target);
+                    position.DrawClock = 0;
+                } else if (sourcePiece.Piece() == Piece::Pawn) {
+                    position.DrawClock = 0;
+                }
 
                 switch (flag) {
                     case Move::Flag::Normal: {
