@@ -14,23 +14,25 @@
 #ifndef UTIL_TYPES
 #define UTIL_TYPES
 
+#include <cstdint>
+
 /*****************
  * Integer Types *
  *****************/
 
-using int8  [[maybe_unused]] =  signed char; //  8-bit signed integer.
-using int16 [[maybe_unused]] = short;       // 16-bit signed integer.
-using int32 [[maybe_unused]] = int;         // 32-bit signed integer.
-using int64 [[maybe_unused]] = long long;   // 64-bit signed integer.
+using int8  [[maybe_unused]] = int8_t;  //  8-bit signed integer.
+using int16 [[maybe_unused]] = int16_t; // 16-bit signed integer.
+using int32 [[maybe_unused]] = int32_t; // 32-bit signed integer.
+using int64 [[maybe_unused]] = int64_t; // 64-bit signed integer.
 
 /**************************
  * Unsigned Integer Types *
  **************************/
 
-using uint8  [[maybe_unused]] =  unsigned char;      //  8-bit unsigned integer.
-using uint16 [[maybe_unused]] = unsigned short;     // 16-bit unsigned integer.
-using uint32 [[maybe_unused]] = unsigned int;       // 32-bit unsigned integer.
-using uint64 [[maybe_unused]] = unsigned long long; // 64-bit unsigned integer.
+using uint8  [[maybe_unused]] = uint8_t;  //  8-bit unsigned integer.
+using uint16 [[maybe_unused]] = uint16_t; // 16-bit unsigned integer.
+using uint32 [[maybe_unused]] = uint32_t; // 32-bit unsigned integer.
+using uint64 [[maybe_unused]] = uint64_t; // 64-bit unsigned integer.
 
 /************************
  * Floating Point Types *
