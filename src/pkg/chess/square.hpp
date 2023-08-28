@@ -17,9 +17,9 @@
 #include <string>
 #include <cassert>
 
-#include "../util/types.hpp"
-
 #include "direction.hpp"
+
+#include "../util/types.hpp"
 
 namespace Chess {
     struct File {
@@ -27,32 +27,32 @@ namespace Chess {
          * Internal Enum Representation *
          ****************************** */
 
-        /// \brief Number of Files, excluding None, on a Chessboard.
+        // Number of Files, excluding None, on a Chessboard.
         static const int N = 8;
 
-        /// \brief The internal enum representation of a File.
+        // The internal enum representation of a File.
         enum internal_type : uint8 {
             A, B, C, D, E, F, G, H, None
         };
 
-        /// \brief The variable that stores the internal representation.
+        // The variable that stores the internal representation.
         internal_type internal = internal_type::None;
 
         /***************************
          * Constructor Definitions *
          ***************************/
 
-        /// \brief   Constructor to convert an uint8 into a File.
-        /// \returns The File with the given uint8 representation.
+        // Constructor to convert an uint8 into a File.
+        // The File with the given uint8 representation.
         constexpr explicit File(uint8 file) : internal(static_cast<internal_type>(file)) {}
 
-        /// \brief   Constructor to convert an internal representation into a File.
-        /// \returns The File with the given internal representation.
+        // Constructor to convert an internal representation into a File.
+        // The File with the given internal representation.
         constexpr File(internal_type file) : internal(file) {}
 
-        /// \brief   Constructor to parse a string for a File.
-        ///          Files are represented by the lowercase characters a-h.
-        /// \returns File represented by the given string.
+        // Constructor to parse a string for a File.
+        // Files are represented by the lowercase characters a-h.
+        // File represented by the given string.
         constexpr inline explicit File(std::string file) {
             assert(file.length() == 1); assert('a' <= file.at(0) && file.at(0) <= 'h');
             internal = static_cast<internal_type>(static_cast<uint8>(file.at(0) - 'a'));
@@ -62,14 +62,14 @@ namespace Chess {
          * Conversion Functions *
          ************************/
 
-        /// \brief   Conversion function to convert a file into its uint8 representation.
-        /// \returns The target file's uint8 representation.
+        //   Conversion function to convert a file into its uint8 representation.
+        // The target file's uint8 representation.
         constexpr inline explicit operator uint8() const {
             return static_cast<uint8>(internal);
         }
 
-        /// \brief   Conversion function to convert a file into its string representation.
-        /// \returns The target file's string representation.
+        //   Conversion function to convert a file into its string representation.
+        // The target file's string representation.
         [[nodiscard]] constexpr inline std::string ToString() const {
             return std::string(1, static_cast<uint8>(internal) + 'a');
         }

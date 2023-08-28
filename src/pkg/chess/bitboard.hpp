@@ -17,115 +17,102 @@
 #include <bit>
 #include <array>
 
-#include "../util/reverse.hpp"
 #include "../util/types.hpp"
+#include "../util/reverse.hpp"
 
 #include "square.hpp"
 
 namespace Chess {
 
-    /// A BitBoard efficiently represents a set of squares from the chessboard.
-    /// It also provides functions which enable easy manipulation of the set.
+    // A BitBoard efficiently represents a set of squares from the chessboard.
+    // It also provides functions which enable easy manipulation of the set.
     struct BitBoard {
     private:
-        /// Internal uint64 representation of the BitBoard.
-        uint64 internal = 0;
+        // Internal uint64 representation of the BitBoard.
+        uint64 internal;
 
     public:
         /* *************************
          * Constructor Definitions *
          ************************* */
 
-        /// \brief Default Constructor to create an empty BitBoard.
+        // Default Constructor to create an empty BitBoard.
         [[maybe_unused]] constexpr BitBoard() = default;
 
-        /// \brief Constructor to convert uint64 to a BitBoard.
-        [[maybe_unused]] constexpr explicit BitBoard(const uint64 bb) {
-            internal = bb;
-        }
+        // Constructor to convert uint64 to a BitBoard.
+        [[maybe_unused]] constexpr explicit BitBoard(const uint64 bb)
+            : internal(bb) {}
 
-        /// \brief Constructor to convert Square to a BitBoard.
-        [[maybe_unused]] constexpr explicit BitBoard(const Square square) {
-            internal = 1ull << static_cast<uint8>(square);
-        }
+        // Constructor to convert Square to a BitBoard.
+        [[maybe_unused]] constexpr explicit BitBoard(const Square square)
+            : internal(1ull << static_cast<uint8>(square)) {}
 
         /* *********************
          * Methods Definitions *
          ********************* */
 
-        /// \brief   IsEmpty checks if the target BitBoard is empty.
-        /// \returns Boolean describing whether the set is empty.
-        [[maybe_unused]] [[nodiscard]] constexpr inline bool Empty() const {
-            return internal == 0;
-        }
-
-        /// \brief   Some checks if the target BitBoard is populated.
-        /// \returns Boolean describing whether the set is populated.
+        // Some checks if the target BitBoard is populated.
         [[maybe_unused]] [[nodiscard]] constexpr inline bool Some() const {
-            return !this->Empty();
+            return internal;
         }
 
-        /// \brief   Several checks if the BitBoard has more than 1 element.
-        /// \returns Boolean describing if the set has more than 1 element.
+        // IsEmpty checks if the target BitBoard is empty.
+        [[maybe_unused]] [[nodiscard]] constexpr inline bool Empty() const {
+            return !Some();
+        }
+
+        // Several checks if the BitBoard has more than 1 element.
         [[maybe_unused]] [[nodiscard]] constexpr inline bool Several() const {
             return internal & (internal - 1);
         }
 
-        /// \brief   Singular checks if the BitBoard has a single element.
-        /// \returns Boolean describing if the set has a single element.
+        // Singular checks if the BitBoard has a single element.
         [[maybe_unused]] [[nodiscard]] constexpr inline bool Singular() const {
-            return internal && !Several();
+            return Some() && !Several();
         }
 
-        /// \brief   PopCount counts the number of elements in the BitBoard.
-        /// \returns Integer containing the number of elements in the set.
-        [[maybe_unused]] [[nodiscard]] constexpr inline int PopCount() const {
+        // PopCount counts the number of elements in the BitBoard.
+        [[maybe_unused]] [[nodiscard]] constexpr inline int32 PopCount() const {
             return std::popcount(internal);
         }
 
-        /// IsDisjoint check if the target and the given BitBoard are disjoint,
-        /// i.e. don't have any elements(squares) in common between them.
-        /// \returns Boolean describing whether the sets are disjoint.
+        // IsDisjoint check if the target and the given BitBoard are disjoint,
+        // i.e. don't have any elements(squares) in common between them.
         [[maybe_unused]] [[nodiscard]] constexpr inline bool IsDisjoint(BitBoard bb) const {
             return (*this & bb).Empty();
         }
 
-        /// \brief   Reverse reverses the given BitBoard.
-        /// \returns The reversed BitBoard.
+        // Reverse reverses the given BitBoard.
         [[maybe_unused]] [[nodiscard]] constexpr inline BitBoard Reverse() const {
             return BitBoard(reverse(internal));
         }
 
-        /// \brief   LSB finds the least significant set-bit from the BitBoard.
-        /// \returns Square representing the least significant set bit.
+        // LSB finds the least significant set-bit from the BitBoard.
         [[maybe_unused]] [[nodiscard]] constexpr inline Square LSB() const {
             return static_cast<Square>(std::countr_zero(internal));
         }
 
-        /// \brief   MSB finds the most significant set-bit from the BitBoard.
-        /// \returns Square representing the most significant set bit.
+        // MSB finds the most significant set-bit from the BitBoard.
         [[maybe_unused]] [[nodiscard]] constexpr inline Square MSB() const {
             return static_cast<Square>(std::countl_zero(internal) ^ 63);
         }
 
-        /// \brief Flip flips the given square in the BitBoard.
-        ///        i.e. removes it if it is present and vice versa.
+        // Flip flips the given square in the BitBoard, i.e. removes
+        // it if it is present in the set and vice versa.
         [[maybe_unused]] constexpr inline void Flip(Square square) {
             internal ^= static_cast<uint64>(BitBoard(square));
         }
 
-        /// \brief   PopLSB removes the least significant set-bit from the BitBoard.
-        /// \returns Square representing the popped bit.
+        // PopLSB removes the least significant set-bit from the BitBoard.
         [[maybe_unused]] constexpr inline Square PopLSB() {
-            Square lsb = this->LSB();
+            Square lsb = LSB();
             internal = internal & (internal - 1);
             return lsb;
         }
 
-        /// \brief   PopMSB removes the most significant set-bit from the BitBoard.
-        /// \returns Square representing the popped bit.
+        // PopMSB removes the most significant set-bit from the BitBoard.
         [[maybe_unused]] constexpr inline Square PopMSB() {
-            Square msb = this->MSB();
+            Square msb = MSB();
             internal ^= static_cast<uint64>(BitBoard(msb));
             return msb;
         }
@@ -134,8 +121,7 @@ namespace Chess {
          * Conversion Functions *
          *********************** */
 
-        /// \brief   Conversion function to convert the BitBoard into a uint64.
-        /// \returns uint64 representing the target BitBoard.
+        // Conversion function to convert the BitBoard into an uint64.
         [[maybe_unused]] constexpr inline explicit operator uint64() const {
             return internal;
         }
@@ -191,7 +177,7 @@ namespace Chess {
         }
 
         [[maybe_unused]] constexpr inline void operator-=(const BitBoard bb) {
-            internal &= static_cast<uint64>(~bb);
+            *this &= ~bb;
         }
 
         [[maybe_unused]] constexpr inline BitBoard operator+(const Square square) const {
@@ -199,7 +185,7 @@ namespace Chess {
         }
 
         [[maybe_unused]] constexpr inline void operator+=(const Square square) {
-            internal |= static_cast<uint64>(BitBoard(square));
+            *this |= BitBoard(square);
         }
 
         [[maybe_unused]] constexpr inline BitBoard operator-(const Square square) const {
@@ -207,7 +193,7 @@ namespace Chess {
         }
 
         [[maybe_unused]] constexpr inline void operator-=(const Square square) {
-            *this = *this - BitBoard(square);
+            *this -= BitBoard(square);
         }
 
         // Definition of the less-than-equal operator, which checks if the
@@ -247,15 +233,18 @@ namespace Chess {
             if (direction == Directions::South || direction == Directions::South+Directions::South)
                 return BitBoard(internal >> -shift);
 
-            if (direction == Directions::East || direction == Directions::NorthEast)
-                return BitBoard((internal & ~0x8080808080808080) << shift);
-            if (direction == Directions::SouthEast)
-                return BitBoard((internal & ~0x8080808080808080) >> -shift);
+            constexpr uint64 NOT_FILE_A = ~0x0101010101010101ULL;
+            constexpr uint64 NOT_FILE_H = ~0x8080808080808080ULL;
 
             if (direction == Directions::West || direction == Directions::SouthWest)
-                return BitBoard((internal & ~0x0101010101010101) >> -shift);
+                return BitBoard((internal & NOT_FILE_A) >> -shift);
             if (direction == Directions::NorthWest)
-                return BitBoard((internal & ~0x0101010101010101) << shift);
+                return BitBoard((internal & NOT_FILE_A) << shift);
+
+            if (direction == Directions::East || direction == Directions::NorthEast)
+                return BitBoard((internal & NOT_FILE_H) << shift);
+            if (direction == Directions::SouthEast)
+                return BitBoard((internal & NOT_FILE_H) >> -shift);
 
             return *this;
         }
@@ -268,35 +257,31 @@ namespace Chess {
          * BitBoard Iterator Implementation *
          ********************************** */
 
-        /// \struct Iterator
-        /// \brief  Iterator implements a BitBoard iterator.
-        ///
-        /// Iterator implements an iterator structure so that BitBoards can
-        /// be used inside range-for loops. The Iterator structure also keeps
-        /// the underlying BitBoard intact.
+        // Iterator implements an iterator structure so that BitBoards can
+        // be used inside range-for loops. The Iterator structure also keeps
+        // the underlying BitBoard intact.
         struct Iterator {
         private:
-            /// Internal representation of BitBoard we are iterating.
+            // Internal representation of BitBoard we are iterating.
             uint64 internal;
 
         public:
-            /// \brief Constructor to convert the given BitBoard uint64
-            ///        into an iterable value.
+            // Constructor to convert the given BitBoard uint64 into an iterable value.
             constexpr explicit Iterator(const uint64 bb) : internal(bb) {}
 
-            /// \brief   ++ takes the iterator forward by popping the LSB.
-            /// \returns A reference to itself as required of an iterator.
+            // ++ takes the iterator forward by popping the LSB.
+            // A reference to itself as required of an iterator.
             constexpr inline Iterator operator++() {
                 internal = internal & (internal - 1);
                 return *this;
             }
 
-            /// \brief   == implements an equality check between two Iterators.
-            /// \returns Boolean describing whether the two are equal or not.
+            // == implements an equality check between two Iterators.
+            // Boolean describing whether the two are equal or not.
             constexpr inline bool operator ==(const Iterator&) const = default;
 
-            /// \brief   * operator finds the least significant set bit in the uint64.
-            /// \returns Square representing the least significant set bit.
+            // * operator finds the least significant set bit in the uint64.
+            // Square representing the least significant set bit.
             constexpr Square operator*() const {
                 return BitBoard(internal).LSB();
             }
@@ -310,10 +295,10 @@ namespace Chess {
          * BitBoard iterations.                                       *
          ************************************************************ */
 
-        /// \returns begin functions returns an iterator for the BitBoard.
-        [[nodiscard]]        Iterator begin() const { return Iterator(internal); }
-        /// \returns end function returns an iterator for the empty BitBoard.
-        [[nodiscard]] static Iterator end  ()       { return Iterator(0x000000); }
+        // begin functions returns an iterator for the BitBoard.
+        [[nodiscard]]        constexpr inline Iterator begin() const { return Iterator(internal); }
+        // end function returns an iterator for the empty BitBoard.
+        [[nodiscard]] static constexpr inline Iterator end  ()       { return Iterator(0x000000); }
 
         [[nodiscard]] constexpr inline std::string ToString() const {
             std::string str;
@@ -333,17 +318,17 @@ namespace Chess {
          * Static Functions for BitBoards *
          ******************************** */
 
-        /// Hyperbola implements the Hyperbola Quintessence algorithm for calculating ray
-        /// attacks. It uses the o - 2r trick to find the ray from the given blockers.
-        ///
-        /// \param   square   Square of the attacker.
-        /// \param   blockers Blockers blocking the attacks.
-        /// \param   mask     Mask of the ray attack.
-        /// \returns BitBoard representing the attack set of the attacker.
+        // Hyperbola implements the Hyperbola Quintessence algorithm for calculating ray
+        // attacks. It uses the o - 2r trick to find the ray from the given blockers.
+        //
+        // square:   Square of the attacker.
+        // blockers: Blockers blocking the attacks.
+        // mask:     Mask of the ray attack.
         constexpr static inline BitBoard Hyperbola(Square square, BitBoard blockers, BitBoard mask) {
-            const uint64 r = static_cast<uint64>(BitBoard(square));
-            const uint64 o = static_cast<uint64>(blockers & mask);
+            const uint64 r = static_cast<uint64>(BitBoard(square)); // Piece's BitBoard as an uint64.
+            const uint64 o = static_cast<uint64>(blockers & mask);  // Position's Masked Occupancy.
 
+            // Calculate attack-set along the mask using the o - 2r trick.
             return BitBoard((o - 2 * r) ^ reverse(reverse(o) - 2 * reverse(r))) & mask;
         }
     };
@@ -471,11 +456,11 @@ namespace Chess {
             }();
         }
 
-        [[maybe_unused]] inline BitBoard Between(Square square1, Square square2) {
+        [[maybe_unused]] constexpr inline BitBoard Between(Square square1, Square square2) {
             return between[static_cast<uint8>(square1)]
             [static_cast<uint8>(square2)];
         }
     }
 }
 
-#endif
+#endif //CHESS_BITBOARD
