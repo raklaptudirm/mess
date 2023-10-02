@@ -179,7 +179,7 @@ namespace Chess::Castling {
                     for (const auto right : str) {
                         if (chess960) {
                             if ('a' <= right && right <= 'h') {
-                                const auto file = File(std::string(1, right + 'a' - 'A'));
+                                const auto file = File(std::string(1, right));
                                 if (file > BlackKing.File()) {
                                     blackH = file;
                                     rights += Castling::BlackH;
