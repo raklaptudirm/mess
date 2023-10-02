@@ -15,28 +15,37 @@
 #define CHESS_MOVE_LIST
 
 #include <array>
+#include <cassert>
 
 #include "move.hpp"
 
 namespace Chess {
+    // Initializing the moves array is time-consuming and redundant,
+    // since each field will we initialized when the length is increased.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
     class MoveList {
         std::array<Move, Move::MaxInPosition> moves;
         int length = 0;
 
         public:
+            constexpr inline MoveList() = default;
+
             [[nodiscard]] constexpr inline int32 Length() const {
                 return length;
             }
 
+            // Clear empties the move-list, preparing it for reuse.
             constexpr inline void Clear() {
                 length = 0;
             }
 
             constexpr inline void operator +=(Move move) {
+                assert(length < Move::MaxInPosition);
                 moves[length++] = move;
             }
 
             constexpr inline Move operator [](int index) const {
+                assert(index < length);
                 return moves[index];
             }
 
@@ -83,4 +92,4 @@ namespace Chess {
     };
 }
 
-#endif
+#endif //CHESS_MOVE_LIST
