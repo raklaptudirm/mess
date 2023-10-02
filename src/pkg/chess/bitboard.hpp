@@ -36,7 +36,6 @@ namespace Chess {
          * Constructor Definitions *
          ************************* */
 
-        // Default Constructor to create an empty BitBoard.
         [[maybe_unused]] constexpr BitBoard() = default;
 
         // Constructor to convert uint64 to a BitBoard.
@@ -53,12 +52,12 @@ namespace Chess {
 
         // Some checks if the target BitBoard is populated.
         [[maybe_unused]] [[nodiscard]] constexpr inline bool Some() const {
-            return internal;
+            return !Empty();
         }
 
         // IsEmpty checks if the target BitBoard is empty.
         [[maybe_unused]] [[nodiscard]] constexpr inline bool Empty() const {
-            return !Some();
+            return !internal;
         }
 
         // Several checks if the BitBoard has more than 1 element.
