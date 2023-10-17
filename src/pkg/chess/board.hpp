@@ -113,14 +113,14 @@ namespace Chess {
 
                     case Move::Flag::CastleHSide: {
                         const Castling::EndSquares ends = Castling::HEndSquares(position.SideToMove);
-                        position.Insert(ends.King, ColoredPiece(Piece::King, position.SideToMove));
-                        position.Insert(ends.Rook, ColoredPiece(Piece::Rook, position.SideToMove));
+                        position.Insert(ends.King, Piece::King + position.SideToMove);
+                        position.Insert(ends.Rook, Piece::Rook + position.SideToMove);
                         break;
                     }
                     case Move::Flag::CastleASide: {
                         const Castling::EndSquares ends = Castling::AEndSquares(position.SideToMove);
-                        position.Insert(ends.King, ColoredPiece(Piece::King, position.SideToMove));
-                        position.Insert(ends.Rook, ColoredPiece(Piece::Rook, position.SideToMove));
+                        position.Insert(ends.King, Piece::King + position.SideToMove);
+                        position.Insert(ends.Rook, Piece::Rook + position.SideToMove);
                         break;
                     }
 
@@ -130,10 +130,10 @@ namespace Chess {
                         break;
                     }
 
-                    case Move::Flag::QPromotion: position.Insert(target, ColoredPiece(Piece::Queen,  position.SideToMove)); break;
-                    case Move::Flag::NPromotion: position.Insert(target, ColoredPiece(Piece::Knight, position.SideToMove)); break;
-                    case Move::Flag::BPromotion: position.Insert(target, ColoredPiece(Piece::Bishop, position.SideToMove)); break;
-                    case Move::Flag::RPromotion: position.Insert(target, ColoredPiece(Piece::Rook,   position.SideToMove)); break;
+                    case Move::Flag::QPromotion: position.Insert(target, Piece::Queen  + position.SideToMove); break;
+                    case Move::Flag::NPromotion: position.Insert(target, Piece::Knight + position.SideToMove); break;
+                    case Move::Flag::BPromotion: position.Insert(target, Piece::Bishop + position.SideToMove); break;
+                    case Move::Flag::RPromotion: position.Insert(target, Piece::Rook   + position.SideToMove); break;
 
                     default: assert(false);
                 }

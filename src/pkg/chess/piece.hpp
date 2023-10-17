@@ -149,6 +149,10 @@ namespace Chess {
 
         constexpr inline bool operator ==(const ColoredPiece&) const = default;
     };
+
+    constexpr inline ColoredPiece operator +(Piece piece, Color color) {
+        return ColoredPiece(piece, color);
+    }
 }
 
 #endif
