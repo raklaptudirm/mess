@@ -39,6 +39,8 @@ namespace Chess {
             BitBoard occupied;
             BitBoard blockers;
 
+            BitBoard territory;
+
             Square king;
 
             BitBoard checkmask;
@@ -52,23 +54,23 @@ namespace Chess {
             // of moves from the given source square which are then appended
             // to the move-list.
             inline void serialize(Square source, BitBoard targets) {
-                targets = targets & checkmask & ~friends;
+                targets = targets & checkmask & territory;
                 for (auto target : targets) moves += Move(source, target, Move::Flag::Normal);
             }
 
             template<Direction OFFSET, uint16 FLAG>
             inline void serialize(BitBoard targets) {
-                targets = targets & checkmask & ~friends;
+                targets = targets & checkmask & territory;
                 for (auto target : targets) moves += Move(target >> -OFFSET, target, FLAG);
             }
 
-            template<Direction OFFSET>
+            template<Direction OFFSET, bool CAPTURE>
             inline void serializePromotions(BitBoard targets) {
                 targets = targets & checkmask & ~friends;
                 for (auto target : targets) {
                     if (NOISY) moves += Move(target >> -OFFSET, target, Move::Flag::QPromotion);
 
-                    if (QUIET) {
+                    if ((QUIET && !CAPTURE) || (NOISY && CAPTURE)) {
                         moves += Move(target >> -OFFSET, target, Move::Flag::NPromotion);
                         moves += Move(target >> -OFFSET, target, Move::Flag::BPromotion);
                         moves += Move(target >> -OFFSET, target, Move::Flag::RPromotion);
@@ -154,8 +156,8 @@ namespace Chess {
                     serialize<UE, Move::Flag::Normal>((attacksE - PRRank) & enemies);
                     serialize<UW, Move::Flag::Normal>((attacksW - PRRank) & enemies);
 
-                    serializePromotions<UE>(attacksE & PRRank & enemies);
-                    serializePromotions<UW>(attacksW & PRRank & enemies);
+                    serializePromotions<UE, true>(attacksE & PRRank & enemies);
+                    serializePromotions<UW, true>(attacksW & PRRank & enemies);
 
                     const Square epTarget = position.EpTarget;
                     if (epTarget != Square::None) {
@@ -207,7 +209,7 @@ namespace Chess {
                 /*****************************
                  * Promotion Push Generation *
                  *****************************/
-                serializePromotions<UP>(singlePushes & PRRank);
+                serializePromotions<UP, false>(singlePushes & PRRank);
 
                 /****************************************
                  * Normal Single/Double Push Generation *
@@ -261,7 +263,7 @@ namespace Chess {
 
             // kingMoves generates legal moves for the king.
             inline void kingMoves() {
-                const BitBoard targets = MoveTable::King(king) & ~friends;
+                const BitBoard targets = MoveTable::King(king) & territory;
 
                 for (auto target : targets) {
                     // Check if king move is legal.
@@ -271,6 +273,8 @@ namespace Chess {
             }
 
             inline void castlingMoves() {
+                if (!QUIET) return;
+
                 #define GENERATE_CASTLING_MOVE(side)                                                               \
                 {                                                                                                  \
                     const auto dimension = Castling::Dimension(STM, side);                                         \
@@ -301,6 +305,10 @@ namespace Chess {
                 friends  = position[ STM];
                 enemies  = position[!STM];
                 occupied = friends + enemies;
+
+                territory = BitBoards::Empty;
+                if (QUIET) territory |= ~occupied;
+                if (NOISY) territory |= enemies;
 
                 const auto kingBB = position[Piece::King] & friends;
 
