@@ -431,18 +431,20 @@ namespace Chess {
                         const Square sq1 = Square(square1);
                         const Square sq2 = Square(square2);
 
+                        if (sq1 == sq2) continue;
+
                         BitBoard mask;
 
-                        // Check for lateral paths.
+                        // Check for lateral blockerMask.
                         if (sq1.Rank() == sq2.Rank()) mask = BitBoards::Rank(sq1.Rank());
                         else if (sq1.File() == sq2.File()) mask = BitBoards::File(sq1.File());
 
-                            // Check for diagonal paths.
+                            // Check for diagonal blockerMask.
                         else if (sq1.Diagonal() == sq2.Diagonal()) mask = BitBoards::Diagonal(sq1.Diagonal());
                         else if (sq1.AntiDiagonal() == sq2.AntiDiagonal())
                             mask = BitBoards::AntiDiagonal(sq1.AntiDiagonal());
 
-                            // No paths between the two squares.
+                            // No blockerMask between the two squares.
                         else continue;
 
                         const BitBoard blockers = BitBoard(sq1) + BitBoard(sq2);
@@ -456,8 +458,19 @@ namespace Chess {
         }
 
         [[maybe_unused]] constexpr inline BitBoard Between(Square square1, Square square2) {
-            return between[static_cast<uint8>(square1)]
-            [static_cast<uint8>(square2)];
+            return between[static_cast<uint8>(square1)][static_cast<uint8>(square2)];
+        }
+
+        [[maybe_unused]] constexpr inline BitBoard Between1(Square square1, Square square2) {
+            return Between(square1, square2) + BitBoard(square1);
+        }
+
+        [[maybe_unused]] constexpr inline BitBoard Between2(Square square1, Square square2) {
+            return Between(square1, square2) + BitBoard(square2);
+        }
+
+        [[maybe_unused]] constexpr inline BitBoard Between12(Square square1, Square square2) {
+            return Between(square1, square2) + BitBoard(square1) + BitBoard(square2);
         }
     }
 }
