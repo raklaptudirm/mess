@@ -14,8 +14,6 @@
 #ifndef CHESS_MOVE_GENERATION
 #define CHESS_MOVE_GENERATION
 
-#include <iostream>
-
 #include "move.hpp"
 #include "board.hpp"
 #include "moves.hpp"
