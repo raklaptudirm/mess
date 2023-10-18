@@ -52,7 +52,7 @@ namespace Chess {
             // of 218, which has been rounded to 220 here.
             constexpr static int MaxInPosition = 220;
 
-            constexpr inline Move(Square source, Square target, int16 flag) {
+            constexpr inline Move(Square source, Square target, uint16 flag) {
                 internal = (flag << MVFLAG_OFFSET) |
                     (static_cast<uint16>(static_cast<uint8>(source) << SOURCE_OFFSET)) |
                     (static_cast<uint16>(static_cast<uint8>(target) << TARGET_OFFSET));
