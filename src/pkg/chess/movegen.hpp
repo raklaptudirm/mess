@@ -190,9 +190,9 @@ namespace Chess::Moves {
             // BitBoard containing all friendly pawns whose moves we are generating.
             const BitBoard pawns = position[Piece::Pawn] & friends;
 
-            /****************************
+            /* **************************
              * Pawn Captures Generation *
-             ****************************/
+             ************************** */
             if (NOISY) { // Only generate captures if noisy moves are allowed.
 
                 // Captures are diagonal moves so pawns pinned laterally can't capture.
@@ -224,9 +224,9 @@ namespace Chess::Moves {
                 serializePromotions<UE, true>(attacksE & PRRank & enemies);
                 serializePromotions<UW, true>(attacksW & PRRank & enemies);
 
-                /*************************
+                /* ***********************
                  * En Passant Generation *
-                 *************************/
+                 *********************** */
                 if (position.EpTarget != Square::None) {
                     const auto target = position.EpTarget;
                     const auto targetBB = BitBoard(target);
@@ -269,9 +269,9 @@ namespace Chess::Moves {
                 }
             }
 
-            /**************************************
+            /* ************************************
              * Pawn Single/Double Push Generation *
-             **************************************/
+             ************************************ */
             if (QUIET) {
                 // Pushes are lateral moves so diagonally pinned pawns can't push.
                 const BitBoard pushers = pawns - pinmaskD;
