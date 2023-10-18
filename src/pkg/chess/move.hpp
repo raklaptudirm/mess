@@ -19,6 +19,7 @@
 
 #include "square.hpp"
 #include "piece.hpp"
+#include "castling.hpp"
 
 namespace Chess {
     class Move {
@@ -96,6 +97,12 @@ namespace Chess {
 
                 static constexpr uint16 CastleHSide = 7; // Flag for Castling O-O.
                 static constexpr uint16 CastleASide = 8; // Flag for Castling O-O-O.
+
+                static constexpr uint16 FlagFrom(Castling::Side side) {
+                    if (side == Castling::Side::H)
+                        return CastleHSide;
+                    return CastleASide;
+                }
 
                 static constexpr bool IsPromotion(uint16 flag) {
                     return NPromotion <= flag && flag <= QPromotion;

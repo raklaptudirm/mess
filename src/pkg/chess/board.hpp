@@ -112,15 +112,17 @@ namespace Chess {
                     }
 
                     case Move::Flag::CastleHSide: {
-                        const Castling::EndSquares ends = Castling::HEndSquares(position.SideToMove);
-                        position.Insert(ends.King, Piece::King + position.SideToMove);
-                        position.Insert(ends.Rook, Piece::Rook + position.SideToMove);
+                        const auto dim = Castling::Dimension(position.SideToMove, Castling::Side::H);
+                        const auto ends = Castling::EndSquares(dim);
+                        position.Insert(ends.first,  Piece::King + position.SideToMove);
+                        position.Insert(ends.second, Piece::Rook + position.SideToMove);
                         break;
                     }
                     case Move::Flag::CastleASide: {
-                        const Castling::EndSquares ends = Castling::AEndSquares(position.SideToMove);
-                        position.Insert(ends.King, Piece::King + position.SideToMove);
-                        position.Insert(ends.Rook, Piece::Rook + position.SideToMove);
+                        const auto dim = Castling::Dimension(position.SideToMove, Castling::Side::A);
+                        const auto ends = Castling::EndSquares(dim);
+                        position.Insert(ends.first,  Piece::King + position.SideToMove);
+                        position.Insert(ends.second, Piece::Rook + position.SideToMove);
                         break;
                     }
 

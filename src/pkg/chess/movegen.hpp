@@ -271,23 +271,26 @@ namespace Chess {
             }
 
             inline void castlingMoves() {
-                const auto pathH = castlingInfo.PathH<STM>();
-                if (
-                        position.Rights.Has(Castling::H<STM>()) &&
-                        occupied.IsDisjoint(pathH) &&
-                        !position.Attacked<!STM>(pathH, blockers)
-                ) {
-                    moves += Move(king, castlingInfo.RookH<STM>(), Move::Flag::CastleHSide);
-                }
+                #define GENERATE_CASTLING_MOVE(side)                                                               \
+                {                                                                                                  \
+                    const auto dimension = Castling::Dimension(STM, side);                                         \
+                    if (                                                                                           \
+                            /* Check for the necessary castling rights. */                                         \
+                            position.Rights.Has(Castling::Rights(dimension)) &&                                    \
+                            /* Check for blockers in the castling path. */                                         \
+                            occupied.IsDisjoint(castlingInfo.BlockerMask(dimension)) &&                            \
+                            /* Check for attackers in the king's path. */                                          \
+                            !position.Attacked<!STM>(castlingInfo.AttackMask(dimension), blockers)                 \
+                            ) {                                                                                    \
+                        /* All castling requirements met: generate move */                                         \
+                        moves += Move(king, castlingInfo.Rook(dimension), Move::Flag::FlagFrom(side));             \
+                    }                                                                                              \
+                } // GENERATE_CASTLING_MOVE
 
-                const auto pathA = castlingInfo.PathA<STM>();
-                if (
-                        position.Rights.Has(Castling::A<STM>()) &&
-                        occupied.IsDisjoint(pathA + (pathA >> Directions::West)) &&
-                        !position.Attacked<!STM>(pathA, blockers)
-                ) {
-                    moves += Move(king, castlingInfo.RookA<STM>(), Move::Flag::CastleASide);
-                }
+                GENERATE_CASTLING_MOVE(Castling::Side::H)
+                GENERATE_CASTLING_MOVE(Castling::Side::A)
+
+                #undef GENERATE_CASTLING_MOVE
             }
 
         public:
