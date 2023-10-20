@@ -34,21 +34,25 @@ namespace Chess {
 
         // Position stack.
         uint16 top = 0; // Current top in stack.
-        std::array<Position, 512> history = {}; // Stack.
+        std::array<Position, Move::MaxInGame> history = {}; // Stack.
 
         // Game ply-count. May differ from top by a constant.
-        uint16 plys = 0;
+        uint16 initialPlys = 0;
 
         // push pushes a new Position into the Position stack.
-        void push() {
-            top++;
-            plys++;
+        inline void push() {
+            top++; // Move the top pointer higher.
+
+            // Bounds check.
+            assert(top < Move::MaxInGame);
         }
 
         // pop pops the top Position from the Position stack.
-        void pop() {
-            top--;
-            plys--;
+        inline void pop() {
+            top--; // Move the top pointer lower.
+
+            // Bounds check;
+            assert(top >= 0);
         }
 
         // doCastling is a utility function used to make the final half of the castling move.
@@ -70,7 +74,7 @@ namespace Chess {
             const FEN fen = FEN(fenString);
 
             // Copy the fields relevant to Board.
-            plys         = fen.PlysCount;
+            initialPlys  = fen.PlysCount;
             castlingInfo = fen.CastlingInfo;
 
             // Create a new position from the fen and store it
@@ -81,6 +85,14 @@ namespace Chess {
         // Position returns a reference to the current Board Position.
         [[nodiscard]] const Position& Position() const {
             return history[top];
+        }
+
+        // PlyCount returns the number of plys in the current game.
+        [[nodiscard]] uint16 PlyCount() const {
+            // Number of plys is equal to initial number of plys at
+            // root (which may be non-zero for non-startpos positions)
+            // + the number of plys since the root (top).
+            return initialPlys + top;
         }
 
         // TODO: make this private
@@ -191,9 +203,6 @@ namespace Chess {
                 // All flags are handled above, unreachable code.
                 default: assert(false);
             }
-
-            // Increase the number of game plys.
-            plys++;
 
             // Switch side to move.
             position.SideToMove = !position.SideToMove;
