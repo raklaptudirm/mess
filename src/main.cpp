@@ -3,26 +3,26 @@
 #include "pkg/chess/move.hpp"
 #include "pkg/chess/square.hpp"
 #include "pkg/chess/board.hpp"
-#include "pkg/chess/movegen.hpp"
 
 #include <chrono>
 
 using namespace Chess;
 
 template <bool BULK_COUNT, bool SPLIT_MOVES>
+// NOLINTNEXTLINE(misc-no-recursion)
 uint64 perft(Board& board, int8 depth) {
     // Return 1 for current node at depth 0.
     if (depth <= 0)
         return 1;
 
+    // Generate legal move-list.
+    const auto moves = board.GenerateMoves<true, true>();
+
     // When bulk counting is enabled, return the length of
     // the legal move-list when depth is one. This saves a
     // lot of time cause it saves make moves and recursion.
-    if (BULK_COUNT && !SPLIT_MOVES && depth == 1)
-        return Moves::Generate<true, true>(board.Position(), board.CastlingInfo).Length();
-
-    // Generate legal move-list.
-    const auto moves = Moves::Generate<true, true>(board.Position(), board.CastlingInfo);
+    if (BULK_COUNT && !(SPLIT_MOVES && depth == 1))
+        return moves.Length();
 
     // Variable to cumulate node count in.
     uint64 nodes = 0;

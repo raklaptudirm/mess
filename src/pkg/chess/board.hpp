@@ -23,6 +23,8 @@
 #include "moves.hpp"
 #include "square.hpp"
 #include "zobrist.hpp"
+#include "movegen.hpp"
+#include "movelist.hpp"
 #include "castling.hpp"
 #include "bitboard.hpp"
 #include "position.hpp"
@@ -93,11 +95,6 @@ namespace Chess {
             // root (which may be non-zero for non-startpos positions)
             // + the number of plys since the root (top).
             return initialPlys + top;
-        }
-
-        // TODO: make this private
-        [[nodiscard]] const Castling::Info& CastlingInfo() const {
-            return castlingInfo;
         }
 
         // MakeMove makes the given chess move on the Board. It does not
@@ -217,6 +214,13 @@ namespace Chess {
             // Undoing a move is just popping the top Position
             // from the stack, making the last Position the new top.
             pop();
+        }
+
+        // GenerateMoves generates the legal moves in the current position which
+        // follow the provided move-generation options, and returns a MoveList.
+        template<bool QUIET, bool NOISY>
+        [[nodiscard]] MoveList GenerateMoves() const {
+            return Moves::Generate<QUIET, NOISY>(Position(), castlingInfo);
         }
 
         // ToString converts the target Board into its string representation.
