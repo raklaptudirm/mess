@@ -27,50 +27,92 @@
 #include "bitboard.hpp"
 
 namespace Chess {
+    // Position represents a particular chess board position.
+    // It also exposes a variety of fields and methods which
+    // allow fetching information and manipulating said position.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
     struct Position {
         // 8x8 Mailbox position representation.
-        std::array<ColoredPiece, Square::N> Mailbox = {};
+        std::array<ColoredPiece, Square::N> Mailbox;
 
         // BitBoard Board representation.
         // x6 piece bbs, x2 color bbs.
-        std::array<BitBoard, Piece::N> PieceBBs = {};
-        std::array<BitBoard, Color::N> ColorBBs = {};
+        std::array<BitBoard, Piece::N> PieceBBs;
+        std::array<BitBoard, Color::N> ColorBBs;
 
-        Hash Hash = Chess::Hash();
-        BitBoard Checkers = BitBoard();
+        // Zobrist Hash of the chess position.
+        Hash Hash;
 
-        Castling::Rights Rights = Castling::None;
+        // Checker BitBoard of the current Position. It
+        // contains the location of all the pieces checking
+        // /attacking the side to move's king.
+        BitBoard Checkers;
 
-        Color  SideToMove = Color ();
-        Square EpTarget   = Square();
+        // Castling Rights of the current position records
+        // all the ways it is possible to castle in the
+        // current position and in the future.
+        Castling::Rights Rights;
 
-        uint8 DrawClock = 0;
-        uint8 CheckNum  = 0;
+        // SideToMove records the current side to move Color.
+        Color  SideToMove;
 
+        // EpTarget records the current En-Passant Target.
+        Square EpTarget;
+
+        // DrawClock records the current 50-move rule
+        // draw clock which determines if the game is a
+        // draw due to the said rule.
+        uint8 DrawClock;
+
+        // CheckNum stores the number of checkers checking/
+        // attacking the side to move's king. It can also
+        // be considered as the number of set bits in the
+        // Checkers BitBoard.
+        uint8 CheckNum;
+
+        // Default constructor for Position, no fields are
+        // initialized by calling this method.
         constexpr inline Position() = default;
 
+        // Insert safely inserts the given piece into the given empty square
+        // updating all the relevant info so the Position stays consistent.
         constexpr inline void Insert(Square square, ColoredPiece piece) {
+            // Assert that the square and the piece are valid, and that
+            // the target square is empty so that a piece can be placed.
             assert(square != Square::None && piece != ColoredPiece::None);
+            assert(Mailbox[static_cast<uint8>(square)] == ColoredPiece::None);
 
+            // Insert the given piece into the mailbox representation.
             Mailbox[static_cast<uint8>(square)] = piece;
 
+            // Insert the given piece into the BitBoard representation.
             PieceBBs[static_cast<uint8>(piece.Piece())].Flip(square);
             ColorBBs[static_cast<uint8>(piece.Color())].Flip(square);
 
+            // Add the given piece to the Zobrist hash of the Position.
             Hash += Keys::PieceOnSquare(piece, square);
         }
 
+        // Remove safely removes the piece occupying the given square,
+        // updating all the relevant info so the Position stays consistent.
         constexpr inline void Remove(Square square) {
+            // Assert that the square is valid.
+            assert(square != Square::None);
+
+            // Fetch the piece present at the given square.
             const ColoredPiece piece = Mailbox[static_cast<uint8>(square)];
 
-            assert(square != Square::None);
+            // Assert that there is a piece to remove.
             assert(piece != ColoredPiece::None);
 
+            // Remove the piece from the mailbox representation.
             Mailbox[static_cast<uint8>(square)] = ColoredPiece::None;
 
+            // Remove the piece from the BitBoard representation.
             PieceBBs[static_cast<uint8>(piece.Piece())].Flip(square);
             ColorBBs[static_cast<uint8>(piece.Color())].Flip(square);
 
+            // Remove the given piece from the Zobrist hash of the Position.
             Hash -= Keys::PieceOnSquare(piece, square);
         }
 
@@ -84,38 +126,12 @@ namespace Chess {
             return ColorBBs[static_cast<uint8_t>(color)];
         }
 
-        /******************************
-         * Game Termination Detection *
-         ******************************/
-
-        [[nodiscard]] constexpr inline bool Mated() const {
-            return Checkers.Some();
-        }
-
-        [[nodiscard]] constexpr inline bool Draw() const {
-            return DrawBy50Move() || DrawByInsufficientMaterial();
-        }
-
-        [[nodiscard]] constexpr inline bool DrawBy50Move() const {
-            return DrawClock >= 100 && !Mated();
-        }
-
-        [[nodiscard]] constexpr inline bool DrawByInsufficientMaterial() const {
-            if ((*this)[Piece::Pawn].Some() || (*this)[Piece::Rook].Some() || (*this)[Piece::Queen].Some())
-                return false;
-
-            return true;
-        }
-
         /****************************
          * Public Utility Functions *
          ****************************/
 
-        template <Color BY>
-        constexpr inline bool Checked() {
-            return Attacked<!BY>(((*this)[Piece::King] & (*this)[BY]).LSB());
-        }
-
+        // Attacked checks if the given square has been attacked by pieces of the given color, given
+        // the provided blocker BitBoard on the target Position.
         template <Color BY>
         [[nodiscard]] constexpr inline bool Attacked(const Square square, const BitBoard blockers) const {
             const BitBoard attackers = (*this)[BY];
@@ -146,11 +162,15 @@ namespace Chess {
             return false;
         }
 
+        // An overload of the standard Attacked function which uses
+        // the occupied BitBoard as its blocker set automatically.
         template <Color BY>
         [[nodiscard]] constexpr inline bool Attacked(const Square square) const {
             return Attacked<BY>(square, (*this)[BY] | (*this)[!BY]);
         }
 
+        // An overload of the standard Attacked function which checks for attacks to
+        // multiple squares. The function returns true if any of the squares is attacked.
         template<Color BY>
         [[nodiscard]] inline bool Attacked(const BitBoard targets, const BitBoard blockers) const {
             for (const auto target : targets)
@@ -158,23 +178,37 @@ namespace Chess {
             return false;
         }
 
+        // An overload of the standard Attacked function which is similar to the one which
+        // operates on multiples squares, except that the blocker set is automatically set
+        // to be the occupied BitBoard.
         template<Color BY>
         [[nodiscard]] inline bool Attacked(const BitBoard targets) const {
             return Attacked<BY>(targets, (*this)[BY] | (*this)[!BY]);
         }
 
+        // Constructor of Position which operates on a raw FEN string.
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
         explicit Position(const std::string& fenString) {
             *this = Position(FEN(fenString));
         }
 
+        // Constructor of Position which operates on a parsed FEN string.
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
         explicit Position(const FEN& fen) {
-            assert(SideToMove == Color ::None); SideToMove = fen.SideToMove;
-            assert(EpTarget == Square::None); EpTarget   = fen.EPTarget;
+            Hash = {};
 
-            assert(DrawClock == 0); DrawClock  = fen.DrawClock;
+            // Copy the relevant fields.
+            SideToMove = fen.SideToMove;
+            EpTarget   = fen.EPTarget;
+            DrawClock  = fen.DrawClock;
+            Rights     = fen.CastlingRights;
 
-            Rights = fen.CastlingRights;
+            // Zero out the board representation.
+            PieceBBs = {};
+            ColorBBs = {};
+            Mailbox = {};
 
+            // Populate the board representation.
             for (uint8 sq = 0; sq < Square::N; sq++)
                 if (fen.Mailbox[sq] != ColoredPiece::None)
                     Insert(Square(sq), fen.Mailbox[sq]);
@@ -182,10 +216,12 @@ namespace Chess {
             GenerateCheckers();
         }
 
+        // Indexing Position by Square returns the ColoredPiece at that Square.
         constexpr inline ColoredPiece operator[](const Square sq) const {
             return Mailbox[static_cast<uint8>(sq)];
         }
 
+        // ToString converts the position to a human-readable string representation.
         [[nodiscard]] constexpr std::string ToString() const {
             std::string board = "+---+---+---+---+---+---+---+---+\n";
 
@@ -204,26 +240,32 @@ namespace Chess {
             return board;
         }
 
+        // GenerateCheckers generates the Checkers BitBoard.
         constexpr inline void GenerateCheckers() {
             const auto friends = (*this)[ SideToMove];
             const auto enemies = (*this)[!SideToMove];
             const auto occupied = friends + enemies;
 
-            //assert((*this)[Piece::King] != BitBoards::Empty);
+            assert((*this)[Piece::King] != BitBoards::Empty);
             const auto king = ((*this)[Piece::King] & friends).LSB();
-            //assert(king != Square::None);
+            assert(king != Square::None);
 
+            // Get the Piece BitBoards.
             const auto p = (*this)[Piece::Pawn  ];
             const auto n = (*this)[Piece::Knight];
             const auto b = (*this)[Piece::Bishop];
             const auto r = (*this)[Piece::Rook  ];
             const auto q = (*this)[Piece::Queen ];
 
+            // Treating the king as a super-piece, check for any pieces that fall
+            // into its attack range with the same type of attack as the range.
             const auto checkingP = p & MoveTable::Pawn(SideToMove, king);
             const auto checkingN = n & MoveTable::Knight(king);
             const auto checkingD = (b + q) & MoveTable::Bishop(king, occupied);
             const auto checkingL = (r + q) & MoveTable::Rook  (king, occupied);
 
+            // Cast out the friendly pieces from the BitBoard and store it.
+            // Also store the number of checkers in the other variable.
             Checkers = (checkingP + checkingN + checkingD + checkingL) & enemies;
             CheckNum = Checkers.PopCount();
         }
