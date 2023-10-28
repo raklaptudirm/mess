@@ -4,6 +4,7 @@
 #include "pkg/chess/square.hpp"
 #include "pkg/chess/board.hpp"
 
+// NOLINTNEXTLINE chrono header unnecessary in Darwin.
 #include <chrono>
 
 using namespace Chess;
@@ -21,7 +22,7 @@ uint64 perft(Board& board, int8 depth) {
     // When bulk counting is enabled, return the length of
     // the legal move-list when depth is one. This saves a
     // lot of time cause it saves make moves and recursion.
-    if (BULK_COUNT && !(SPLIT_MOVES && depth == 1))
+    if (BULK_COUNT && !SPLIT_MOVES && depth == 1)
         return moves.Length();
 
     // Variable to cumulate node count in.
