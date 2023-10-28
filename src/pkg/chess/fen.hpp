@@ -50,6 +50,9 @@ namespace Chess {
             static constexpr int MOVE_COUNT_ID = 5;
 
         public:
+            static constexpr uint16 MoveToPlyCount(int mc, Color stm) {
+                return static_cast<uint16>(mc * 2) - (stm == Color::White ? 2 : 1);
+            }
             constexpr FEN(const std::string& fenString) {
                 const std::vector<std::string> fields = strutil::split(fenString, " ");
                 assert(fields.size() == 6);
@@ -87,7 +90,7 @@ namespace Chess {
                 EPTarget = Square(fields[EP_TARGET_ID]);
 
                 DrawClock = std::stoi(fields[DRAW_CLOCK_ID]);
-                PlysCount = std::stoi(fields[MOVE_COUNT_ID]);
+                PlysCount = MoveToPlyCount(std::stoi(fields[MOVE_COUNT_ID]), SideToMove);
             }
     };
 }
