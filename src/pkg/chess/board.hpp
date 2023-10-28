@@ -36,7 +36,7 @@ namespace Chess {
 
         // Position stack.
         uint16 top = 0; // Current top in stack.
-        std::array<Position, Move::MaxInGame> history = {}; // Stack.
+        std::array<Position, Move::MaxInGame> history; // Stack.
 
         // Game ply-count. May differ from top by a constant.
         uint16 initialPlys = 0;
