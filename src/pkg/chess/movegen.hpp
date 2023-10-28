@@ -82,7 +82,7 @@ namespace Chess::Moves {
         // to the move-list.
         inline void serialize(Square source, BitBoard targets) {
             targets = targets & checkmask & territory;
-            for (auto target : targets) moves += Move(source, target, Move::Flag::Normal);
+            for (const auto target : targets) moves += Move(source, target, Move::Flag::Normal);
         }
 
         // Overload of serialize which infers the source square from the
@@ -91,7 +91,7 @@ namespace Chess::Moves {
         template<Direction OFFSET, uint16 FLAG>
         inline void serialize(BitBoard targets) {
             targets = targets & checkmask & territory;
-            for (auto target : targets) moves += Move(target >> -OFFSET, target, FLAG);
+            for (const auto target : targets) moves += Move(target >> -OFFSET, target, FLAG);
         }
 
         // serializePromotions is similar to the offset overload of serialize
@@ -105,7 +105,7 @@ namespace Chess::Moves {
             // which may move to empty squares. Therefore, the territory
             // logic is implemented inside the target loop.
             targets = targets & checkmask & ~friends;
-            for (auto target : targets) {
+            for (const auto target : targets) {
                 // Queen promotions are noisy moves, so generate them whenever
                 // we can generate noisy moves according to the generation type.
                 if (NOISY) moves += Move(target >> -OFFSET, target, Move::Flag::QPromotion);
@@ -149,7 +149,7 @@ namespace Chess::Moves {
 
         [[nodiscard]] inline BitBoard generatePinMask(const BitBoard pinning) const {
             auto pinmask = BitBoards::Empty;
-            for (const auto& piece : pinning) {
+            for (const auto piece : pinning) {
                 // Get the possibly pinning ray (can have friendly pieces).
                 const BitBoard possiblePin = BitBoards::Between2(king, piece);
 
@@ -309,7 +309,7 @@ namespace Chess::Moves {
         inline void knightMoves() {
             // Knights which are pinned either laterally or diagonally can't move.
             const BitBoard knights = (position[Piece::Knight] & friends) - (pinmaskL + pinmaskD);
-            for (auto knight : knights) serialize(knight, MoveTable::Knight(knight));
+            for (const auto knight : knights) serialize(knight, MoveTable::Knight(knight));
         }
 
         // bishopMoves generates legal moves for bishop-like pieces, i.e. bishops and queens.
@@ -321,11 +321,11 @@ namespace Chess::Moves {
             // Pieces pinned diagonally can only make moves within
             // the pinned diagonal, so remove all other targets.
             const BitBoard pinned = bishops & pinmaskD;
-            for (auto bishop : pinned) serialize(bishop, MoveTable::Bishop(bishop, occupied) & pinmaskD);
+            for (const auto bishop : pinned) serialize(bishop, MoveTable::Bishop(bishop, occupied) & pinmaskD);
 
             // Unpinned pieces can make any legal move.
             const BitBoard unpinned = bishops ^ pinned;
-            for (auto bishop : unpinned) serialize(bishop, MoveTable::Bishop(bishop, occupied));
+            for (const auto bishop : unpinned) serialize(bishop, MoveTable::Bishop(bishop, occupied));
         }
 
         // rookMoves generates legal moves for rook-like pieces, i.e. rooks and queens.
@@ -337,18 +337,18 @@ namespace Chess::Moves {
             // Pieces pinned laterally can only make moves within
             // the pinned file/rank, so remove all other targets.
             const BitBoard pinned = rooks & pinmaskL;
-            for (auto rook : pinned) serialize(rook, MoveTable::Rook(rook, occupied) & pinmaskL);
+            for (const auto rook : pinned) serialize(rook, MoveTable::Rook(rook, occupied) & pinmaskL);
 
             // Unpinned pieces can make any legal move.
             const BitBoard unpinned = rooks ^ pinned;
-            for (auto rook : unpinned) serialize(rook, MoveTable::Rook(rook, occupied));
+            for (const auto rook : unpinned) serialize(rook, MoveTable::Rook(rook, occupied));
         }
 
         // kingMoves generates legal moves for the king, excluding castling.
         inline void kingMoves() {
             const BitBoard targets = MoveTable::King(king) & territory;
 
-            for (auto target : targets) {
+            for (const auto target : targets) {
                 // Check if king move is legal.
                 if (!position.Attacked<!STM>(target, blockers))
                     moves += Move(king, target, Move::Flag::Normal);
@@ -356,14 +356,15 @@ namespace Chess::Moves {
         }
 
         // castlingMove tries to generate a castling move for the given side.
-        inline void castlingMove(Castling::Side side) {
-            const auto dimension = Castling::Dimension(STM, side);
+        template<Castling::Side SIDE>
+        inline void castlingMove() {
+            constexpr auto dimension = Castling::Dimension(STM, SIDE);
             if (    // Check if castling requirements are met:
                     position.Rights.Has(Castling::Rights(dimension)) && // Check for the necessary castling rights.
                     occupied.IsDisjoint(castlingInfo.BlockerMask(dimension)) && // Check for blockers in the castling path.
                     !position.Attacked<!STM>(castlingInfo.AttackMask(dimension), blockers) // Check for attackers in the king's path.
                 ) {
-                moves += Move(king, castlingInfo.Rook(dimension), Move::Flag::FlagFrom(side));
+                moves += Move(king, castlingInfo.Rook(dimension), Move::Flag::FlagFrom(SIDE));
             }
         }
 
@@ -373,8 +374,8 @@ namespace Chess::Moves {
             if (!QUIET) return;
 
             // Try to generate castling move for both sides.
-            castlingMove(Castling::Side::H);
-            castlingMove(Castling::Side::A);
+            castlingMove<Castling::Side::H>();
+            castlingMove<Castling::Side::A>();
         }
 
     public:
