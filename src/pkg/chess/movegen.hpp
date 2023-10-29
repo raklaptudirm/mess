@@ -82,7 +82,7 @@ namespace Chess::Moves {
         // to the move-list.
         inline void serialize(Square source, BitBoard targets) {
             targets = targets & checkmask & territory;
-            for (const auto target : targets) moves += Move(source, target, Move::Flag::Normal);
+            for (const auto target : targets) moves.Emplace(Move(source, target, Move::Flag::Normal));
         }
 
         // Overload of serialize which infers the source square from the
@@ -91,7 +91,7 @@ namespace Chess::Moves {
         template<Direction OFFSET, uint16 FLAG>
         inline void serialize(BitBoard targets) {
             targets = targets & checkmask & territory;
-            for (const auto target : targets) moves += Move(target >> -OFFSET, target, FLAG);
+            for (const auto target : targets) moves.Emplace(Move(target >> -OFFSET, target, FLAG));
         }
 
         // serializePromotions is similar to the offset overload of serialize
@@ -108,15 +108,15 @@ namespace Chess::Moves {
             for (const auto target : targets) {
                 // Queen promotions are noisy moves, so generate them whenever
                 // we can generate noisy moves according to the generation type.
-                if (NOISY) moves += Move(target >> -OFFSET, target, Move::Flag::QPromotion);
+                if (NOISY) moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::QPromotion));
 
                 // Other types of promotions are quiet moves by default, so
                 // their noisy-ness is determined like that of any other move:
                 // whether they are a capture or a non-capture.
                 if ((QUIET && !CAPTURE) || (NOISY && CAPTURE)) {
-                    moves += Move(target >> -OFFSET, target, Move::Flag::NPromotion);
-                    moves += Move(target >> -OFFSET, target, Move::Flag::BPromotion);
-                    moves += Move(target >> -OFFSET, target, Move::Flag::RPromotion);
+                    moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::NPromotion));
+                    moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::BPromotion));
+                    moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::RPromotion));
                 }
             }
         }
@@ -253,7 +253,7 @@ namespace Chess::Moves {
                             }
 
                             if (pinmaskD.IsDisjoint(passanters) || !pinmaskD.IsDisjoint(targetBB))
-                                moves += Move(passanters.LSB(), target, Move::Flag::EnPassant);
+                                moves.Emplace(Move(passanters.LSB(), target, Move::Flag::EnPassant));
 
                             break;
                         }
@@ -263,7 +263,7 @@ namespace Chess::Moves {
                         case 2: {
                             for (const auto passanter : passanters)
                                 if (!pinmaskD[passanter] || !pinmaskD.IsDisjoint(targetBB))
-                                    moves += Move(passanter, target, Move::Flag::EnPassant);
+                                    moves.Emplace(Move(passanter, target, Move::Flag::EnPassant));
                         }
                     }
                 }
@@ -351,7 +351,7 @@ namespace Chess::Moves {
             for (const auto target : targets) {
                 // Check if king move is legal.
                 if (!position.Attacked<!STM>(target, blockers))
-                    moves += Move(king, target, Move::Flag::Normal);
+                    moves.Emplace(Move(king, target, Move::Flag::Normal));
             }
         }
 
@@ -364,7 +364,7 @@ namespace Chess::Moves {
                     occupied.IsDisjoint(castlingInfo.BlockerMask(dimension)) && // Check for blockers in the castling path.
                     !position.Attacked<!STM>(castlingInfo.AttackMask(dimension), blockers) // Check for attackers in the king's path.
                 ) {
-                moves += Move(king, castlingInfo.Rook(dimension), Move::Flag::FlagFrom(SIDE));
+                moves.Emplace(Move(king, castlingInfo.Rook(dimension), Move::Flag::FlagFrom(SIDE)));
             }
         }
 

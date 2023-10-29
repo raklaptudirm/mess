@@ -39,7 +39,7 @@ namespace Chess {
                 length = 0;
             }
 
-            constexpr inline void operator +=(Move move) {
+            constexpr inline void Emplace(Move move) {
                 assert(length < Move::MaxInPosition);
                 moves[length++] = move;
             }
