@@ -75,12 +75,12 @@ namespace Chess::Moves {
         BitBoard pinmaskD;
 
         // The internal movelist which stores all the moves.
-        MoveList moves;
+        MoveList& moves;
 
         // serialize serializes the given targets BitBoard into an array
         // of moves from the given source square which are then appended
         // to the move-list.
-        inline void serialize(Square source, BitBoard targets) {
+        inline void serialize(Square source, BitBoard targets) const {
             targets = targets & checkmask & territory;
             for (const auto target : targets) moves.Emplace(Move(source, target, Move::Flag::Normal));
         }
@@ -89,7 +89,7 @@ namespace Chess::Moves {
         // target square and the target-source offset. It also accepts a
         // move flag which is packed into the final move.
         template<Direction OFFSET, uint16 FLAG>
-        inline void serialize(BitBoard targets) {
+        inline void serialize(BitBoard targets) const {
             targets = targets & checkmask & territory;
             for (const auto target : targets) moves.Emplace(Move(target >> -OFFSET, target, FLAG));
         }
@@ -99,7 +99,7 @@ namespace Chess::Moves {
         // offset. It additionally generates all the possible promotion types
         // according to the provided move generation type.
         template<Direction OFFSET, bool CAPTURE>
-        inline void serializePromotions(BitBoard targets) {
+        inline void serializePromotions(BitBoard targets) const {
             // Unlike other serialization methods, the target BitBoard is not
             // masked with territory since queen promotions are noisy moves
             // which may move to empty squares. Therefore, the territory
@@ -123,13 +123,13 @@ namespace Chess::Moves {
 
         // generateCheckMask generates the checkmask for the current position.
         // Look at the documentation for the checkmask variable for more info.
-        inline void generateCheckMask() {
+        [[nodiscard]] inline BitBoard generateCheckMask() const {
             switch (position.CheckNum) {
                 // King is not under any checks, all moves are possible.
-                case 0: checkmask = BitBoards::Full;  break;
+                case 0: return BitBoards::Full;
 
                 // King is under double check, no moves are possible for non-king pieces.
-                case 2: checkmask = BitBoards::Empty; break;
+                case 2: return BitBoards::Empty;
 
                 // King is under a singular check. Determine the type of check and set
                 // the value of the checkmask accordingly.
@@ -140,10 +140,10 @@ namespace Chess::Moves {
                     if (checkerPc == Piece::Pawn || checkerPc == Piece::Knight)
                         // Pawn/Knight checks cannot be blocked. Only possible moves
                         // by non-king pieces is capturing the checking piece.
-                        checkmask = position.Checkers;
-                    else // Sliding piece moves can be blocked, so include the between
-                        // squares in the checkmask along with the checking piece.
-                        checkmask = BitBoards::Between2(king, checkerSq);
+                        return position.Checkers;
+                    // Sliding piece moves can be blocked, so include the between
+                    // squares in the checkmask along with the checking piece.
+                    return BitBoards::Between2(king, checkerSq);
             }
         }
 
@@ -178,7 +178,7 @@ namespace Chess::Moves {
 
         // pawnMoves generates all the different types of pawn moves that are legal
         // in this position and are in accordance with the move generation type.
-        inline void pawnMoves() {
+        inline void pawnMoves() const {
             // Some useful direction constants.
             constexpr Direction UP = STM == Color::White ? Directions::North : Directions::South;
             constexpr Direction UE = UP + Directions::East, UW = UP + Directions::West;
@@ -306,14 +306,14 @@ namespace Chess::Moves {
         }
 
         // knightMoves generates legal moves for knights.
-        inline void knightMoves() {
+        inline void knightMoves() const {
             // Knights which are pinned either laterally or diagonally can't move.
             const BitBoard knights = (position[Piece::Knight] & friends) - (pinmaskL + pinmaskD);
             for (const auto knight : knights) serialize(knight, MoveTable::Knight(knight));
         }
 
         // bishopMoves generates legal moves for bishop-like pieces, i.e. bishops and queens.
-        inline void bishopMoves() {
+        inline void bishopMoves() const {
             // Consider both bishops and queens. Pieces which are pinned
             // laterally can't make any diagonal moves, so remove those.
             const BitBoard bishops = ((position[Piece::Bishop] + position[Piece::Queen]) & friends) - pinmaskL;
@@ -329,7 +329,7 @@ namespace Chess::Moves {
         }
 
         // rookMoves generates legal moves for rook-like pieces, i.e. rooks and queens.
-        inline void rookMoves() {
+        inline void rookMoves() const {
             // Consider both rooks and queens. Pieces which are pinned
             // diagonally can't make any lateral moves, so remove them.
             const BitBoard rooks = ((position[Piece::Rook] + position[Piece::Queen]) & friends) - pinmaskD;
@@ -345,7 +345,7 @@ namespace Chess::Moves {
         }
 
         // kingMoves generates legal moves for the king, excluding castling.
-        inline void kingMoves() {
+        inline void kingMoves() const {
             const BitBoard targets = MoveTable::King(king) & territory;
 
             for (const auto target : targets) {
@@ -357,7 +357,7 @@ namespace Chess::Moves {
 
         // castlingMove tries to generate a castling move for the given side.
         template<Castling::Side SIDE>
-        inline void castlingMove() {
+        inline void castlingMove() const {
             constexpr auto dimension = Castling::Dimension(STM, SIDE);
             if (    // Check if castling requirements are met:
                     position.Rights.Has(Castling::Rights(dimension)) && // Check for the necessary castling rights.
@@ -369,7 +369,7 @@ namespace Chess::Moves {
         }
 
         // castlingMoves generates all legal castling moves.
-        inline void castlingMoves() {
+        inline void castlingMoves() const {
             // Generate castling only if quiet moves are allowed.
             if (!QUIET) return;
 
@@ -381,8 +381,8 @@ namespace Chess::Moves {
     public:
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
-        Generator(const Position& p, const Castling::Info& c) :
-                position(p), castlingInfo(c) {
+        Generator(const Position& p, const Castling::Info& c, MoveList& movelist) :
+                position(p), castlingInfo(c), moves(movelist) {
 
             // Initialize various BitBoards.
             friends  = position[ STM];
@@ -403,13 +403,10 @@ namespace Chess::Moves {
             king = kingBB.LSB();
 
             generatePinMasks();
-            generateCheckMask();
+            checkmask = generateCheckMask();
         }
 
-        constexpr inline MoveList GenerateMoves() {
-            // Clear the move list for move generation.
-            moves.Clear();
-
+        constexpr inline void GenerateMoves() const {
             // Due to the fallthrough nature of switch statements, the move generation
             // functions below get called when the matched case is the same as or higher
             // that the case that contains the function. In this particular case, this
@@ -431,9 +428,6 @@ namespace Chess::Moves {
                     // King moves are always possible.
                     kingMoves();
             }
-
-            // Return a copy of the generated movelist.
-            return moves;
         }
     };
 
@@ -441,14 +435,18 @@ namespace Chess::Moves {
     // with the given CastlingInfo which match the provided move generation type.
     template<bool QUIET, bool NOISY>
     MoveList Generate(const Position& p, const Castling::Info& castlingInfo) {
+        MoveList moves = {};
+
         // Switch template arguments according to side to move.
         if (p.SideToMove == Color::White) {
-            auto generator = Generator<Color::White, QUIET, NOISY>(p, castlingInfo);
-            return generator.GenerateMoves();
+            const auto generator = Generator<Color::White, QUIET, NOISY>(p, castlingInfo, moves);
+            generator.GenerateMoves();
         } else {
-            auto generator = Generator<Color::Black, QUIET, NOISY>(p, castlingInfo);
-            return generator.GenerateMoves();
+            const auto generator = Generator<Color::Black, QUIET, NOISY>(p, castlingInfo, moves);
+            generator.GenerateMoves();
         }
+
+        return moves;
     }
 }
 
