@@ -19,3 +19,5 @@ go.work
 
 # Ignore binary directory
 bin/
+
+cmake-build
