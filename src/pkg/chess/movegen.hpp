@@ -108,12 +108,12 @@ namespace Chess::Moves {
             for (const auto target : targets) {
                 // Queen promotions are noisy moves, so generate them whenever
                 // we can generate noisy moves according to the generation type.
-                if (NOISY) moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::QPromotion));
+                if constexpr (NOISY) moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::QPromotion));
 
                 // Other types of promotions are quiet moves by default, so
                 // their noisy-ness is determined like that of any other move:
                 // whether they are a capture or a non-capture.
-                if ((QUIET && !CAPTURE) || (NOISY && CAPTURE)) {
+                if constexpr ((QUIET && !CAPTURE) || (NOISY && CAPTURE)) {
                     moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::NPromotion));
                     moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::BPromotion));
                     moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::RPromotion));
@@ -193,7 +193,7 @@ namespace Chess::Moves {
             /* **************************
              * Pawn Captures Generation *
              ************************** */
-            if (NOISY) { // Only generate captures if noisy moves are allowed.
+            if constexpr (NOISY) { // Only generate captures if noisy moves are allowed.
 
                 // Captures are diagonal moves so pawns pinned laterally can't capture.
                 const BitBoard attackers = pawns - pinmaskL;
@@ -272,7 +272,7 @@ namespace Chess::Moves {
             /* ************************************
              * Pawn Single/Double Push Generation *
              ************************************ */
-            if (QUIET) {
+            if constexpr (QUIET) {
                 // Pushes are lateral moves so diagonally pinned pawns can't push.
                 const BitBoard pushers = pawns - pinmaskD;
 
@@ -391,8 +391,8 @@ namespace Chess::Moves {
 
             // Initialize the territory BitBoard.
             territory = BitBoards::Empty;
-            if (QUIET) territory |= ~occupied; // QUIET => Can move to empty squares.
-            if (NOISY) territory |= enemies;   // NOISY => Can move to enemy squares.
+            if constexpr (QUIET) territory |= ~occupied; // QUIET => Can move to empty squares.
+            if constexpr (NOISY) territory |= enemies;   // NOISY => Can move to enemy squares.
 
             const auto kingBB = position[Piece::King] & friends;
 
