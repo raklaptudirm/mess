@@ -29,7 +29,7 @@ namespace Chess::Castling {
          * Internal Enum Representation *
          ****************************** */
 
-        // Number of Files, excluding None, on a Chessboard.
+        // Number of castling sides on a chessboard.
         static const int N = 2;
 
         // The internal enum representation of a Side.
@@ -48,7 +48,8 @@ namespace Chess::Castling {
 
         // Constructor to convert an internal representation into a Side.
         // The Side with the given internal representation.
-        constexpr Side(internal_type side) : internal(side) {}
+        // NOLINTNEXTLINE
+        [[maybe_unused]] constexpr Side(internal_type side) : internal(side) {}
 
         /************************
          * Conversion Functions *
@@ -63,20 +64,30 @@ namespace Chess::Castling {
          * Operator Definitions *
          ************************/
 
+        // Equality operator to check if two Sides are equal.
         constexpr inline bool operator ==(const Side&) const = default;
     };
 
+    // A Dimension represents a Color-Side pair, each of which uniquely
+    // represents one "way" that castling is possible on a chessboard.
     struct Dimension {
+    private:
+        // Internal representation of a dimension.
         uint8 internal;
 
     public:
+        // Number of castling Dimension (2 Sides x 2 Colors).
+        static constexpr int N = Side::N * Color::N;
+
         constexpr inline Dimension(Color color, Side side)
                 : internal(static_cast<uint8>(color) * Side::N + static_cast<uint8>(side)) {}
 
+        // Color returns the color of this Dimension.
         [[nodiscard]] constexpr inline Color Color() const {
             return Chess::Color(internal / Chess::Color::N);
         }
 
+        // Side returns the Side of this Dimension.
         [[nodiscard]] constexpr inline Side Side() const {
             return Castling::Side(internal % Castling::Side::N);
         }
@@ -86,6 +97,7 @@ namespace Chess::Castling {
         }
     };
 
+    // List of all the possible castling Dimensions.
     namespace Dimensions {
         constexpr static auto WhiteH = Dimension(Color::White, Side::H);
         constexpr static auto WhiteA = Dimension(Color::White, Side::A);
@@ -93,26 +105,34 @@ namespace Chess::Castling {
         constexpr static auto BlackA = Dimension(Color::Black, Side::A);
     }
 
+    // Ends name spaces all the Ranks, Files, and Squares relevant
+    // to the end squares of a King and a Rook after castling.
     namespace Ends {
+        // End Files of Kings and Rooks for each Side.
         constexpr File KingFileH = File::G;
         constexpr File RookFileH = File::F;
         constexpr File KingFileA = File::C;
         constexpr File RookFileA = File::D;
 
+        // End Ranks of Kings and Rooks for each Color.
         constexpr Rank WhiteRank = Rank::First;
         constexpr Rank BlackRank = Rank::Eighth;
 
+        // End squares of White Kings and Rooks.
         constexpr Square WhiteKingH = Square(KingFileH, WhiteRank);
         constexpr Square WhiteRookH = Square(RookFileH, WhiteRank);
         constexpr Square WhiteKingA = Square(KingFileA, WhiteRank);
         constexpr Square WhiteRookA = Square(RookFileA, WhiteRank);
 
+        // End squares of Black Kings and Rooks.
         constexpr Square BlackKingH = Square(KingFileH, BlackRank);
         constexpr Square BlackRookH = Square(RookFileH, BlackRank);
         constexpr Square BlackKingA = Square(KingFileA, BlackRank);
         constexpr Square BlackRookA = Square(RookFileA, BlackRank);
     }
 
+    // EndSquares returns a pair containing the end Squares of a King
+    // and Rook respectively which are castling in the given dimension.
     constexpr inline std::pair<Square, Square> EndSquares(const Dimension dimension) {
         switch (static_cast<uint8>(dimension)) {
             case static_cast<uint8>(Dimensions::WhiteH): return {Ends::WhiteKingH, Ends::WhiteRookH};
@@ -124,7 +144,9 @@ namespace Chess::Castling {
         }
     }
 
+    // Rights represents a set of the four different Dimensions of castling.
     class Rights {
+        // Internal representation of the set.
         uint8 internal = 0;
 
     public:
@@ -134,9 +156,14 @@ namespace Chess::Castling {
         constexpr inline explicit Rights(Dimension dimension)
             : internal(1 << static_cast<uint8>(dimension)) {}
 
+        // Has checks if the given Rights is a subset of the target.
         [[nodiscard]] constexpr inline bool Has(const Rights subset) const {
             const auto ss = static_cast<uint8>(subset);
             return (internal & ss) == ss;
+        }
+
+        [[nodiscard]] constexpr inline bool Has(const Dimension dim) const {
+            return internal & static_cast<uint8>(Rights(dim));
         }
 
         constexpr inline explicit operator uint8() const {
@@ -165,13 +192,17 @@ namespace Chess::Castling {
             return Rights(~internal);
         }
 
+        constexpr inline Rights operator &(const Rights rhs) const {
+            return Rights(internal & static_cast<uint8>(rhs));
+        }
+
         [[nodiscard]] constexpr inline std::string ToString() const {
             std::string str;
 
-            if (Has(Rights(Dimensions::WhiteH))) str += "K";
-            if (Has(Rights(Dimensions::WhiteA))) str += "Q";
-            if (Has(Rights(Dimensions::BlackH))) str += "k";
-            if (Has(Rights(Dimensions::BlackA))) str += "q";
+            if (Has(Dimensions::WhiteH)) str += "K";
+            if (Has(Dimensions::WhiteA)) str += "Q";
+            if (Has(Dimensions::BlackH)) str += "k";
+            if (Has(Dimensions::BlackA)) str += "q";
 
             return str;
         }
@@ -188,19 +219,34 @@ namespace Chess::Castling {
     constexpr static Rights All  = White + Black;
     constexpr static Rights None = Rights(0ull);
 
+    // Info contains all the castling metadata required to be able to determine
+    // castling legality and the correct castling move in both Standard and FRC.
     class Info {
     private:
         bool chess960 = false;
+
+        // Positions of the rooks.
         std::array<Square,   4> rooks = {};
-        std::array<BitBoard, 4> blockerMask = {};
-        std::array<BitBoard, 4> attacksMask = {};
+
+        // Castling Legality checks.
+        std::array<BitBoard, 4> blockerMask = {}; // Squares which need to be empty for target Dimension.
+        std::array<BitBoard, 4> attacksMask = {}; // Squares which need to be safe  for target Dimension.
+
+        // List of Rights to remove for Moves to and from each Square.
+        // This ensures that the castling rights are updated when the
+        // King moves or a Rook moves/is captured.
         std::array<Castling::Rights, Square::N> masks = {};
 
     public:
         constexpr inline Info() = default;
 
+        // Parse parses the given castling rights string with the additional context
+        // of the position of both the Kings, and returns a parsed Info and Rights.
         constexpr static inline std::pair<Info, Rights> Parse(std::string str, Square WhiteKing, Square BlackKing) {
+            // - is the empty set of Rights.
             if (str == "-") {
+                // Positions of rooks and whether we are playing FRC chess is
+                // ambiguous/inconsequential and Standard chess is assumed.
                 return {
                     Info(
                         Square::E1, File::H, File::A,
@@ -210,13 +256,16 @@ namespace Chess::Castling {
                 };
             }
 
+            // Basic checks on the rights string.
             assert(0 < str.length() && str.length() <= 4);
 
+            // FRC uses Shredder fen which uses a-h instead of k/q.
             const char id = str.at(0);
             const auto chess960 = id != 'K' && id != 'Q' && id != 'k' && id != 'q';
 
             Castling::Rights rights = None;
 
+            // Default to Standard chess rook files.
             File whiteH = File::H;
             File whiteA = File::A;
             File blackH = File::H;
@@ -249,6 +298,8 @@ namespace Chess::Castling {
                         case 'Q': rights += Castling::WhiteA; break;
                         case 'k': rights += Castling::BlackH; break;
                         case 'q': rights += Castling::BlackA; break;
+
+                        default: assert(false);
                     }
                 }
             }
@@ -269,11 +320,13 @@ namespace Chess::Castling {
         ) {
             chess960 = isChess960;
 
+            // Convert the Rook Files to Squares.
             const Square whiteRookH = Square(whiteRookHFile, Rank::First);
             const Square whiteRookA = Square(whiteRookAFile, Rank::First);
             const Square blackRookH = Square(blackRookHFile, Rank::Eighth);
             const Square blackRookA = Square(blackRookAFile, Rank::Eighth);
 
+            // Populate the rooks field of Info.
             rooks[static_cast<uint8>(Dimensions::WhiteH)] = whiteRookH;
             rooks[static_cast<uint8>(Dimensions::WhiteA)] = whiteRookA;
             rooks[static_cast<uint8>(Dimensions::BlackH)] = blackRookH;
@@ -282,43 +335,58 @@ namespace Chess::Castling {
             // Blocker mask extracts the square which need to be empty in order for castling to be legal.
             // The king's path to its end square and the rooks path to its end square should be empty except for the
             // castling king and rook themselves. Therefore, the blocker mask is (kingPath + rookPath) - (king + rook).
-            #define BLOCKER_MASK(king, rook, kingEnd, rookEnd) \
-            ((BitBoards::Between2(king,  kingEnd) + BitBoards::Between2(rook, rookEnd)) - (BitBoard(king) + BitBoard(rook)))
+            auto BLOCKER_MASK = [](Square king, Square rook, Square kingEnd, Square rookEnd) {
+                return (BitBoards::Between2(king,  kingEnd) + BitBoards::Between2(rook, rookEnd)) - (BitBoard(king) + BitBoard(rook));
+            };
 
+            // Populate the blockerMask field of Info.
             blockerMask[static_cast<uint8>(Dimensions::WhiteH)] = BLOCKER_MASK(whiteKing, whiteRookH, Ends::WhiteKingH, Ends::WhiteRookH);
             blockerMask[static_cast<uint8>(Dimensions::WhiteA)] = BLOCKER_MASK(whiteKing, whiteRookA, Ends::WhiteKingA, Ends::WhiteRookA);
             blockerMask[static_cast<uint8>(Dimensions::BlackH)] = BLOCKER_MASK(blackKing, blackRookH, Ends::BlackKingH, Ends::BlackRookH);
             blockerMask[static_cast<uint8>(Dimensions::BlackA)] = BLOCKER_MASK(blackKing, blackRookA, Ends::BlackKingA, Ends::BlackRookA);
 
-            #undef BLOCKER_MASK
-
+            // Populate the attacksMask field of Info.
+            // Attack masks are the squares between the castling King and its end square both inclusive.
+            // However, whether the king is in check is checks differently so only include the end Square.
             attacksMask[static_cast<uint8>(Dimensions::WhiteH)] = BitBoards::Between2(whiteKing,  Ends::WhiteKingH);
             attacksMask[static_cast<uint8>(Dimensions::WhiteA)] = BitBoards::Between2(whiteKing,  Ends::WhiteKingA);
             attacksMask[static_cast<uint8>(Dimensions::BlackH)] = BitBoards::Between2(blackKing,  Ends::BlackKingH);
             attacksMask[static_cast<uint8>(Dimensions::BlackA)] = BitBoards::Between2(blackKing,  Ends::BlackKingA);
 
+            // Zero out the entire masks array.
             masks = {};
+
+            // Moves to and from the Rook's position imply the Rook
+            // has moved or been captured so remove those Rights.
             masks[static_cast<uint8>(whiteRookH)] = WhiteH;
             masks[static_cast<uint8>(whiteRookA)] = WhiteA;
             masks[static_cast<uint8>(blackRookH)] = BlackH;
             masks[static_cast<uint8>(blackRookA)] = BlackA;
 
+            // Moves from the Kings position imply that the King
+            // has moved so remove all the Rights for that Color.
             masks[static_cast<uint8>(whiteKing)] = White;
             masks[static_cast<uint8>(blackKing)] = Black;
         }
 
+        // Mask returns the relevant Rights mask for the given Square.
         [[nodiscard]] constexpr inline Castling::Rights Mask(const Square sq) const {
             return masks[static_cast<uint8>(sq)];
         }
 
+        // Rook returns the position of the rook for the given Dimension.
         [[nodiscard]] constexpr inline Square Rook(Dimension dimension) const {
             return rooks[static_cast<uint8>(dimension)];
         }
 
+        // BlockerMask returns the blocker mask for the given Dimension, which
+        // are the Squares which need to be empty for castling to be legal.
         [[nodiscard]] constexpr inline BitBoard BlockerMask(Dimension dimension) const {
             return blockerMask[static_cast<uint8>(dimension)];
         }
 
+        // AttackMask returns the attacks mask for the given Dimension, which
+        // are the Squares which need to be safe for castling to be legal.
         [[nodiscard]] constexpr inline BitBoard AttackMask(Dimension dimension) const {
             return attacksMask[static_cast<uint8>(dimension)];
         }

@@ -360,7 +360,7 @@ namespace Chess::Moves {
         inline void castlingMove() const {
             constexpr auto dimension = Castling::Dimension(STM, SIDE);
             if (    // Check if castling requirements are met:
-                    position.Rights.Has(Castling::Rights(dimension)) && // Check for the necessary castling rights.
+                    position.Rights.Has(dimension) && // Check for the necessary castling rights.
                     occupied.IsDisjoint(castlingInfo.BlockerMask(dimension)) && // Check for blockers in the castling path.
                     !position.Attacked<!STM>(castlingInfo.AttackMask(dimension), blockers) // Check for attackers in the king's path.
                 ) {
