@@ -13,15 +13,24 @@
 # limitations under the License.                                            #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+# =================================== #
+# Target Program Name and Source Path #
+# =================================== #
+         PROGRAM  = mess
+override SRC_PATH = cmd/$(PROGRAM)
+
 # ====================== #
 # Engine Executable Name #
 # ====================== #
-EXE = mess
+EXE = ${PROGRAM}
 
 # ======================= #
 # Code Building Directory #
 # ======================= #
-BUILD_DIR = cmake-build
+override BUILD_ROOT = cmake-build
+override BUILD_DIR  = ${BUILD_ROOT}/${PROGRAM}/${CONFIG}
+
+CONFIG = RelWithDebInfo
 
 # =========================================================== #
 # Compiler Selection: If CC and CXX variables are not set,    #
@@ -38,56 +47,36 @@ endif
 # executable file extension according to the target os. #
 # ===================================================== #
 ifeq ($(OS),Windows_NT)
-    CP = powershell cp
-    EXTENSION = .exe
+    override CP = powershell cp
+    override EXTENSION = .exe
 else
-    CP = cp
-    EXTENSION =
+    override CP = cp
+    override EXTENSION =
 endif
 
 # ======================= #
 # Default Makefile Target #
 # ======================= #
-# TODO: set default to testing
 .PHONY: default
-default: release
+default: build
 
 # ============================ #
 # All Make targets are Phonies #
 # ============================ #
-.PHONY: debug release testing   # Build Targets
-.PHONY: cmake-setup cmake-build # CMake Utilities
-.PHONY: clean help              # Other Utilities
-
-# ======================================== #
-# Targets for various binary Build Configs #
-# ======================================== #
-
-# TARGET=Debug
-debug:
-	@make cmake-build TARGET=Debug
-
-# TARGET=Testing
-testing:
-	@make cmake-build TARGET=Testing
-
-# Target=Release
-release:
-	@make cmake-build TARGET=Release
+.PHONY: build      # Build Utilities
+.PHONY: clean help # Other Utilities
 
 # =============================================================================== #
 # CMake Setup: Setup Mess's build system with the Ninja Generator, which allows   #
 # incremental compilations to the source code. This is useful for developers, but #
 # probably won't cause any change for users building release binaries with it.    #
 # =============================================================================== #
-cmake-setup:
-	cmake -B $(BUILD_DIR)/$(TARGET) -DCMAKE_BUILD_TYPE=$(TARGET)   \
+build:
+	cmake $(SRC_PATH) -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=$(CONFIG)   \
 	-DCMAKE_C_COMPILER=$(CC) -DCMAKE_CXX_COMPILER=$(CXX) \
 	-G Ninja
-
-cmake-build: cmake-setup
-	cmake --build $(BUILD_DIR)/$(TARGET) --config $(TARGET) && \
-	$(CP) $(BUILD_DIR)/$(TARGET)/Mess$(EXTENSION) $(EXE)$(EXTENSION)
+	cmake --build $(BUILD_DIR) --config $(CONFIG)
+	@$(CP) $(BUILD_DIR)/$(PROGRAM)$(EXTENSION) $(EXE)$(EXTENSION)
 
 # ===================================================================== #
 # Utility Commands which are not build targets but useful for the user. #
@@ -99,20 +88,24 @@ clean:
 
 help:
 	@echo "USAGE:"
-	@echo "    for builds: make [ clean ] [ TARGET ] { VARIABLE=VALUE }"
+	@echo "    for builds: make [ clean build ] { VARIABLE=VALUE }"
 	@echo "    for others: make UTILITY"
 	@echo
-	@echo "TARGETS: (* = default)"
-	@echo "    debug           create a mess binary with all  debugging info"
-	@echo "    testing         create a mess binary with some debugging info"
-	@echo "  * release         create a mess binary with no   debugging info"
-	@echo
 	@echo "UTILITIES:"
-	@echo "    clean           remove all the cached target build information"
-	@echo "    help            print this help message for ease of use"
+	@echo "    clean    remove all the cached target build information"
+	@echo "    help     print this help message for ease of use"
 	@echo
 	@echo "VARIABLES: (VARIABLE = DEFAULT_VALUE)"
-	@echo "    EXE = mess      the path to the built executable"
-	@echo "    C   = clang     the C   compiler used for the build"
-	@echo "    CXX = clang++   the C++ compiler used for the build"
+	@echo "    PROGRAM = mess              the program that will be built. possible values:"
+	@echo "                                - mess: the actual chess engine"
+	@echo
+	@echo "    CONFIG  = RelWithDebInfo    the build configuration to use. possible values:"
+	@echo "                                - Debug: full debug and sanitization information"
+	@echo "                                - Release: fastest and most optimized build"
+	@echo "                                - RelWithDebInfo: Release + asserts"
+	@echo
+	@echo "    EXE     = mess              the path to the built executable"
+	@echo
+	@echo "    C       = clang             the C   compiler used for the build"
+	@echo "    CXX     = clang++           the C++ compiler used for the build"
 	@echo

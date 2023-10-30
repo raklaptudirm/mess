@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(Mess)
+project(mess)
 
 # ========================== #
 # CMake Flags Initialization #
@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-march=native -flto")
 set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Wextra -g -ftime-report -fsanitize=undefined -fsanitize=address -fsanitize=leak")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3")
 
 # ============================ #
 # Profile Guided Optimizations #
@@ -52,28 +53,22 @@ endif()
 
 include(${CPM_DOWNLOAD_LOCATION})
 
-# ========================== #
-# Include Required Libraries #
-# ========================== #
-
-add_subdirectory(lib/strutil)
-
-add_subdirectory(pkg/types)
-add_subdirectory(pkg/chess)
-
 # ===================== #
 # Setup Mess Executable #
 # ===================== #
 
-set(MessMainFile "${PROJECT_SOURCE_DIR}/main.cpp")
+add_executable(${PROJECT_NAME} main.cpp)
 
-file(GLOB MessCppFiles "${PROJECT_SOURCE_DIR}/lib/**/*.h")
+# =================================== #
+# Include and Link Required Libraries #
+# =================================== #
 
-set(SOURCES
-    ${MessMainFile} ${MessCppFiles}
-)
+set(SOURCE ${PROJECT_SOURCE_DIR}/../..)
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_subdirectory(${SOURCE}/lib/strutil lib/strutil)
+
+add_subdirectory(${SOURCE}/pkg/types pkg/types)
+add_subdirectory(${SOURCE}/pkg/chess pkg/chess)
 
 target_link_libraries(${PROJECT_NAME}
     strutil
