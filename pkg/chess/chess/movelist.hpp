@@ -17,7 +17,7 @@
 #include <array>
 #include <cassert>
 
-#include "types.hpp"
+#include "types/types.hpp"
 
 #include "move.hpp"
 

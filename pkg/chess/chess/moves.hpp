@@ -17,7 +17,7 @@
 #include <cassert>
 #include <array>
 
-#include "types.hpp"
+#include "types/types.hpp"
 
 #include "bitboard.hpp"
 #include "color.hpp"

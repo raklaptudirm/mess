@@ -29,7 +29,7 @@
 #include "bitboard.hpp"
 #include "position.hpp"
 
-#include "types.hpp"
+#include "types/types.hpp"
 
 namespace Chess {
     class Board {

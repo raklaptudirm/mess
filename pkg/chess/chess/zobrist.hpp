@@ -14,10 +14,10 @@
 #ifndef CHESS_ZOBRIST
 #define CHESS_ZOBRIST
 
+#include "types/types.hpp"
+
 #include "piece.hpp"
 #include "square.hpp"
-
-#include "types.hpp"
 
 namespace Chess {
     class Hash {

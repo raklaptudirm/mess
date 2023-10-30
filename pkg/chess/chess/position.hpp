@@ -18,7 +18,7 @@
 #include <cassert>
 #include <utility>
 
-#include "types.hpp"
+#include "types/types.hpp"
 
 #include "fen.hpp"
 #include "move.hpp"

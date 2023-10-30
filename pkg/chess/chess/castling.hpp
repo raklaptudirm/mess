@@ -18,7 +18,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "types.hpp"
+#include "types/types.hpp"
 
 #include "square.hpp"
 #include "bitboard.hpp"
@@ -347,7 +347,7 @@ namespace Chess::Castling {
 
             // Populate the attacksMask field of Info.
             // Attack masks are the squares between the castling King and its end square both inclusive.
-            // However, whether the king is in check is checks differently so only include the end Square.
+            // However, whether the king is in check is checks differently so only chess the end Square.
             attacksMask[static_cast<uint8>(Dimensions::WhiteH)] = BitBoards::Between2(whiteKing,  Ends::WhiteKingH);
             attacksMask[static_cast<uint8>(Dimensions::WhiteA)] = BitBoards::Between2(whiteKing,  Ends::WhiteKingA);
             attacksMask[static_cast<uint8>(Dimensions::BlackH)] = BitBoards::Between2(blackKing,  Ends::BlackKingH);

@@ -14,7 +14,7 @@
 #ifndef CHESS_MOVE_GENERATION
 #define CHESS_MOVE_GENERATION
 
-#include "types.hpp"
+#include "types/types.hpp"
 
 #include "move.hpp"
 #include "board.hpp"
@@ -143,7 +143,7 @@ namespace Chess::Moves {
                         // Pawn/Knight checks cannot be blocked. Only possible moves
                         // by non-king pieces is capturing the checking piece.
                         return position.Checkers;
-                    // Sliding piece moves can be blocked, so include the between
+                    // Sliding piece moves can be blocked, so chess the between
                     // squares in the checkmask along with the checking piece.
                     return BitBoards::Between2(king, checkerSq);
             }

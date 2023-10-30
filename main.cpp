@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include "../pkg/chess/move.hpp"
-#include "../pkg/chess/square.hpp"
-#include "../pkg/chess/board.hpp"
+#include "chess/move.hpp"
+#include "chess/square.hpp"
+#include "chess/board.hpp"
 
-#include "types.hpp"
+#include "types/types.hpp"
 
 // NOLINTNEXTLINE chrono header unnecessary in Darwin.
 #include <chrono>

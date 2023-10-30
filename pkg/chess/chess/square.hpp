@@ -17,9 +17,9 @@
 #include <string>
 #include <cassert>
 
-#include "direction.hpp"
+#include "types/types.hpp"
 
-#include "types.hpp"
+#include "direction.hpp"
 
 namespace Chess {
     struct File {

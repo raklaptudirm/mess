@@ -18,9 +18,9 @@
 #include <string>
 #include <array>
 
-#include "types.hpp"
+#include "types/types.hpp"
 
-#include "../../lib/strutil.h"
+#include "strutil/strutil.h"
 
 #include "piece.hpp"
 #include "square.hpp"

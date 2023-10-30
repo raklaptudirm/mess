@@ -17,7 +17,7 @@
 #include <string>
 #include <cassert>
 
-#include "types.hpp"
+#include "types/types.hpp"
 
 namespace Chess {
     // Color struct represents the chess colors. Usually this refers

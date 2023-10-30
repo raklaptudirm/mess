@@ -14,7 +14,7 @@
 #ifndef CHESS_DIRECTION
 #define CHESS_DIRECTION
 
-#include "types.hpp"
+#include "types/types.hpp"
 
 #include "color.hpp"
 

@@ -17,7 +17,7 @@
 #include <string>
 #include <cassert>
 
-#include "types.hpp"
+#include "types/types.hpp"
 
 #include "piece.hpp"
 #include "color.hpp"

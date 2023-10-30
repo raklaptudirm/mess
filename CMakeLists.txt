@@ -52,25 +52,30 @@ endif()
 
 include(${CPM_DOWNLOAD_LOCATION})
 
+# ========================== #
+# Include Required Libraries #
+# ========================== #
+
+add_subdirectory(lib/strutil)
+
+add_subdirectory(pkg/types)
+add_subdirectory(pkg/chess)
+
 # ===================== #
 # Setup Mess Executable #
 # ===================== #
 
-#set(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(MessMainFile "${PROJECT_SOURCE_DIR}/main.cpp")
 
-#set(MessMainFile "${SOURCE}/main.cpp")
+file(GLOB MessCppFiles "${PROJECT_SOURCE_DIR}/lib/**/*.h")
 
-#file(GLOB MessHppFiles "${SOURCE}/pkg/chess/**/*.hpp")
-#file(GLOB MessCppFiles "${SOURCE}/pkg/chess/**/*.cpp")
+set(SOURCES
+    ${MessMainFile} ${MessCppFiles}
+)
 
-#set(SOURCES
-#    ${MessMainFile}
-#    ${MessHppFiles} ${MessCppFiles}
-##)
+add_executable(${PROJECT_NAME} ${SOURCES})
 
-#add_executable(${PROJECT_NAME} ${SOURCES})
-
-#target_link_libraries(${PROJECT_NAME} types)
-
-add_subdirectory(src/pkg/types)
-add_subdirectory(src/cmd)
+target_link_libraries(${PROJECT_NAME}
+    strutil
+    types chess
+)
