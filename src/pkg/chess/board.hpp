@@ -142,8 +142,8 @@ namespace Chess {
             }
 
             // Determine the change in castling rights, if any.
-            // TODO: add castling rights to zobrist hash
             const Castling::Rights change = castlingInfo.Mask(source) + castlingInfo.Mask(target);
+            position.Hash -= Keys::CastlingRights(change & position.Rights);
             position.Rights -= change;
 
             // Remove the moving piece.
@@ -207,6 +207,8 @@ namespace Chess {
 
             // Generate checker BitBoard.
             position.GenerateCheckers();
+
+            assert(position.Hash == Position::ZobristHash(position));
         }
 
         // UndoMove undoes the last chess move made on the Board.

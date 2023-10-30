@@ -54,8 +54,10 @@ namespace Chess {
     };
 
     namespace Keys {
+        constexpr Hash None = Hash(0);
+
         namespace {
-            constexpr uint64 psqt[Square::N][Square::N] = {
+            constexpr std::array<std::array<uint64, Square::N>, ColoredPiece::N> psqt = {{
                 {0x083610fb1cd7c6a5, 0xa37f944be9dfc323, 0xf6abbe2515a93cbb, 0x014d5ce796d3ea21, 0x46762749c86b2be7, 0xaf8f7e5e5ed8dab6, 0x650f5e0808e360fa, 0x92392e42419e33d7, 0x3f00957bf619fabd, 0x277059f962b2ad51, 0xd5e6b582d55f02f8, 0x6a8fc1e493122621, 0xb93875281e1a9e10, 0xfdccfe46fd5c65b6, 0x8fe7670648261096, 0xfaf02033d4a8e4be, 0x4cdbf1c399a0d591, 0x15ab0047084d6a72, 0x04c803b639b31ccf, 0xafc8b6cdc9cd9178, 0x9f6489ce28d8e4df, 0x6e0f22474ea92533, 0xc67d7cfe40573fbc, 0xc6e2de374960b2d3, 0x3dd9ff4b4cb20377, 0x2732a77574a34c97, 0x90109f006eb02f00, 0xd1d6984031b00ea1, 0x2222761e1ff24f3c, 0x3046e312f5926dd8, 0x2ee49120253af727, 0x868f3eb27661d798, 0xb5c64ce3d8887ca5, 0xe7eb41a397897ef8, 0x8be01949fc53c6e3, 0xc431f31919856a9b, 0x427fea13e941741b, 0x545ac69f3d1c6634, 0x5330e8f007f7a79c, 0xe1017ea38e3edacc, 0x3fd71ac257d29c3a, 0x211161dd93d52f71, 0x4b828af57d3a4472, 0xb757239537eb85e1, 0x70594501903e1f99, 0xb29c35ab5d55ca77, 0xfee1f0e1793f9ae3, 0x1493c090bdf0e21d, 0xff558a38b78e694e, 0xb2f1501e42d8c37f, 0x52e51685a29c6033, 0xdf11a0bcc1c921d3, 0xa4517cced14456a7, 0xe8e7e7b5f94817a8, 0xe5e60a7e4c3153a6, 0x699fc03bfc3ad0b3, 0x3c07bb3c37d3d153, 0x6251bd8731c30cb2, 0xc3dea9c62c4edca8, 0x607c06832e583a9e, 0xa2574452c4b0dd15, 0xdd1b4c11b5a1ad7d, 0x04a2634682c1aaad, 0x8c165c27b93899a1},
                 {0x7adfd3d554658027, 0xfd774b1530cf1356, 0xfbebe15b01385c83, 0x062d679429588cb4, 0x6752115c2c5326e8, 0x51b42635f0cdc9aa, 0xae93c5295995b5f8, 0xd7b0bcd44364a6c6, 0x3b5ff8aaa4b255a9, 0x6c7f1261a536649a, 0xe8aa5791cc441371, 0xd86b5875c7dcb86d, 0x9a46cfd78ed9b762, 0xa0e117135d96df38, 0x9478ea3e9293fb5a, 0x03a733f03155429c, 0xd693ff9c09f873e8, 0x2a3d8dad465630ca, 0x0edafa049fd439b0, 0x090729732b690837, 0x5279c76801154a6a, 0x005d1b1daadc0167, 0xe8460df1498fcf95, 0xc1f9c15076df65f5, 0x0e99df998d80d424, 0x82c9e119ed321b0a, 0xa8dba34133a2004c, 0x3bb2efc57cd90111, 0xf0ec0e4129421d3c, 0xc0782c93ad3142c5, 0xdd61e5b15ff6b122, 0x455dd5d93aed39d5, 0x43e84734883942a1, 0xf3e1b7621ac2f5f5, 0x2179dcc18a2e0bc3, 0xe53a1c459f32878b, 0xeba0a229f4d45afb, 0x7a8cfe54e35fc5e7, 0x036543ee6e22fe10, 0x95e5fffd0af43e20, 0xbbcb0800930bfb77, 0x9217dc6bb35ca3e6, 0xf2cb1ab44210a347, 0xc51cbb72992489db, 0xbef5df21c347a8e1, 0x11ab10dbdfb93abe, 0x2bc604b273b84e04, 0xb115232b2e73a311, 0x163477644bd47fb5, 0x4b254d8161f32805, 0x63ef3c964052f0f8, 0x98dff249223f96ca, 0x6b07106fd6bceddc, 0x768ff02e843aad10, 0xb577f171389c94bb, 0x366fbe11e18cee44, 0x26968ac24a683664, 0x5cf0f35aa2aa6bbf, 0xbb13cca6b6051c0a, 0xa8f18e41930fd83f, 0x2dd3abe39d4af1e3, 0xe5ef7fe684965153, 0xcf8485194d6cb250, 0xe4665a4568064f04},
                 {0x28dfad0a205b2e9c, 0x3465686005390915, 0x3b90f6e1f6c56840, 0xe4109f19e9fa7f95, 0x11d46f28d3dace84, 0xfe2bb5b257be494f, 0x7c2967e1b1ed0b95, 0xe43b4a381a3a37cf, 0x695059d5ffe6fbbf, 0xb2f9e81b811a7170, 0xcf46e879c65fe0ad, 0xb9f97cd8a4d78595, 0xc02a516db8ae144f, 0xad435686fb04e9ec, 0xf82bbb6f352a3960, 0xe6e42dc57d2df3e0, 0xd187aa3cdbedd5b0, 0xf4aec79145d15fae, 0xae9c3fca7088fe8f, 0xf873076c70c5e238, 0x8e94cbcfbe2f8eb5, 0xa69dbbe1e61f1481, 0x57c6ac4cd8547a67, 0xee976d8cb38ecb47, 0x82c4c4591e6a3619, 0x2c17d11bfbfd153f, 0xd023af78940fafde, 0x09cb7b8b3635c0f8, 0x9d339b95075e5f21, 0x618d55829c196453, 0x99872d72aa4b5bb1, 0x28411a439cfab02f, 0x0447c4980dd18c0b, 0x0a727dd8203971a7, 0x4d64017ea28444f8, 0x7933f58f03881b90, 0x0408e8373ef716fa, 0x7cccc649e930bbad, 0x90af3b4043e9899c, 0x4c3d73f5fb212cb9, 0xaeb57acbe523727b, 0xce31b1ba42dfa5ec, 0xbb49d484582c2b00, 0x605e3e628c10baf6, 0x375b37391ac9f3e3, 0xcd9c35bf28764550, 0xf7fa103085c18847, 0x7515338408400c09, 0x68db9f000c9ae26d, 0x7ee7c64e4a40bac1, 0x5e4bfb864335d91b, 0x54460f903f65383c, 0x97d82484d05f13ba, 0xc2e48b075cc5ee40, 0x740dffe55366710c, 0xf625ead458cb5363, 0x25edad6808412086, 0x3c5f9a8f6b509e77, 0x0f45f0963da28643, 0xf1e7394e16dbad3d, 0x67aaffa8538ae041, 0xb9c83a569c2b2064, 0x623d092e66653e08, 0xaadd09b034e21dfe},
@@ -68,9 +70,9 @@ namespace Chess {
                 {0x1c6a15e74c484818, 0x394ecc7315c776b3, 0x8b338c025467af83, 0x755df72e74e28c2c, 0x096102c2f4721596, 0xda324813d5f5165c, 0x13a72cf0f2f0c8c4, 0xfe8772410008712a, 0x3b640efbb53b4127, 0x69779f11fc633452, 0x75de90b625fda51d, 0x4b9c82ee1e1cb305, 0x6eace48f276be344, 0x32d00fceb789ec71, 0xf1faa8b8a4addd4a, 0x6b2dd36fbf2e5ec4, 0xad2bb7a46b82cab4, 0x49012620972ce6ce, 0x32dc03c3cf95b8b8, 0xa9f463724298da92, 0x9e80e8729b9e098e, 0x94a5f1293de1972c, 0x0577e33a55f297eb, 0x16f3b7b1b2c800d4, 0x934d62300037b090, 0x30ba5035eaa9f1d3, 0xcdca15d562592c40, 0xb0aae4af24edd99d, 0x7eb866dc206dfa52, 0x91602ec574b77474, 0xa98abd14dde57859, 0xaef082e17aae0e3d, 0x00c39cb0f82e24a1, 0x4ea8d7b26183d512, 0x49d058a520fcfcfc, 0x50a8f5a501b860ff, 0xac97a5b426ab824a, 0x9efc8ac042139f45, 0xf0d84b3d42b5cb99, 0xb1e8c0adab3d57d7, 0x1c7a0fba85a8aaeb, 0x87565f24bdc3ee7a, 0x77552ed09b8b4101, 0x95ee84237775535c, 0xf148623c65791a53, 0x306f04eadff39f55, 0xcfb27c101bfc3dae, 0x25b1bc975e125ba6, 0xbe2e97660e85f62b, 0x55350c3c99bb7a26, 0xa72aba5099663783, 0x5198c5e6a82368d3, 0xfe68bbdf927faa6e, 0x7338bf90c9ed7039, 0x2e5078e9d6b3b8e5, 0x40684cd6b9c6cac0, 0xf3979178e731c738, 0xd392f50ab651e966, 0x0c7916677a67f9aa, 0xbac5b81b53946b68, 0xf47d692e0a0ae20e, 0xaf98a3b93ac483fd, 0x36c3343929a28281, 0x01177bbc613bdfd7},
                 {0x68085e26dbe3ad56, 0x9a9d46582a40120b, 0x8aa6abbd2cad7d96, 0x5527a24035773ed8, 0xc79805af15fa519c, 0xa9a03e8fb9f60885, 0x82f999d825db04e0, 0x49db5f367e106034, 0x83fbfc6a4aa8f161, 0xc1daedbaa5d01451, 0x7d938e607492dfe8, 0x622135de5b37f9c1, 0x6946d729ce3a1019, 0xb19a3dfdd10d34a8, 0xbff22fd4f4268351, 0xc329a8b2c951b7ff, 0x63da62e7e591dcec, 0xbf007b12ec4307ac, 0x792444890a0570c6, 0x72318d01e4ccf0a4, 0x50e0d2417bdb719b, 0x1565a2897030890e, 0xf9d5d18956242293, 0x64104ef221973e5a, 0x5dd2fda8c41eb447, 0x175ed04f5cba8520, 0x4b41274dc059c1de, 0x52c6a011722f7525, 0xdeb942504bc8e782, 0xb458d3594d6cae08, 0x1eac4cb3fa22358e, 0xb8b970f1500a1119, 0x3c74e78cc4a6420f, 0x978ef947dd452dce, 0x3e2e951e6b2f0efe, 0xa56f9e5d36f3a00b, 0xf77371e0e30687d4, 0xf530ae19bf5498e5, 0x772163240b406f47, 0x8bf14ec5102856f2, 0xd29afaf89fbc4012, 0x2f37b6297c95b3f0, 0xf99323223fa8d818, 0xbd33ffd00a14c9aa, 0xfc8af274e35822fe, 0x635a69eaa68adee7, 0x57d645d580e935f0, 0x3fc98238def97d41, 0x1ac557171e66091b, 0x28d6dd4d2a8e542c, 0xf47a8200e4b78fa8, 0xcb27461f07dcaeda, 0x0344565cd7c80558, 0xd6f32dd8e7a4c265, 0xc963e291da80d2ff, 0x441d93cafd5df3df, 0x6f0df8634290aa45, 0x0556b564010e6b21, 0x3d3e34e8eff6e213, 0xdf37a92c959fc1b8, 0x6c7c380625981e73, 0x9fe365590db2e003, 0x9391b03d2f536994, 0x6188e8d1db75331d},
                 {0xabab879cd5585f2f, 0xfdb8a69bc4052dd5, 0xa097af8b98ae5653, 0xa7262be7fa75d97b, 0xda8f8ae4c5526fba, 0xac8d445dc93990b3, 0x311e44664ea37966, 0x72358b3b76d6e28b, 0xfd84b139d74da2ad, 0xfbad215ccd898848, 0x8c7a00a136a05ffd, 0x7709e685c945ee73, 0xeb32efd0627aecc1, 0x3e6f41983f953cd8, 0x46ebf3bd647cc189, 0x21e91003e0e722b7, 0x5ff78aee36f5e7df, 0x7f0b0b2514024f0f, 0x31a7b80fad47192f, 0xd48ca8c3be089ea4, 0x6220c3ea0477a100, 0xcda3d82077f85837, 0x29a7477b3274955b, 0xb46b8fa6c96a547c, 0xc76e82f848d82a29, 0x9912a9640c62023d, 0xc59e8a1a77cabde7, 0x82ac3fd8bb87ecff, 0x5c7fb3bfff378cbb, 0xb0a9a087ea30e56f, 0x01c4f4855092269f, 0x53e0dc61631cfd20, 0xb482604ea6d2a918, 0xc0be737023dcdef6, 0xbbdb426b8e95919e, 0xe4e54404356b9992, 0x1d8fd20388787282, 0x4a85dc29bf8e1109, 0x450eb0cb187bcafb, 0xf51e953f2053516a, 0x8d7a82dfecd6f2f0, 0x82ee9c1328eaf825, 0x80b8a490de34e58c, 0xc199c2cf6fa3c4a0, 0x404f57fd165644eb, 0xf335001fc9324ab4, 0xb1109adca3c18129, 0x2b65dc52c43442c5, 0x36f814c72a173952, 0xce5c402e9cf3bc46, 0x043c3cba93773393, 0x397305568e833188, 0x03c8b53be7ebb8f4, 0xd8c9ea4dbbe0caba, 0xe4c12637188a7f2f, 0xb3c39c29782b86c8, 0x9430009ef3092669, 0xfa7d3f1cc2dae40e, 0x6ead2df26cbef22b, 0x92060073bd794085, 0xaef2c95bd9ad5886, 0xc13f07c270b5cace, 0x5b21dd821267ea79, 0x2fe9a4d5aa8d43f6},
-            };
+            }};
 
-            constexpr uint64 ep[File::N] = {
+            constexpr std::array<uint64, File::N> ep = {
                 0x14c6099d731723b7,
                 0x1cec25e490795dfb,
                 0xa2c8015acdd7305f,
@@ -80,6 +82,27 @@ namespace Chess {
                 0x2fe646b777886e9f,
                 0xc045c1dde772ac79,
             };
+
+            constexpr uint64 whiteH = 0x4d28598573750b10;
+            constexpr uint64 whiteA = 0xdfe34de8892603ad;
+            constexpr uint64 blackH = 0x177ab8314c2b200e;
+            constexpr uint64 blackA = 0xc07e0a697776ea93;
+
+            constexpr std::array<uint64, 16> castling = [](){
+                std::array<uint64, 16> keys = {};
+
+                for (uint8 rawRights = 0; rawRights < 16; rawRights++) {
+                    keys[rawRights] = 0UL;
+
+                    auto rights = Castling::Rights(rawRights);
+                    if (rights.Has(Castling::WhiteH)) keys[rawRights] ^= whiteH;
+                    if (rights.Has(Castling::WhiteA)) keys[rawRights] ^= whiteA;
+                    if (rights.Has(Castling::BlackH)) keys[rawRights] ^= blackH;
+                    if (rights.Has(Castling::BlackA)) keys[rawRights] ^= blackA;
+                }
+
+                return keys;
+            }();
         }
 
         constexpr Hash SideToMove = Hash(0x5ec3a196160b9a06);
@@ -90,6 +113,10 @@ namespace Chess {
 
         constexpr inline Hash EnPassantTarget(Square target) {
             return Hash(ep[static_cast<uint8>(target.File())]);
+        }
+
+        constexpr inline Hash CastlingRights(Castling::Rights rights) {
+            return Hash(castling[static_cast<uint8>(rights)]);
         }
     }
 }

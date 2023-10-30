@@ -195,13 +195,13 @@ namespace Chess {
         // Constructor of Position which operates on a parsed FEN string.
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
         explicit Position(const FEN& fen) {
-            Hash = {};
+            Hash = Keys::None;
 
             // Copy the relevant fields.
-            SideToMove = fen.SideToMove;
-            EpTarget   = fen.EPTarget;
+            SideToMove = fen.SideToMove;     if (SideToMove !=    Color::White) Hash += Keys::SideToMove;
+            EpTarget   = fen.EPTarget;       if (EpTarget   !=   Square::None ) Hash += Keys::EnPassantTarget(EpTarget);
+            Rights     = fen.CastlingRights; if (Rights     != Castling::None ) Hash += Keys::CastlingRights(Rights);
             DrawClock  = fen.DrawClock;
-            Rights     = fen.CastlingRights;
 
             // Zero out the board representation.
             PieceBBs = {};
@@ -268,6 +268,21 @@ namespace Chess {
             // Also store the number of checkers in the other variable.
             Checkers = (checkingP + checkingN + checkingD + checkingL) & enemies;
             CheckNum = Checkers.PopCount();
+        }
+
+        static constexpr Chess::Hash ZobristHash(const Position& position) {
+            auto hash = Keys::None;
+
+            if (position.SideToMove != Color::White) hash += Keys::SideToMove;
+            if (position.EpTarget != Square::None) hash += Keys::EnPassantTarget(position.EpTarget);
+
+            hash += Keys::CastlingRights(position.Rights);
+
+            for (uint8 square = 0; square < Square::N; square++)
+                if (position.Mailbox[square] != ColoredPiece::None)
+                    hash += Keys::PieceOnSquare(position.Mailbox[square], Square(square));
+
+            return hash;
         }
     };
 
