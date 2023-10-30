@@ -19,7 +19,7 @@
 
 #include "direction.hpp"
 
-#include "../util/types.hpp"
+#include "types.hpp"
 
 namespace Chess {
     struct File {

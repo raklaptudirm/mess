@@ -29,6 +29,8 @@
 #include "bitboard.hpp"
 #include "position.hpp"
 
+#include "types.hpp"
+
 namespace Chess {
     class Board {
     private:

@@ -17,6 +17,8 @@
 #include <array>
 #include <cassert>
 
+#include "types.hpp"
+
 #include "move.hpp"
 
 namespace Chess {

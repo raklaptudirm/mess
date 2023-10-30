@@ -18,6 +18,8 @@
 #include <cassert>
 #include <utility>
 
+#include "types.hpp"
+
 #include "fen.hpp"
 #include "move.hpp"
 #include "moves.hpp"

@@ -18,7 +18,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "../util/types.hpp"
+#include "types.hpp"
 
 #include "square.hpp"
 #include "bitboard.hpp"

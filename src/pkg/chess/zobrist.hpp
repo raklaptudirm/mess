@@ -17,7 +17,7 @@
 #include "piece.hpp"
 #include "square.hpp"
 
-#include "../util/types.hpp"
+#include "types.hpp"
 
 namespace Chess {
     class Hash {

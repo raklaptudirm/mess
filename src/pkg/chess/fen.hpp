@@ -18,6 +18,8 @@
 #include <string>
 #include <array>
 
+#include "types.hpp"
+
 #include "../../lib/strutil.h"
 
 #include "piece.hpp"

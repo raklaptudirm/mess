@@ -17,7 +17,7 @@
 #include <bit>
 #include <array>
 
-#include "../util/types.hpp"
+#include "types.hpp"
 
 #include "square.hpp"
 

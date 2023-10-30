@@ -17,6 +17,8 @@
 #include <cstdint>
 #include <string>
 
+#include "types.hpp"
+
 #include "square.hpp"
 #include "piece.hpp"
 #include "castling.hpp"

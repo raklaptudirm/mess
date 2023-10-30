@@ -5,9 +5,23 @@ project(Mess)
 # CMake Flags Initialization #
 # ========================== #
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "-march=native")
+set(CMAKE_CXX_FLAGS "-march=native -flto")
 set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Wextra -g -ftime-report -fsanitize=undefined -fsanitize=address -fsanitize=leak")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+
+# ============================ #
+# Profile Guided Optimizations #
+# ============================ #
+if(PGO MATCHES "True")
+    message(STATUS "PGO: Enabled")
+    if(EXISTS ${CMAKE_BINARY_DIR}/pgo.profdata)
+        message(STATUS "PGO: Using existing profile data at: ${CMAKE_BINARY_DIR}/pgo.profdata")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-use=${CMAKE_BINARY_DIR}/pgo.profdata")
+    else()
+        message(STATUS "PGO: No existing profile data found. Compiling with instrumentation.")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate=${CMAKE_BINARY_DIR}/pgo.profraw")
+    endif()
+endif()
 
 # ======================== #
 # Measure Compilation Time #
@@ -41,13 +55,22 @@ include(${CPM_DOWNLOAD_LOCATION})
 # ===================== #
 # Setup Mess Executable #
 # ===================== #
-file(GLOB MessPackages
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/pkg/chess/*"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/pkg/util/*"
-)
 
-file(GLOB MessLibraries
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/lib/*"
-)
+#set(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-add_executable(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp" ${MessPackages} ${MessLibraries} src/pkg/uci/uci.hpp)
+#set(MessMainFile "${SOURCE}/main.cpp")
+
+#file(GLOB MessHppFiles "${SOURCE}/pkg/chess/**/*.hpp")
+#file(GLOB MessCppFiles "${SOURCE}/pkg/chess/**/*.cpp")
+
+#set(SOURCES
+#    ${MessMainFile}
+#    ${MessHppFiles} ${MessCppFiles}
+##)
+
+#add_executable(${PROJECT_NAME} ${SOURCES})
+
+#target_link_libraries(${PROJECT_NAME} types)
+
+add_subdirectory(src/pkg/types)
+add_subdirectory(src/cmd)

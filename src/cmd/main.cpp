@@ -1,8 +1,10 @@
 #include <iostream>
 
-#include "pkg/chess/move.hpp"
-#include "pkg/chess/square.hpp"
-#include "pkg/chess/board.hpp"
+#include "../pkg/chess/move.hpp"
+#include "../pkg/chess/square.hpp"
+#include "../pkg/chess/board.hpp"
+
+#include "types.hpp"
 
 // NOLINTNEXTLINE chrono header unnecessary in Darwin.
 #include <chrono>
@@ -48,11 +50,13 @@ uint64 perft(Board& board, int8 depth) {
 }
 
 int main(int argc, char const *argv[]) {
-    assert(argc == 3);
-    Board board = Board(argv[1]);
+    const auto fen = argc >= 2 ? argv[1] : "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    const auto dep = argc >= 3 ? argv[2] : "7";
+
+    Board board = Board(fen);
 
     const auto start = std::chrono::steady_clock::now();
-    const auto nodes = perft<true, true>(board, (int8)std::atoi(argv[2]));
+    const auto nodes = perft<true, true>(board, (int8)std::atoi(dep));
     const auto end = std::chrono::steady_clock::now();
 
     const std::chrono::duration<float64> delta = end - start;
