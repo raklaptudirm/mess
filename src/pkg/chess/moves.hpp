@@ -18,7 +18,6 @@
 #include <array>
 
 #include "../util/types.hpp"
-#include "../util/reverse.hpp"
 
 #include "bitboard.hpp"
 #include "color.hpp"
