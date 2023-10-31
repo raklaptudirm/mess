@@ -105,7 +105,7 @@ help:
 	@echo "                                - Release: fastest and most optimized build"
 	@echo "                                - RelWithDebInfo: Release + asserts"
 	@echo
-	@echo "    EXE     = mess              the path to the built executable"
+	@echo "    EXE     = bin/PROGRAM       the path to the built executable"
 	@echo
 	@echo "    C       = clang             the C   compiler used for the build"
 	@echo "    CXX     = clang++           the C++ compiler used for the build"
