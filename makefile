@@ -22,7 +22,7 @@ override SRC_PATH = cmd/$(PROGRAM)
 # ====================== #
 # Engine Executable Name #
 # ====================== #
-EXE = ${PROGRAM}
+EXE = bin/${PROGRAM}
 
 # ======================= #
 # Code Building Directory #
