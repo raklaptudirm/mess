@@ -98,6 +98,7 @@ help:
 	@echo "VARIABLES: (VARIABLE = DEFAULT_VALUE)"
 	@echo "    PROGRAM = mess              the program that will be built. possible values:"
 	@echo "                                - mess: the actual chess engine"
+	@echo "                                - tests: catch2 exe containing all unit tests"
 	@echo
 	@echo "    CONFIG  = RelWithDebInfo    the build configuration to use. possible values:"
 	@echo "                                - Debug: full debug and sanitization information"
