@@ -231,6 +231,50 @@ namespace Chess {
         [[nodiscard]] constexpr std::string ToString() const {
             return Position().ToString();
         }
+
+        template <bool BULK_COUNT, bool SPLIT_MOVES>
+        [[maybe_unused]] int64 Perft(int32 depth) {
+            return perft<BULK_COUNT, SPLIT_MOVES>(*this, depth);
+        }
+
+    private:
+        template <bool BULK_COUNT, bool SPLIT_MOVES>
+        // NOLINTNEXTLINE(misc-no-recursion)
+        static int64 perft(Board& board, int32 depth) {
+            // Return 1 for current node at depth 0.
+            if (depth <= 0)
+                return 1;
+
+            // Generate legal move-list.
+            const auto moves = board.GenerateMoves<true, true>();
+
+            // When bulk counting is enabled, return the length of
+            // the legal move-list when depth is one. This saves a
+            // lot of time cause it saves make moves and recursion.
+            if (BULK_COUNT && !SPLIT_MOVES && depth == 1)
+                return moves.Length();
+
+            // Variable to cumulate node count in.
+            int64 nodes = 0;
+
+            // Recursively call perft for child nodes.
+            for (const auto move : moves) {
+                board.MakeMove(move);
+                const int64 delta = perft<BULK_COUNT, false>(board, depth - 1);
+                board.UndoMove();
+
+                nodes += delta;
+
+                // If split moves is enabled, display each child move's
+                // contribution to the node count separately.
+                if (SPLIT_MOVES)
+                    std::cout << move << ": " << delta << std::endl;
+
+            }
+
+            // Return cumulative node count.
+            return nodes;
+        }
     };
 
     constexpr inline std::ostream& operator<<(std::ostream& os, const Board& board) {

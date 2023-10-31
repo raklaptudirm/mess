@@ -1,3 +1,6 @@
 [submodule "lib/strutil/strutil"]
 	path = lib/strutil/strutil
 	url = https://github.com/tgalaj/strutil
+[submodule "lib/catch2"]
+	path = lib/catch2
+	url = https://github.com/catchorg/Catch2.git
