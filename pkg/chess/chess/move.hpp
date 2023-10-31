@@ -17,8 +17,6 @@
 #include <cstdint>
 #include <string>
 
-#include "types/types.hpp"
-
 #include "square.hpp"
 #include "piece.hpp"
 #include "castling.hpp"
@@ -26,15 +24,15 @@
 namespace Chess {
     class Move {
         private:
-            uint16 internal;
+            uint16_t internal;
 
             static constexpr int SOURCE_WIDTH = 6;
             static constexpr int TARGET_WIDTH = 6;
             static constexpr int MVFLAG_WIDTH = 4;
 
-            static constexpr uint16 SOURCE_MASK = (1 << SOURCE_WIDTH) - 1;
-            static constexpr uint16 TARGET_MASK = (1 << TARGET_WIDTH) - 1;
-            static constexpr uint16 MVFLAG_MASK = (1 << MVFLAG_WIDTH) - 1;
+            static constexpr uint16_t SOURCE_MASK = (1 << SOURCE_WIDTH) - 1;
+            static constexpr uint16_t TARGET_MASK = (1 << TARGET_WIDTH) - 1;
+            static constexpr uint16_t MVFLAG_MASK = (1 << MVFLAG_WIDTH) - 1;
 
             static constexpr int SOURCE_OFFSET = 0;
             static constexpr int TARGET_OFFSET = SOURCE_OFFSET + SOURCE_WIDTH;
@@ -54,10 +52,10 @@ namespace Chess {
             // of 218, which has been rounded to 220 here.
             constexpr static int MaxInPosition = 220;
 
-            constexpr inline Move(Square source, Square target, uint16 flag) {
+            constexpr inline Move(Square source, Square target, uint16_t flag) {
                 internal = (flag << MVFLAG_OFFSET) |
-                    (static_cast<uint16>(static_cast<uint8>(source) << SOURCE_OFFSET)) |
-                    (static_cast<uint16>(static_cast<uint8>(target) << TARGET_OFFSET));
+                    (static_cast<uint16_t>(static_cast<uint8_t>(source) << SOURCE_OFFSET)) |
+                    (static_cast<uint16_t>(static_cast<uint8_t>(target) << TARGET_OFFSET));
             }
 
             [[nodiscard]] constexpr inline Square Source() const {
@@ -68,14 +66,14 @@ namespace Chess {
                 return Square((internal >> TARGET_OFFSET) & TARGET_MASK);
             }
 
-            [[nodiscard]] constexpr inline uint16 Flag() const {
+            [[nodiscard]] constexpr inline uint16_t Flag() const {
                 return (internal >> MVFLAG_OFFSET) & MVFLAG_MASK;
             }
 
             struct Flag {
                 // Flag for a Normal move i.e. none of the
                 // other flags are applicable to the move.
-                static constexpr uint16 Normal = 0;
+                static constexpr uint16_t Normal = 0;
 
                 /***************************
                  * Pawn Special Move Flags *
@@ -83,34 +81,34 @@ namespace Chess {
 
                 // Promotions Moves.
 
-                static constexpr uint16 NPromotion = 1; // Flag for promotion to a Knight.
-                static constexpr uint16 BPromotion = 2; // Flag for promotion to a Bishop.
-                static constexpr uint16 RPromotion = 3; // Flag for promotion to a Rook.
-                static constexpr uint16 QPromotion = 4; // Flag for promotion to a Queen.
+                static constexpr uint16_t NPromotion = 1; // Flag for promotion to a Knight.
+                static constexpr uint16_t BPromotion = 2; // Flag for promotion to a Bishop.
+                static constexpr uint16_t RPromotion = 3; // Flag for promotion to a Rook.
+                static constexpr uint16_t QPromotion = 4; // Flag for promotion to a Queen.
 
                 // Other Special Moves.
 
-                static constexpr uint16 EnPassant  = 5; // Flag for En Passant capture.
-                static constexpr uint16 DoublePush = 6; // Flag for Double Pawn Push.
+                static constexpr uint16_t EnPassant  = 5; // Flag for En Passant capture.
+                static constexpr uint16_t DoublePush = 6; // Flag for Double Pawn Push.
 
                 /******************
                  * Castling Flags *
                  ******************/
 
-                static constexpr uint16 CastleHSide = 7; // Flag for Castling O-O.
-                static constexpr uint16 CastleASide = 8; // Flag for Castling O-O-O.
+                static constexpr uint16_t CastleHSide = 7; // Flag for Castling O-O.
+                static constexpr uint16_t CastleASide = 8; // Flag for Castling O-O-O.
 
-                static constexpr uint16 FlagFrom(Castling::Side side) {
+                static constexpr uint16_t FlagFrom(Castling::Side side) {
                     if (side == Castling::Side::H)
                         return CastleHSide;
                     return CastleASide;
                 }
 
-                static constexpr bool IsPromotion(uint16 flag) {
+                static constexpr bool IsPromotion(uint16_t flag) {
                     return NPromotion <= flag && flag <= QPromotion;
                 }
 
-                static constexpr bool IsCastling(uint16 flag) {
+                static constexpr bool IsCastling(uint16_t flag) {
                     return flag == CastleHSide || flag == CastleASide;
                 }
             };

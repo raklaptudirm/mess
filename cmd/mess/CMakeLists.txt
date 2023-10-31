@@ -67,9 +67,8 @@ set(SOURCE ${PROJECT_SOURCE_DIR}/../..)
 
 add_subdirectory(${SOURCE}/lib/strutil lib/strutil)
 
-add_subdirectory(${SOURCE}/pkg/types pkg/types)
 add_subdirectory(${SOURCE}/pkg/chess pkg/chess)
 
 target_link_libraries(${PROJECT_NAME}
-    types chess
+    chess
 )

@@ -14,24 +14,24 @@
 #ifndef CHESS_DIRECTION
 #define CHESS_DIRECTION
 
-#include "types/types.hpp"
+#include <cstdint>
 
 #include "color.hpp"
 
 namespace Chess {
     struct Direction {
-        int8 internal = 0;
+        int8_t internal = 0;
 
-        constexpr inline explicit Direction(int8 direction) : internal(direction) {}
+        constexpr inline explicit Direction(int8_t direction) : internal(direction) {}
 
-        constexpr inline explicit operator int8() const {
-            return static_cast<int8>(internal);
+        constexpr inline explicit operator int8_t() const {
+            return static_cast<int8_t>(internal);
         }
 
         constexpr inline bool operator ==(const Direction&) const = default;
 
         constexpr inline Direction operator +(const Direction rhs) const {
-            return Direction(internal + static_cast<int8>(rhs));
+            return Direction(internal + static_cast<int8_t>(rhs));
         }
 
         constexpr inline Direction operator -() const {

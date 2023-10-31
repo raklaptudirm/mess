@@ -16,8 +16,7 @@
 
 #include <cassert>
 #include <array>
-
-#include "types/types.hpp"
+#include <cstdint>
 
 #include "bitboard.hpp"
 #include "color.hpp"
@@ -26,25 +25,25 @@
 namespace Chess::MoveTable {
     namespace {
         struct magic {
-            uint64 Relevant = 0;
-            uint64   Number = 0;
-            int32    Offset = 0;
+            uint64_t Relevant = 0;
+            uint64_t   Number = 0;
+            int32_t    Offset = 0;
 
             constexpr inline magic() = default;
 
-            constexpr inline magic(uint64 relevant, uint64 magic, int offset) :
+            constexpr inline magic(uint64_t relevant, uint64_t magic, int offset) :
                     Relevant(relevant), Number(magic), Offset(offset) {}
         };
 
         namespace blackMagic {
             namespace {
                 template<Piece piece>
-                constexpr inline uint8 pieceIndex() {
+                constexpr inline uint8_t pieceIndex() {
                     assert(piece == Piece::Bishop || piece == Piece::Rook);
-                    return static_cast<uint8>(piece) - 2;
+                    return static_cast<uint8_t>(piece) - 2;
                 }
                 // magic hash function shifts for each piece type.
-                constexpr std::array<uint8, 2> pieceShifts { 9, 12 };
+                constexpr std::array<uint8_t, 2> pieceShifts { 9, 12 };
 
                 // Table containing magic constants for sliding pieces.
                 // magic numbers and offsets are from Analog Hors's CozyChess
@@ -131,22 +130,22 @@ namespace Chess::MoveTable {
 
             template<Piece piece>
             constexpr inline magic GetMagic(const Square square) {
-                return magics[pieceIndex<piece>()][static_cast<uint8>(square)];
+                return magics[pieceIndex<piece>()][static_cast<uint8_t>(square)];
             }
 
             template<Piece piece>
-            constexpr inline uint32 Index(const Square square, const BitBoard occupied) {
-                constexpr uint8 pieceShift = 64 - pieceShifts[pieceIndex<piece>()];  // Shift of given piece.
+            constexpr inline uint32_t Index(const Square square, const BitBoard occupied) {
+                constexpr uint8_t pieceShift = 64 - pieceShifts[pieceIndex<piece>()];  // Shift of given piece.
 
                 // Get the relevant magic entry.
                 const magic magic = GetMagic<piece>(square);
 
                 // Mask off irrelevant blockers (outside or at end of rays).
-                const uint64 relevant = static_cast<uint64>(occupied) | magic.Relevant;
+                const uint64_t relevant = static_cast<uint64_t>(occupied) | magic.Relevant;
 
                 // Compute hash and finally, the index.
-                const uint64 hash = relevant * magic.Number;
-                return magic.Offset + static_cast<int32>(hash >> pieceShift);
+                const uint64_t hash = relevant * magic.Number;
+                return magic.Offset + static_cast<int32_t>(hash >> pieceShift);
             }
         }
 
@@ -160,7 +159,7 @@ namespace Chess::MoveTable {
                   BitBoard::Hyperbola(square, blockers, BitBoards::Rank(square.Rank()));
         }
 
-        constexpr std::array<std::array<uint64, Square::N>, Color::N> pawn {{
+        constexpr std::array<std::array<uint64_t, Square::N>, Color::N> pawn {{
             {
                 0x0000000000000200, 0x0000000000000500, 0x0000000000000a00, 0x0000000000001400,
                 0x0000000000002800, 0x0000000000005000, 0x000000000000a000, 0x0000000000004000,
@@ -199,7 +198,7 @@ namespace Chess::MoveTable {
             }
         }};
 
-        constexpr std::array<uint64, Square::N> knight {
+        constexpr std::array<uint64_t, Square::N> knight {
             0x0000000000020400, 0x0000000000050800, 0x00000000000A1100, 0x0000000000142200,
             0x0000000000284400, 0x0000000000508800, 0x0000000000A01000, 0x0000000000402000,
             0x0000000002040004, 0x0000000005080008, 0x000000000A110011, 0x0000000014220022,
@@ -221,11 +220,11 @@ namespace Chess::MoveTable {
         const blackMagic::Table sliding = []() {
             blackMagic::Table table = {};
 
-            for (uint8 sq = 0; sq < Square::N; sq++) {
+            for (uint8_t sq = 0; sq < Square::N; sq++) {
                 const Square square = Square(sq);
 
-                const uint64 bishopMask = ~blackMagic::GetMagic<Piece::Bishop>(square).Relevant;
-                const uint64 rookMask   = ~blackMagic::GetMagic<Piece::Rook  >(square).Relevant;
+                const uint64_t bishopMask = ~blackMagic::GetMagic<Piece::Bishop>(square).Relevant;
+                const uint64_t rookMask   = ~blackMagic::GetMagic<Piece::Rook  >(square).Relevant;
 
                 // Initialize Bishop Moves in table.
                 BitBoard blockers = BitBoards::Empty;
@@ -242,7 +241,7 @@ namespace Chess::MoveTable {
 
                     // Calculate the next subset of the Relevant Blocker Mask using
                     // the Carry-Rippler Trick to generate all subsets.
-                    blockers = BitBoard((static_cast<uint64>(blockers) - bishopMask) & bishopMask);
+                    blockers = BitBoard((static_cast<uint64_t>(blockers) - bishopMask) & bishopMask);
                 } while (blockers != BitBoards::Empty);
 
                 // Initialize Rook Moves in table.
@@ -260,14 +259,14 @@ namespace Chess::MoveTable {
 
                     // Calculate the next subset of the Relevant Blocker Mask using
                     // the Carry-Rippler Trick to generate all subsets.
-                    blockers = BitBoard((static_cast<uint64>(blockers) - rookMask) & rookMask);
+                    blockers = BitBoard((static_cast<uint64_t>(blockers) - rookMask) & rookMask);
                 } while (blockers != BitBoards::Empty);
             }
 
             return table;
         }();
 
-        constexpr std::array<uint64, Square::N> king {
+        constexpr std::array<uint64_t, Square::N> king {
             0x0000000000000302, 0x0000000000000705, 0x0000000000000E0A, 0x0000000000001C14,
             0x0000000000003828, 0x0000000000007050, 0x000000000000E0A0, 0x000000000000C040,
             0x0000000000030203, 0x0000000000070507, 0x00000000000E0A0E, 0x00000000001C141C,
@@ -289,15 +288,15 @@ namespace Chess::MoveTable {
 
     template<Color color>
     [[maybe_unused]] constexpr inline static BitBoard Pawn(Square square) {
-        return BitBoard(pawn[static_cast<uint8>(color)][static_cast<uint8>(square)]);
+        return BitBoard(pawn[static_cast<uint8_t>(color)][static_cast<uint8_t>(square)]);
     }
 
     [[maybe_unused]] constexpr inline static BitBoard Pawn(Color color, Square square) {
-        return BitBoard(pawn[static_cast<uint8>(color)][static_cast<uint8>(square)]);
+        return BitBoard(pawn[static_cast<uint8_t>(color)][static_cast<uint8_t>(square)]);
     }
 
     [[maybe_unused]] constexpr inline static BitBoard Knight(Square square) {
-        return BitBoard(knight[static_cast<uint8>(square)]);
+        return BitBoard(knight[static_cast<uint8_t>(square)]);
     }
 
     [[maybe_unused]] constexpr inline static BitBoard Bishop(Square square, BitBoard blockers) {
@@ -309,7 +308,7 @@ namespace Chess::MoveTable {
     }
 
     [[maybe_unused]] constexpr inline static BitBoard King(Square square) {
-        return BitBoard(king[static_cast<uint8>(square)]);
+        return BitBoard(king[static_cast<uint8_t>(square)]);
     }
 }
 

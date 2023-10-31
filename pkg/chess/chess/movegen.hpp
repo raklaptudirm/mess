@@ -14,7 +14,7 @@
 #ifndef CHESS_MOVE_GENERATION
 #define CHESS_MOVE_GENERATION
 
-#include "types/types.hpp"
+#include <cstdint>
 
 #include "move.hpp"
 #include "board.hpp"
@@ -90,7 +90,7 @@ namespace Chess::Moves {
         // Overload of serialize which infers the source square from the
         // target square and the target-source offset. It also accepts a
         // move flag which is packed into the final move.
-        template<Direction OFFSET, uint16 FLAG>
+        template<Direction OFFSET, uint16_t FLAG>
         inline void serialize(BitBoard targets) const {
             targets = targets & checkmask & territory;
             for (const auto target : targets) moves.Emplace(Move(target >> -OFFSET, target, FLAG));

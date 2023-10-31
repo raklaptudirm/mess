@@ -17,8 +17,7 @@
 #include <array>
 #include <cassert>
 #include <utility>
-
-#include "types/types.hpp"
+#include <cstdint>
 
 #include "fen.hpp"
 #include "move.hpp"
@@ -64,13 +63,13 @@ namespace Chess {
         // DrawClock records the current 50-move rule
         // draw clock which determines if the game is a
         // draw due to the said rule.
-        uint8 DrawClock;
+        uint8_t DrawClock;
 
         // CheckNum stores the number of checkers checking/
         // attacking the side to move's king. It can also
         // be considered as the number of set bits in the
         // Checkers BitBoard.
-        uint8 CheckNum;
+        uint8_t CheckNum;
 
         // Default constructor for Position, no fields are
         // initialized by calling this method.
@@ -82,14 +81,14 @@ namespace Chess {
             // Assert that the square and the piece are valid, and that
             // the target square is empty so that a piece can be placed.
             assert(square != Square::None && piece != ColoredPiece::None);
-            assert(Mailbox[static_cast<uint8>(square)] == ColoredPiece::None);
+            assert(Mailbox[static_cast<uint8_t>(square)] == ColoredPiece::None);
 
             // Insert the given piece into the mailbox representation.
-            Mailbox[static_cast<uint8>(square)] = piece;
+            Mailbox[static_cast<uint8_t>(square)] = piece;
 
             // Insert the given piece into the BitBoard representation.
-            PieceBBs[static_cast<uint8>(piece.Piece())].Flip(square);
-            ColorBBs[static_cast<uint8>(piece.Color())].Flip(square);
+            PieceBBs[static_cast<uint8_t>(piece.Piece())].Flip(square);
+            ColorBBs[static_cast<uint8_t>(piece.Color())].Flip(square);
 
             // Add the given piece to the Zobrist hash of the Position.
             Hash += Keys::PieceOnSquare(piece, square);
@@ -102,17 +101,17 @@ namespace Chess {
             assert(square != Square::None);
 
             // Fetch the piece present at the given square.
-            const ColoredPiece piece = Mailbox[static_cast<uint8>(square)];
+            const ColoredPiece piece = Mailbox[static_cast<uint8_t>(square)];
 
             // Assert that there is a piece to remove.
             assert(piece != ColoredPiece::None);
 
             // Remove the piece from the mailbox representation.
-            Mailbox[static_cast<uint8>(square)] = ColoredPiece::None;
+            Mailbox[static_cast<uint8_t>(square)] = ColoredPiece::None;
 
             // Remove the piece from the BitBoard representation.
-            PieceBBs[static_cast<uint8>(piece.Piece())].Flip(square);
-            ColorBBs[static_cast<uint8>(piece.Color())].Flip(square);
+            PieceBBs[static_cast<uint8_t>(piece.Piece())].Flip(square);
+            ColorBBs[static_cast<uint8_t>(piece.Color())].Flip(square);
 
             // Remove the given piece from the Zobrist hash of the Position.
             Hash -= Keys::PieceOnSquare(piece, square);
@@ -211,7 +210,7 @@ namespace Chess {
             Mailbox = {};
 
             // Populate the board representation.
-            for (uint8 sq = 0; sq < Square::N; sq++)
+            for (uint8_t sq = 0; sq < Square::N; sq++)
                 if (fen.Mailbox[sq] != ColoredPiece::None)
                     Insert(Square(sq), fen.Mailbox[sq]);
 
@@ -220,17 +219,17 @@ namespace Chess {
 
         // Indexing Position by Square returns the ColoredPiece at that Square.
         constexpr inline ColoredPiece operator[](const Square sq) const {
-            return Mailbox[static_cast<uint8>(sq)];
+            return Mailbox[static_cast<uint8_t>(sq)];
         }
 
         // ToString converts the position to a human-readable string representation.
         [[nodiscard]] constexpr std::string ToString() const {
             std::string board = "+---+---+---+---+---+---+---+---+\n";
 
-            for (uint8 rank = 7; rank != 255; rank--) {
+            for (uint8_t rank = 7; rank != 255; rank--) {
                 board += "| ";
 
-                for (uint8 file = 0; file < File::N; file++) {
+                for (uint8_t file = 0; file < File::N; file++) {
                     board += Mailbox[rank * 8 + file].ToString() + " | ";
                 }
 
@@ -280,7 +279,7 @@ namespace Chess {
 
             hash += Keys::CastlingRights(position.Rights);
 
-            for (uint8 square = 0; square < Square::N; square++)
+            for (uint8_t square = 0; square < Square::N; square++)
                 if (position.Mailbox[square] != ColoredPiece::None)
                     hash += Keys::PieceOnSquare(position.Mailbox[square], Square(square));
 

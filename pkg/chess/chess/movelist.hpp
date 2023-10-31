@@ -16,8 +16,7 @@
 
 #include <array>
 #include <cassert>
-
-#include "types/types.hpp"
+#include <cstdint>
 
 #include "move.hpp"
 
@@ -27,12 +26,12 @@ namespace Chess {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
     class MoveList {
         std::array<Move, Move::MaxInPosition> moves;
-        int length = 0;
+        std::size_t length = 0;
 
         public:
             constexpr inline MoveList() = default;
 
-            [[nodiscard]] constexpr inline int32 Length() const {
+            [[nodiscard]] constexpr inline std::size_t Length() const {
                 return length;
             }
 

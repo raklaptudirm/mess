@@ -13,13 +13,12 @@ configure_file(${SOURCE}/tests/common/common.hpp.in ${PROJECT_BINARY_DIR}/common
 file(GLOB TEST_FILES ${SOURCE}/tests/**/*.cpp)
 add_executable(${PROJECT_NAME} ${TEST_FILES})
 
-add_subdirectory(${SOURCE}/pkg/types   pkg/types)
 add_subdirectory(${SOURCE}/pkg/chess   pkg/chess)
 add_subdirectory(${SOURCE}/lib/catch2  lib/catch2)
 add_subdirectory(${SOURCE}/lib/strutil lib/strutil)
 
 target_link_libraries(${PROJECT_NAME}
-    types chess strutil
+    chess strutil
     Catch2::Catch2WithMain
 )
 

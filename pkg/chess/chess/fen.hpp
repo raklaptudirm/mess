@@ -17,8 +17,7 @@
 #include <iostream>
 #include <string>
 #include <array>
-
-#include "types/types.hpp"
+#include <cstdint>
 
 #include "strutil/strutil.h"
 
@@ -35,8 +34,8 @@ namespace Chess {
             Color SideToMove;
             Square EPTarget;
 
-            uint16 PlysCount;
-            uint8  DrawClock;
+            uint16_t PlysCount;
+            uint8_t  DrawClock;
 
             Castling::Info CastlingInfo;
             Castling::Rights CastlingRights;
@@ -52,8 +51,8 @@ namespace Chess {
             static constexpr int MOVE_COUNT_ID = 5;
 
         public:
-            static constexpr uint16 MoveToPlyCount(int mc, Color stm) {
-                return static_cast<uint16>(mc * 2) - (stm == Color::White ? 2 : 1);
+            static constexpr uint16_t MoveToPlyCount(int mc, Color stm) {
+                return static_cast<uint16_t>(mc * 2) - (stm == Color::White ? 2 : 1);
             }
             constexpr FEN(const std::string& fenString) {
                 const std::vector<std::string> fields = strutil::split(fenString, " ");
@@ -67,8 +66,8 @@ namespace Chess {
                 Square blackKing = Square::None;
 
                 const std::vector<std::string> ranks = strutil::split(fields[MAILBOX_ID], "/");
-                for (uint8 rank = 0; rank < 8; rank++) {
-                    uint8 file = 0;
+                for (uint8_t rank = 0; rank < 8; rank++) {
+                    uint8_t file = 0;
 
                     for (const auto& info : ranks[rank]) {
                         if ('1' <= info && info <= '8') file += info - '1';

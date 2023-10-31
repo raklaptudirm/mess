@@ -16,8 +16,7 @@
 
 #include <string>
 #include <cassert>
-
-#include "types/types.hpp"
+#include <cstdint>
 
 #include "piece.hpp"
 #include "color.hpp"
@@ -31,7 +30,7 @@ namespace Chess {
 
         static const int N = 6;
 
-        enum internal_type : uint8 {
+        enum internal_type : uint8_t {
             Pawn, Knight, Bishop, Rook, Queen, King, None
         };
 
@@ -45,21 +44,21 @@ namespace Chess {
             internal = piece;
         }
 
-        constexpr explicit inline Piece(uint8 piece) {
+        constexpr explicit inline Piece(uint8_t piece) {
             internal = static_cast<internal_type>(piece);
         }
 
         [[nodiscard]] constexpr inline std::string ToString() const {
             const std::string runes = "pnbrqk-";
-            return runes.substr(static_cast<uint8>(internal), 1);
+            return runes.substr(static_cast<uint8_t>(internal), 1);
         }
 
         /************************
          * Conversion Functions *
          ************************/
 
-        constexpr inline explicit operator uint8() const {
-            return static_cast<uint8>(internal);
+        constexpr inline explicit operator uint8_t() const {
+            return static_cast<uint8_t>(internal);
         }
 
         constexpr inline bool operator ==(const Piece&) const = default;
@@ -73,7 +72,7 @@ namespace Chess {
 
         static const int N = 12;
 
-        enum internal_type : uint8 {
+        enum internal_type : uint8_t {
             // White Pieces.
             WhitePawn, WhiteKnight, WhiteBishop,
             WhiteRook, WhiteQueen, WhiteKing,
@@ -100,7 +99,7 @@ namespace Chess {
         }
 
         constexpr inline ColoredPiece(Piece piece, Color color) {
-            internal = static_cast<internal_type>(static_cast<uint8>(color)*Piece::N + static_cast<uint8>(piece));
+            internal = static_cast<internal_type>(static_cast<uint8_t>(color)*Piece::N + static_cast<uint8_t>(piece));
         }
 
         constexpr inline explicit ColoredPiece(const std::string& piece) {
@@ -123,7 +122,7 @@ namespace Chess {
 
         [[nodiscard]] constexpr inline std::string ToString() const {
             const std::string runes = "PNBRQKpnbrqk-";
-            return runes.substr(static_cast<uint8>(internal), 1);
+            return runes.substr(static_cast<uint8_t>(internal), 1);
         }
 
         /*****************************
@@ -132,19 +131,19 @@ namespace Chess {
 
         [[nodiscard]] constexpr inline Piece Piece() const {
             if (internal == None) return Piece::None;
-            return Chess::Piece(static_cast<uint8>(internal) % Piece::N);
+            return Chess::Piece(static_cast<uint8_t>(internal) % Piece::N);
         }
 
         [[nodiscard]] constexpr inline Color Color() const {
-            return Chess::Color(static_cast<uint8>(internal) / Piece::N);
+            return Chess::Color(static_cast<uint8_t>(internal) / Piece::N);
         }
 
         /************************
          * Conversion Functions *
          ************************/
 
-        constexpr inline explicit operator uint8() const {
-            return static_cast<uint8>(internal);
+        constexpr inline explicit operator uint8_t() const {
+            return static_cast<uint8_t>(internal);
         }
 
         constexpr inline bool operator ==(const ColoredPiece&) const = default;

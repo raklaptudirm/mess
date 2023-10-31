@@ -16,8 +16,7 @@
 
 #include <string>
 #include <cassert>
-
-#include "types/types.hpp"
+#include <cstdint>
 
 namespace Chess {
     // Color struct represents the chess colors. Usually this refers
@@ -32,7 +31,7 @@ namespace Chess {
         // used by this struct. Values of internal_type are implicitly
         // cast to values of type Color, and this type should
         // not be used or depended on outside of this definition.
-        enum internal_type : uint8 {
+        enum internal_type : uint8_t {
             White, Black, None
         };
 
@@ -40,8 +39,8 @@ namespace Chess {
 
         constexpr inline Color() = default;
 
-        // Constructor to create a Color from its uint8 representation.
-        constexpr explicit inline Color(uint8 color)
+        // Constructor to create a Color from its uint8_t representation.
+        constexpr explicit inline Color(uint8_t color)
             : internal(static_cast<internal_type>(color)) {}
 
         // Constructor to create a Color from the given internal representation.
@@ -63,7 +62,7 @@ namespace Chess {
         // value, i.e. White -> Black or Black -> White.
         constexpr inline Color operator !() const {
             // ^ 1 flips the lsb which is used to represent the Color.
-            return Color(static_cast<uint8>(internal) ^ 1);
+            return Color(static_cast<uint8_t>(internal) ^ 1);
         }
 
         // The EqualEqual (==) operator checks if two Colors are equal.
@@ -72,9 +71,9 @@ namespace Chess {
         // NotEqual (!=) operator which checks if two Colors are not equal.
         constexpr inline bool operator ==(const Color&) const = default;
 
-        // uint8 is the conversion function to convert a Color to an uint8.
-        constexpr inline explicit operator uint8() const {
-            return static_cast<uint8>(internal);
+        // uint8_t is the conversion function to convert a Color to an uint8_t.
+        constexpr inline explicit operator uint8_t() const {
+            return static_cast<uint8_t>(internal);
         }
 
         // ToString converts the target Color to its string representation.

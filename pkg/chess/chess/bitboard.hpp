@@ -16,8 +16,7 @@
 
 #include <bit>
 #include <array>
-
-#include "types/types.hpp"
+#include <cstdint>
 
 #include "square.hpp"
 
@@ -27,8 +26,8 @@ namespace Chess {
     // It also provides functions which enable easy manipulation of the set.
     struct BitBoard {
     private:
-        // Internal uint64 representation of the BitBoard.
-        uint64 internal;
+        // Internal uint64_t representation of the BitBoard.
+        uint64_t internal;
 
     public:
         /* *************************
@@ -37,13 +36,13 @@ namespace Chess {
 
         [[maybe_unused]] constexpr BitBoard() = default;
 
-        // Constructor to convert uint64 to a BitBoard.
-        [[maybe_unused]] constexpr explicit BitBoard(const uint64 bb)
+        // Constructor to convert uint64_t to a BitBoard.
+        [[maybe_unused]] constexpr explicit BitBoard(const uint64_t bb)
             : internal(bb) {}
 
         // Constructor to convert Square to a BitBoard.
         [[maybe_unused]] constexpr explicit BitBoard(const Square square)
-            : internal(1ull << static_cast<uint8>(square)) {}
+            : internal(1ull << static_cast<uint8_t>(square)) {}
 
         /* *********************
          * Methods Definitions *
@@ -70,7 +69,7 @@ namespace Chess {
         }
 
         // PopCount counts the number of elements in the BitBoard.
-        [[maybe_unused]] [[nodiscard]] constexpr inline int32 PopCount() const {
+        [[maybe_unused]] [[nodiscard]] constexpr inline int32_t PopCount() const {
             return std::popcount(internal);
         }
 
@@ -98,7 +97,7 @@ namespace Chess {
         // Flip flips the given square in the BitBoard, i.e. removes
         // it if it is present in the set and vice versa.
         [[maybe_unused]] constexpr inline void Flip(Square square) {
-            internal ^= static_cast<uint64>(BitBoard(square));
+            internal ^= static_cast<uint64_t>(BitBoard(square));
         }
 
         // PopLSB removes the least significant set-bit from the BitBoard.
@@ -111,7 +110,7 @@ namespace Chess {
         // PopMSB removes the most significant set-bit from the BitBoard.
         [[maybe_unused]] constexpr inline Square PopMSB() {
             Square msb = MSB();
-            internal ^= static_cast<uint64>(BitBoard(msb));
+            internal ^= static_cast<uint64_t>(BitBoard(msb));
             return msb;
         }
 
@@ -119,8 +118,8 @@ namespace Chess {
          * Conversion Functions *
          *********************** */
 
-        // Conversion function to convert the BitBoard into an uint64.
-        [[maybe_unused]] constexpr inline explicit operator uint64() const {
+        // Conversion function to convert the BitBoard into an uint64_t.
+        [[maybe_unused]] constexpr inline explicit operator uint64_t() const {
             return internal;
         }
 
@@ -131,27 +130,27 @@ namespace Chess {
         [[maybe_unused]] constexpr inline bool operator==(const BitBoard &) const = default;
 
         [[maybe_unused]] constexpr inline BitBoard operator|(const BitBoard bb) const {
-            return BitBoard(internal | static_cast<uint64>(bb));
+            return BitBoard(internal | static_cast<uint64_t>(bb));
         }
 
         [[maybe_unused]] constexpr inline void operator|=(const BitBoard bb) {
-            internal |= static_cast<uint64>(bb);
+            internal |= static_cast<uint64_t>(bb);
         }
 
         [[maybe_unused]] constexpr inline BitBoard operator&(const BitBoard bb) const {
-            return BitBoard(internal & static_cast<uint64>(bb));
+            return BitBoard(internal & static_cast<uint64_t>(bb));
         }
 
         [[maybe_unused]] constexpr inline void operator&=(const BitBoard bb) {
-            internal &= static_cast<uint64>(bb);
+            internal &= static_cast<uint64_t>(bb);
         }
 
         [[maybe_unused]] constexpr inline BitBoard operator^(const BitBoard bb) const {
-            return BitBoard(internal ^ static_cast<uint64>(bb));
+            return BitBoard(internal ^ static_cast<uint64_t>(bb));
         }
 
         [[maybe_unused]] constexpr inline void operator^=(const BitBoard bb) {
-            internal ^= static_cast<uint64>(bb);
+            internal ^= static_cast<uint64_t>(bb);
         }
 
         [[maybe_unused]] constexpr inline BitBoard operator~() const {
@@ -167,7 +166,7 @@ namespace Chess {
         }
 
         [[maybe_unused]] constexpr inline void operator+=(const BitBoard bb) {
-            internal |= static_cast<uint64>(bb);
+            internal |= static_cast<uint64_t>(bb);
         }
 
         [[maybe_unused]] constexpr inline BitBoard operator-(const BitBoard bb) const {
@@ -224,15 +223,15 @@ namespace Chess {
         }
 
         [[maybe_unused]] constexpr inline BitBoard operator>>(const Direction direction) const {
-            const auto shift = static_cast<int8>(direction);
+            const auto shift = static_cast<int8_t>(direction);
 
             if (direction == Directions::North || direction == Directions::North+Directions::North)
                 return BitBoard(internal << shift);
             if (direction == Directions::South || direction == Directions::South+Directions::South)
                 return BitBoard(internal >> -shift);
 
-            constexpr uint64 NOT_FILE_A = ~0x0101010101010101ULL;
-            constexpr uint64 NOT_FILE_H = ~0x8080808080808080ULL;
+            constexpr uint64_t NOT_FILE_A = ~0x0101010101010101ULL;
+            constexpr uint64_t NOT_FILE_H = ~0x8080808080808080ULL;
 
             if (direction == Directions::West || direction == Directions::SouthWest)
                 return BitBoard((internal & NOT_FILE_A) >> -shift);
@@ -261,11 +260,11 @@ namespace Chess {
         struct Iterator {
         private:
             // Internal representation of BitBoard we are iterating.
-            uint64 internal;
+            uint64_t internal;
 
         public:
-            // Constructor to convert the given BitBoard uint64 into an iterable value.
-            constexpr explicit Iterator(const uint64 bb) : internal(bb) {}
+            // Constructor to convert the given BitBoard uint64_t into an iterable value.
+            constexpr explicit Iterator(const uint64_t bb) : internal(bb) {}
 
             // ++ takes the iterator forward by popping the LSB.
             // A reference to itself as required of an iterator.
@@ -278,7 +277,7 @@ namespace Chess {
             // Boolean describing whether the two are equal or not.
             constexpr inline bool operator ==(const Iterator&) const = default;
 
-            // * operator finds the least significant set bit in the uint64.
+            // * operator finds the least significant set bit in the uint64_t.
             // Square representing the least significant set bit.
             constexpr Square operator*() const {
                 return BitBoard(internal).LSB();
@@ -288,7 +287,7 @@ namespace Chess {
         /* ************************************************************
          * Definition of begin and end functions for construction an  *
          * iterator for the BitBoard. The begin function returns an   *
-         * Iterator on the internal uint64, while the end function    *
+         * Iterator on the internal uint64_t, while the end function    *
          * returns an Iterator on 0, which is the end result for most *
          * BitBoard iterations.                                       *
          ************************************************************ */
@@ -301,8 +300,8 @@ namespace Chess {
         [[nodiscard]] constexpr inline std::string ToString() const {
             std::string str;
 
-            for (uint8 rank = 7; rank != 255; rank--) {
-                for (uint8 file = 0; file < File::N; file++) {
+            for (uint8_t rank = 7; rank != 255; rank--) {
+                for (uint8_t file = 0; file < File::N; file++) {
                     str += (*this)[Square(rank * 8 + file)] ? "1 " : "0 ";
                 }
 
@@ -317,10 +316,10 @@ namespace Chess {
          ******************************** */
 
     private:
-        // reverse reverses the bits of the given uint64 number.
-        constexpr static inline uint64 reverse(uint64 n) {
+        // reverse reverses the bits of the given uint64_t number.
+        constexpr static inline uint64_t reverse(uint64_t n) {
             // Lookup table with precomputed reverses for each byte value.
-            constexpr uint64 BitReverseTable256[256] = {
+            constexpr uint64_t BitReverseTable256[256] = {
                 #define R2(n)   (n),   (n + 2*64),   (n + 1*64),   (n + 3*64)
                 #define R4(n) R2(n), R2(n + 2*16), R2(n + 1*16), R2(n + 3*16)
                 #define R6(n) R4(n), R4(n + 2*4 ), R4(n + 1*4 ), R4(n + 3*4 )
@@ -345,8 +344,8 @@ namespace Chess {
         // blockers: Blockers blocking the attacks.
         // mask:     Mask of the ray attack.
         constexpr static inline BitBoard Hyperbola(Square square, BitBoard blockers, BitBoard mask) {
-            const uint64 r = static_cast<uint64>(BitBoard(square)); // Piece's BitBoard as an uint64.
-            const uint64 o = static_cast<uint64>(blockers & mask);  // Position's Masked Occupancy.
+            const uint64_t r = static_cast<uint64_t>(BitBoard(square)); // Piece's BitBoard as an uint64_t.
+            const uint64_t o = static_cast<uint64_t>(blockers & mask);  // Position's Masked Occupancy.
 
             // Calculate attack-set along the mask using the o - 2r trick.
             return BitBoard((o - 2 * r) ^ reverse(reverse(o) - 2 * reverse(r))) & mask;
@@ -360,7 +359,7 @@ namespace Chess {
 
     namespace BitBoards {
         namespace {
-            constexpr std::array<uint64, File::N> files = {
+            constexpr std::array<uint64_t, File::N> files = {
                     0x0101010101010101,
                     0x0202020202020202,
                     0x0404040404040404,
@@ -371,7 +370,7 @@ namespace Chess {
                     0x8080808080808080,
             };
 
-            constexpr std::array<uint64, Rank::N> ranks = {
+            constexpr std::array<uint64_t, Rank::N> ranks = {
                     0x00000000000000FF,
                     0x000000000000FF00,
                     0x0000000000FF0000,
@@ -382,7 +381,7 @@ namespace Chess {
                     0xFF00000000000000,
             };
 
-            constexpr std::array<uint64, 15> diagonals = {
+            constexpr std::array<uint64_t, 15> diagonals = {
                     0x0000000000000080,
                     0x0000000000008040,
                     0x0000000000804020,
@@ -399,7 +398,7 @@ namespace Chess {
                     0x0201000000000000,
                     0x0100000000000000,
             };
-            constexpr std::array<uint64, 15> antiDiagonals = {
+            constexpr std::array<uint64_t, 15> antiDiagonals = {
                     0x0000000000000001,
                     0x0000000000000102,
                     0x0000000000010204,
@@ -428,18 +427,18 @@ namespace Chess {
 
         [[maybe_unused]] constexpr inline BitBoard File(Chess::File file) {
             if (file == File::None) return Empty;
-            return BitBoard(files[static_cast<uint8>(file)]);
+            return BitBoard(files[static_cast<uint8_t>(file)]);
         }
 
         [[maybe_unused]] constexpr inline BitBoard Rank(Chess::Rank rank) {
-            return BitBoard(ranks[static_cast<uint8>(rank)]);
+            return BitBoard(ranks[static_cast<uint8_t>(rank)]);
         }
 
-        [[maybe_unused]] constexpr inline BitBoard Diagonal(uint8 diagonal) {
+        [[maybe_unused]] constexpr inline BitBoard Diagonal(uint8_t diagonal) {
             return BitBoard(diagonals[diagonal]);
         }
 
-        [[maybe_unused]] constexpr inline BitBoard AntiDiagonal(uint8 antiDiagonal) {
+        [[maybe_unused]] constexpr inline BitBoard AntiDiagonal(uint8_t antiDiagonal) {
             return BitBoard(antiDiagonals[antiDiagonal]);
         }
 
@@ -447,8 +446,8 @@ namespace Chess {
             constexpr std::array<std::array<BitBoard, Square::N>, Square::N> between = []() {
                 std::array<std::array<BitBoard, Square::N>, Square::N> between = {};
 
-                for (uint8 square1 = 0; square1 < Square::N; square1++) {
-                    for (uint8 square2 = 0; square2 < Square::N; square2++) {
+                for (uint8_t square1 = 0; square1 < Square::N; square1++) {
+                    for (uint8_t square2 = 0; square2 < Square::N; square2++) {
                         const Square sq1 = Square(square1);
                         const Square sq2 = Square(square2);
 
@@ -479,7 +478,7 @@ namespace Chess {
         }
 
         [[maybe_unused]] constexpr inline BitBoard Between(Square square1, Square square2) {
-            return between[static_cast<uint8>(square1)][static_cast<uint8>(square2)];
+            return between[static_cast<uint8_t>(square1)][static_cast<uint8_t>(square2)];
         }
 
         [[maybe_unused]] constexpr inline BitBoard Between1(Square square1, Square square2) {

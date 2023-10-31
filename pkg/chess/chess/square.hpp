@@ -16,8 +16,7 @@
 
 #include <string>
 #include <cassert>
-
-#include "types/types.hpp"
+#include <cstdint>
 
 #include "direction.hpp"
 
@@ -31,7 +30,7 @@ namespace Chess {
         static const int N = 8;
 
         // The internal enum representation of a File.
-        enum internal_type : uint8 {
+        enum internal_type : uint8_t {
             A, B, C, D, E, F, G, H, None
         };
 
@@ -42,9 +41,9 @@ namespace Chess {
          * Constructor Definitions *
          ***************************/
 
-        // Constructor to convert an uint8 into a File.
-        // The File with the given uint8 representation.
-        constexpr explicit File(uint8 file) : internal(static_cast<internal_type>(file)) {}
+        // Constructor to convert an uint8_t into a File.
+        // The File with the given uint8_t representation.
+        constexpr explicit File(uint8_t file) : internal(static_cast<internal_type>(file)) {}
 
         // Constructor to convert an internal representation into a File.
         // The File with the given internal representation.
@@ -55,23 +54,23 @@ namespace Chess {
         // File represented by the given string.
         constexpr inline explicit File(std::string file) {
             assert(file.length() == 1); assert('a' <= file.at(0) && file.at(0) <= 'h');
-            internal = static_cast<internal_type>(static_cast<uint8>(file.at(0) - 'a'));
+            internal = static_cast<internal_type>(static_cast<uint8_t>(file.at(0) - 'a'));
         }
 
         /************************
          * Conversion Functions *
          ************************/
 
-        //   Conversion function to convert a file into its uint8 representation.
-        // The target file's uint8 representation.
-        constexpr inline explicit operator uint8() const {
-            return static_cast<uint8>(internal);
+        //   Conversion function to convert a file into its uint8_t representation.
+        // The target file's uint8_t representation.
+        constexpr inline explicit operator uint8_t() const {
+            return static_cast<uint8_t>(internal);
         }
 
         //   Conversion function to convert a file into its string representation.
         // The target file's string representation.
         [[nodiscard]] constexpr inline std::string ToString() const {
-            return std::string(1, static_cast<uint8>(internal) + 'a');
+            return std::string(1, static_cast<uint8_t>(internal) + 'a');
         }
 
         /************************
@@ -81,11 +80,11 @@ namespace Chess {
         constexpr inline bool operator ==(const File&) const = default;
 
         constexpr inline bool operator <(const File file) const {
-            return internal < static_cast<uint8>(file);
+            return internal < static_cast<uint8_t>(file);
         }
 
         constexpr inline bool operator >(const File file) const {
-            return internal > static_cast<uint8>(file);
+            return internal > static_cast<uint8_t>(file);
         }
     };
 
@@ -96,7 +95,7 @@ namespace Chess {
 
         static const int N = 8;
 
-        enum internal_type : uint8 {
+        enum internal_type : uint8_t {
             First, Second, Third, Fourth, Fifth, Sixth, Seventh, Eighth, None
         };
 
@@ -110,25 +109,25 @@ namespace Chess {
             internal = rank;
         }
 
-        constexpr inline explicit Rank(uint8 rank) {
+        constexpr inline explicit Rank(uint8_t rank) {
             internal = static_cast<internal_type>(rank);
         }
 
         constexpr inline explicit Rank(std::string rank) {
             assert(rank.length() == 1); assert('1' <= rank.at(0) && rank.at(0) <= '8');
-            internal = static_cast<internal_type>(static_cast<uint8>(rank.at(0) - '1'));
+            internal = static_cast<internal_type>(static_cast<uint8_t>(rank.at(0) - '1'));
         }
 
         /************************
          * Conversion Functions *
          ************************/
 
-        constexpr inline explicit operator uint8() const {
-            return static_cast<uint8>(internal);
+        constexpr inline explicit operator uint8_t() const {
+            return static_cast<uint8_t>(internal);
         }
 
         [[nodiscard]] constexpr inline std::string ToString() const {
-            return std::string(1, static_cast<uint8>(internal) + '1');
+            return std::string(1, static_cast<uint8_t>(internal) + '1');
         }
 
         /************************
@@ -145,7 +144,7 @@ namespace Chess {
 
         static constexpr int N = 64;
 
-        enum internal_type : uint8 {
+        enum internal_type : uint8_t {
             A1, B1, C1, D1, E1, F1, G1, H1,
             A2, B2, C2, D2, E2, F2, G2, H2,
             A3, B3, C3, D3, E3, F3, G3, H3,
@@ -168,14 +167,14 @@ namespace Chess {
             internal = square;
         }
 
-        constexpr inline explicit Square(uint8 square) {
+        constexpr inline explicit Square(uint8_t square) {
             internal = static_cast<internal_type>(square);
         }
 
         constexpr inline explicit Square(File file, Rank rank) {
             internal = static_cast<internal_type>(
-                static_cast<uint8>(rank)*8 +
-                static_cast<uint8>(file)
+                static_cast<uint8_t>(rank)*8 +
+                static_cast<uint8_t>(file)
             );
         }
 
@@ -199,27 +198,27 @@ namespace Chess {
 
         [[nodiscard]] constexpr inline File File() const {
             if (*this == None) return Chess::File::None;
-            return Chess::File(static_cast<uint8>(internal) % Chess::File::N);
+            return Chess::File(static_cast<uint8_t>(internal) % Chess::File::N);
         }
 
         [[nodiscard]] constexpr inline Rank Rank() const {
-            return Chess::Rank(static_cast<uint8>(internal) / Chess::File::N);
+            return Chess::Rank(static_cast<uint8_t>(internal) / Chess::File::N);
         }
 
-        [[nodiscard]] constexpr inline uint8 Diagonal() const {
-            return 7 + static_cast<uint8>(this->Rank()) - static_cast<uint8>(this->File());
+        [[nodiscard]] constexpr inline uint8_t Diagonal() const {
+            return 7 + static_cast<uint8_t>(this->Rank()) - static_cast<uint8_t>(this->File());
         }
 
-        [[nodiscard]] constexpr inline uint8 AntiDiagonal() const {
-            return static_cast<uint8>(this->Rank()) + static_cast<uint8>(this->File());
+        [[nodiscard]] constexpr inline uint8_t AntiDiagonal() const {
+            return static_cast<uint8_t>(this->Rank()) + static_cast<uint8_t>(this->File());
         }
 
         /************************
          * Conversion Functions *
          ************************/
 
-        constexpr inline explicit operator uint8() const {
-            return static_cast<uint8>(internal);
+        constexpr inline explicit operator uint8_t() const {
+            return static_cast<uint8_t>(internal);
         }
 
         [[nodiscard]] constexpr inline std::string ToString() const {
@@ -235,8 +234,8 @@ namespace Chess {
 
         constexpr inline Square operator >>(const Direction direction) const {
             return Square(
-                static_cast<int8>(static_cast<uint8>(internal)) +
-                static_cast<int8>(direction)
+                static_cast<int8_t>(static_cast<uint8_t>(internal)) +
+                static_cast<int8_t>(direction)
             );
         }
     };

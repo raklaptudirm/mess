@@ -17,6 +17,7 @@
 #include <array>
 #include <string>
 #include <fstream>
+#include <cstdint>
 #include <iostream>
 
 #include "common.hpp"
@@ -32,7 +33,7 @@ namespace Perft {
     // a position and its PERFT results for depths 1-6.
     struct TestCase {
         std::string FEN;               // Position FEN Representation.
-        std::array<int64, 7> Expected; // Expected PERFT Results for each depth.
+        std::array<int64_t, 7> Expected; // Expected PERFT Results for each depth.
 
         // TestCase creates a new TestCase from a string
         // in the format: fen { ;perft expected results }.
@@ -51,14 +52,14 @@ namespace Perft {
 
         // parsePerftResult parses a perft result case in the format:
         // ;D<depth> <expected perft result for depth in current position>
-        static std::pair <int32, int64> parsePerftResult(std::string resultStr) {
+        static std::pair <int32_t, int64_t> parsePerftResult(std::string resultStr) {
             strutil::trim(resultStr);
             auto fields = strutil::split(resultStr, " ");
 
             // The call to string::substr removes the 'D' from "D<depth>" so that
             // we can parse "<depth>" as an integer without any errors.
-            return {strutil::parse_string<int32>(fields[0].substr(1)),
-                    strutil::parse_string<int64>(fields[1])};
+            return {strutil::parse_string<int32_t>(fields[0].substr(1)),
+                    strutil::parse_string<int64_t>(fields[1])};
         }
     };
 
@@ -86,9 +87,9 @@ namespace Perft {
         }
 
         // Run the test cases stored in the current object.
-        void Run(const int32 depth) const {
+        void Run(const int32_t depth) const {
             const auto& tests = *this;
-            int32 n = 1;
+            int32_t n = 1;
             for (const auto& test : tests.Cases) {
                 // Print information in the format: [<index>/<total>] <fen>
                 std::cout << "[" << std::setfill(' ') << std::setw(3) << n << "/"

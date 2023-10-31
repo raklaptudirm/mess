@@ -1,8 +1,7 @@
+#include <cstdint>
 #include <iostream>
 
 #include "chess/board.hpp"
-
-#include "types/types.hpp"
 
 // NOLINTNEXTLINE chrono header unnecessary in Darwin.
 #include <chrono>
@@ -16,9 +15,9 @@ int main(int argc, char const *argv[]) {
     Board board = Board(fen);
 
     const auto start = std::chrono::steady_clock::now();
-    const auto nodes = board.Perft<true, true>((int8)std::atoi(dep));
+    const auto nodes = board.Perft<true, true>((int8_t)std::atoi(dep));
     const auto end = std::chrono::steady_clock::now();
 
-    const std::chrono::duration<float64> delta = end - start;
-    std::cout << "nodes " << nodes << " nps " << (uint64)((nodes / delta.count()) / 1'000'000) << std::endl;
+    const std::chrono::duration<double> delta = end - start;
+    std::cout << "nodes " << nodes << " nps " << (uint64_t)((nodes / delta.count()) / 1'000'000) << std::endl;
 }

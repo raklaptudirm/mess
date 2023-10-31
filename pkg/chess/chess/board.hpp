@@ -17,6 +17,7 @@
 #include <array>
 #include <cassert>
 #include <utility>
+#include <cstdint>
 
 #include "fen.hpp"
 #include "move.hpp"
@@ -29,19 +30,17 @@
 #include "bitboard.hpp"
 #include "position.hpp"
 
-#include "types/types.hpp"
-
 namespace Chess {
     class Board {
     private:
         Castling::Info castlingInfo = Castling::Info();
 
         // Position stack.
-        uint16 top = 0; // Current top in stack.
+        uint16_t top = 0; // Current top in stack.
         std::array<Position, Move::MaxInGame> history; // Stack.
 
         // Game ply-count. May differ from top by a constant.
-        uint16 initialPlys = 0;
+        uint16_t initialPlys = 0;
 
         // push pushes a new Position into the Position stack.
         inline void push() {
@@ -92,7 +91,7 @@ namespace Chess {
         }
 
         // PlyCount returns the number of plys in the current game.
-        [[nodiscard]] uint16 PlyCount() const {
+        [[nodiscard]] uint16_t PlyCount() const {
             // Number of plys is equal to initial number of plys at
             // root (which may be non-zero for non-startpos positions)
             // + the number of plys since the root (top).
@@ -233,14 +232,14 @@ namespace Chess {
         }
 
         template <bool BULK_COUNT, bool SPLIT_MOVES>
-        [[maybe_unused]] int64 Perft(int32 depth) {
+        [[maybe_unused]] int64_t Perft(int32_t depth) {
             return perft<BULK_COUNT, SPLIT_MOVES>(*this, depth);
         }
 
     private:
         template <bool BULK_COUNT, bool SPLIT_MOVES>
         // NOLINTNEXTLINE(misc-no-recursion)
-        static int64 perft(Board& board, int32 depth) {
+        static int64_t perft(Board& board, int32_t depth) {
             // Return 1 for current node at depth 0.
             if (depth <= 0)
                 return 1;
@@ -255,12 +254,12 @@ namespace Chess {
                 return moves.Length();
 
             // Variable to cumulate node count in.
-            int64 nodes = 0;
+            int64_t nodes = 0;
 
             // Recursively call perft for child nodes.
             for (const auto move : moves) {
                 board.MakeMove(move);
-                const int64 delta = perft<BULK_COUNT, false>(board, depth - 1);
+                const int64_t delta = perft<BULK_COUNT, false>(board, depth - 1);
                 board.UndoMove();
 
                 nodes += delta;
