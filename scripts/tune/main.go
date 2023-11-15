@@ -27,7 +27,7 @@ func main() {
 
 			ReportRate: 50,
 
-			LearningRate:     0.01,
+			LearningRate:     1,
 			LearningDropRate: 1,
 			LearningStepRate: 250,
 

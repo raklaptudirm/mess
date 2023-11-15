@@ -22,6 +22,7 @@ import (
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/schollz/progressbar/v3"
+
 	"laptudirm.com/x/mess/pkg/search/eval/classical"
 )
 
@@ -135,7 +136,7 @@ func (tuner *Tuner) Tune() {
 			}
 
 			if epoch%tuner.Config.ReportRate == 0 {
-				fmt.Printf("%#v", tuner.Delta)
+				fmt.Printf("%#v", tuner.Delta.EvaluationTerms())
 			}
 		}
 	}

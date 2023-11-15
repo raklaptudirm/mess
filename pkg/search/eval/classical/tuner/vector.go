@@ -14,6 +14,9 @@
 package tuner
 
 import (
+	"math"
+
+	"laptudirm.com/x/mess/pkg/search/eval"
 	"laptudirm.com/x/mess/pkg/search/eval/classical"
 )
 
@@ -24,6 +27,19 @@ const (
 	MG = 0 // index of mg value in Vector
 	EG = 1 // index of eg value in Vector
 )
+
+func (vector Vector) EvaluationTerms() *classical.EvaluationTerms[classical.Score] {
+	terms := classical.Terms
+	for i := 0; i < classical.TermsN; i++ {
+		term := terms.FetchTerm(i)
+		*term += classical.S(
+			eval.Eval(math.Round(vector[i][MG])),
+			eval.Eval(math.Round(vector[i][EG])),
+		)
+	}
+
+	return &terms
+}
 
 func VectorizeParams(terms classical.EvaluationTerms[classical.Score]) ScoreVector {
 	vector := make(ScoreVector, classical.TermsN)

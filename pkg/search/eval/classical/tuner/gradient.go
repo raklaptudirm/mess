@@ -18,15 +18,13 @@ import (
 )
 
 type GradientData struct {
-	egEval               float64
 	wSafetyMG, bSafetyMG float64
 	wSafetyEG, bSafetyEG float64
 }
 
 func (tuner *Tuner) ComputeGradient() {
-	batchEnd := util.Min((tuner.Batch+1)*tuner.Config.BatchSize, len(tuner.Dataset))
-	for i := tuner.Batch * tuner.Config.BatchSize; i < batchEnd; i++ {
-		tuner.updateSingleGradient(&tuner.Dataset[i])
+	for i := 0; i < tuner.Config.BatchSize; i++ {
+		tuner.updateSingleGradient(&tuner.Dataset[tuner.Batch*tuner.Config.BatchSize+i])
 	}
 }
 
@@ -54,11 +52,18 @@ func (tuner *Tuner) updateSingleGradient(entry *Entry) {
 			tuner.Gradient[coeff.Index][EG] += egBase * deltaCoeff
 
 		case Safety:
+			clamp := func(eg float64) float64 {
+				if eg < 0 {
+					return 1
+				}
+
+				return 0
+			}
 			// update king safety term
 			tuner.Gradient[coeff.Index][MG] += (mgBase / 360) *
-				(util.Min(data.wSafetyMG, 0)*float64(coeff.White) - util.Min(data.bSafetyMG, 0)*float64(coeff.Black))
+				(util.Max(-data.bSafetyMG, 0)*float64(coeff.Black) - util.Max(-data.wSafetyMG, 0)*float64(coeff.White))
 			tuner.Gradient[coeff.Index][EG] += (egBase / 20) *
-				(util.Min(data.wSafetyEG, 0)*float64(coeff.White) - util.Min(data.bSafetyEG, 0)*float64(coeff.Black))
+				(clamp(data.bSafetyEG)*float64(coeff.Black) - clamp(data.wSafetyEG)*float64(coeff.White))
 		}
 	}
 }

@@ -19,7 +19,7 @@ import (
 	"laptudirm.com/x/mess/pkg/search/eval/classical"
 )
 
-func (tuner Tuner) LinerEvaluation(entry *Entry, gradientData *GradientData) float64 {
+func (tuner *Tuner) LinerEvaluation(entry *Entry, gradientData *GradientData) float64 {
 	var delta [TermTypeN][piece.ColorN][2]float64
 
 	// calculate the change evaluation due to every tuned parameter
@@ -46,20 +46,20 @@ func (tuner Tuner) LinerEvaluation(entry *Entry, gradientData *GradientData) flo
 
 	var safety [2]float64
 
-	// put the linear king safety evaluations through the non-linear functions
-	safety[MG] = (-wSafety[MG] * util.Min(0, wSafety[MG]) / 720) -
-		(-bSafety[EG] * util.Min(0, bSafety[EG]) / 720)
-	safety[EG] = (util.Min(0, wSafety[EG]) / 20) - (util.Min(0, bSafety[EG]) / 20)
-
 	// store info for gradient calculation
-	gradientData.egEval = normal[EG] + safety[EG]
 	gradientData.wSafetyMG = wSafety[MG]
 	gradientData.wSafetyEG = wSafety[EG]
 	gradientData.bSafetyMG = bSafety[MG]
 	gradientData.bSafetyEG = bSafety[EG]
 
+	// put the linear king safety evaluations through the non-linear functions
+	safety[MG] = (-wSafety[MG] * util.Min(0, wSafety[MG]) / 720) -
+		/******/ (-bSafety[MG] * util.Min(0, bSafety[MG]) / 720)
+	safety[EG] = (util.Min(0, wSafety[EG]) / 20) -
+		/******/ (util.Min(0, bSafety[EG]) / 20)
+
 	// interpolate mg and eg scores to get final static evaluation
-	scoreMG := normal[MG] + safety[EG]
-	scoreEG := normal[MG] + safety[EG]
+	scoreMG := normal[MG] + safety[MG]
+	scoreEG := normal[EG] + safety[EG]
 	return util.Lerp(scoreEG, scoreMG, float64(entry.phase), float64(classical.MaxPhase))
 }

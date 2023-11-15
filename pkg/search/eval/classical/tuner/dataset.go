@@ -43,35 +43,34 @@ func NewDataset(filename string) (Dataset, error) {
 
 	dataset := make(Dataset, 10)
 
-	for rawEntry, err := reader.ReadString('\n'); err == nil; rawEntry, err = reader.ReadString('\n') {
+	for rawEntry, err := reader.ReadString(';'); err == nil; rawEntry, err = reader.ReadString(';') {
+		rawEntry = strings.Trim(rawEntry, " \n\r\t;")
 		var entry Entry
 
-		result, fenString, found := strings.Cut(rawEntry, " ")
-		if !found {
-			return nil, errors.New("read dataset: invalid entry")
-		}
+		//mt.Printf("entry: %#v\n", rawEntry)
 
-		switch result {
-		case "[1.0]":
+		switch {
+		case strings.HasSuffix(rawEntry, "\"1-0\""):
 			entry.result = 1.0
-		case "[0.0]":
+		case strings.HasSuffix(rawEntry, "\"0-1\""):
 			entry.result = 0.0
-		case "[0.5]":
+		case strings.HasSuffix(rawEntry, "\"1/2-1/2\""):
 			entry.result = 0.5
 		default:
 			return nil, errors.New("read dataset: invalid entry")
 		}
 
-		chessboard.UpdateWithFEN(fen.FromString(fenString))
+		fenString, _, _ := strings.Cut(rawEntry, "\"")
+
+		chessboard.UpdateWithFEN(fen.FromString(fenString + " 0 1"))
 
 		entry.static = evaluator.Accumulate(piece.White)
 		entry.coeffs = GetCoefficients(&evaluator.Trace)
 		entry.eval = evaluator.Trace.Evaluation
 
-		phase := classical.MaxPhase - evaluator.Phase
-		entry.phaseFactors[0] = 1 - float64(phase)/float64(classical.MaxPhase)
-		entry.phaseFactors[1] = 0 + float64(phase)/float64(classical.MaxPhase)
-		entry.phase = phase / classical.MaxPhase
+		entry.phase = evaluator.Phase
+		entry.phaseFactors[MG] = 0 + float64(entry.phase)/float64(classical.MaxPhase)
+		entry.phaseFactors[EG] = 1 - float64(entry.phase)/float64(classical.MaxPhase)
 
 		entry.safety[piece.White] = evaluator.Trace.Safety[piece.White]
 		entry.safety[piece.Black] = evaluator.Trace.Safety[piece.Black]
@@ -129,7 +128,7 @@ func (dataset Dataset) ComputeE(K float64) float64 {
 
 // Sigmoid implements a sigmoid function scaled by the factor K.
 func Sigmoid(K, eval float64) float64 {
-	return 1.0 / (1.0 + math.Exp(-K*eval/400.0))
+	return 1.0 / (1.0 + math.Exp(-K*eval))
 }
 
 // Entry contains the data of a single position which will be
