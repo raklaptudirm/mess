@@ -1,3 +1,3 @@
 module laptudirm.com/x/mess
 
-go 1.18
+go 1.21

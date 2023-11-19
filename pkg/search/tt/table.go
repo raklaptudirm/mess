@@ -47,6 +47,10 @@ type Table struct {
 	epoch uint8   // table epoch
 }
 
+func (tt *Table) Clear() {
+	clear(tt.table)
+}
+
 // NextEpoch increases the epoch number of the given tt.
 func (tt *Table) NextEpoch() {
 	tt.epoch++

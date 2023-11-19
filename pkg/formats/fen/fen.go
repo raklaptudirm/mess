@@ -20,12 +20,15 @@ import (
 
 // FromString returns a FEN parsed from the given string.
 func FromString(fen string) String {
-	return String(*(*[6]string)(strings.Fields(fen)))
+	return FromSlice(strings.Fields(fen))
 }
 
 // FromSlice returns a FEN parsed from the given slice.
 func FromSlice(fen []string) String {
-	return String(*(*[6]string)(fen))
+	if len(fen) == 4 {
+		fen = append(fen, "0", "1")
+	}
+	return [6]string(fen)
 }
 
 // String represents a String position string.

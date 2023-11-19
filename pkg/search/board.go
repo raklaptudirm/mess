@@ -14,6 +14,8 @@
 package search
 
 import (
+	"laptudirm.com/x/mess/pkg/board"
+	"laptudirm.com/x/mess/pkg/board/move"
 	"laptudirm.com/x/mess/pkg/formats/fen"
 )
 
@@ -26,6 +28,15 @@ func (search *Context) String() string {
 // UpdatePosition updates the search board with the given fen.
 func (search *Context) UpdatePosition(fen fen.String) {
 	search.board.UpdateWithFEN(fen)
+	search.tt.Clear()
+}
+
+func (search *Context) Board() *board.Board {
+	return search.board
+}
+
+func (search *Context) MakeMove(m move.Move) {
+	search.board.MakeMove(m)
 }
 
 // MakeMoves makes the given moves on the search board.
