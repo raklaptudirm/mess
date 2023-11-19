@@ -159,14 +159,14 @@ namespace Chess {
                 position.DrawClock = 0; // Reset on pawn move (irreversible move)
             }
 
-            switch (flag) {
-                case Move::Flag::Normal: {
+            switch (static_cast<uint8_t>(flag)) {
+                case MoveFlag::Normal: {
                     // Normal move, insert the moving piece to the target.
                     position.Insert(target, sourcePiece);
                     break;
                 }
 
-                case Move::Flag::DoublePush: {
+                case MoveFlag::DoublePush: {
                     position.Insert(target, sourcePiece);
 
                     // Pawn double push, set the en-passant square if there are
@@ -181,10 +181,10 @@ namespace Chess {
                 }
 
                 // Castling move, details handled by doCastling function.
-                case Move::Flag::CastleHSide: doCastling(position, Castling::Side::H); break;
-                case Move::Flag::CastleASide: doCastling(position, Castling::Side::A); break;
+                case MoveFlag::CastleHSide: doCastling(position, Castling::Side::H); break;
+                case MoveFlag::CastleASide: doCastling(position, Castling::Side::A); break;
 
-                case Move::Flag::EnPassant: {
+                case MoveFlag::EnPassant: {
                     position.Insert(target, sourcePiece);
 
                     // En Passant capture, remove the correct pawn.
@@ -193,10 +193,10 @@ namespace Chess {
                 }
 
                 // Promotion move, insert the promoted piece to the target.
-                case Move::Flag::QPromotion: position.Insert(target, Piece::Queen  + position.SideToMove); break;
-                case Move::Flag::NPromotion: position.Insert(target, Piece::Knight + position.SideToMove); break;
-                case Move::Flag::BPromotion: position.Insert(target, Piece::Bishop + position.SideToMove); break;
-                case Move::Flag::RPromotion: position.Insert(target, Piece::Rook   + position.SideToMove); break;
+                case MoveFlag::QPromotion: position.Insert(target, Piece::Queen  + position.SideToMove); break;
+                case MoveFlag::NPromotion: position.Insert(target, Piece::Knight + position.SideToMove); break;
+                case MoveFlag::BPromotion: position.Insert(target, Piece::Bishop + position.SideToMove); break;
+                case MoveFlag::RPromotion: position.Insert(target, Piece::Rook   + position.SideToMove); break;
 
                 // All flags are handled above, unreachable code.
                 default: assert(false);

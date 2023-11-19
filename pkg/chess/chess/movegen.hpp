@@ -84,13 +84,13 @@ namespace Chess::Moves {
         // to the move-list.
         inline void serialize(Square source, BitBoard targets) const {
             targets = targets & checkmask & territory;
-            for (const auto target : targets) moves.Emplace(Move(source, target, Move::Flag::Normal));
+            for (const auto target : targets) moves.Emplace(Move(source, target, MoveFlag::Normal));
         }
 
         // Overload of serialize which infers the source square from the
         // target square and the target-source offset. It also accepts a
         // move flag which is packed into the final move.
-        template<Direction OFFSET, uint16_t FLAG>
+        template<Direction OFFSET, MoveFlag FLAG>
         inline void serialize(BitBoard targets) const {
             targets = targets & checkmask & territory;
             for (const auto target : targets) moves.Emplace(Move(target >> -OFFSET, target, FLAG));
@@ -110,15 +110,15 @@ namespace Chess::Moves {
             for (const auto target : targets) {
                 // Queen promotions are noisy moves, so generate them whenever
                 // we can generate noisy moves according to the generation type.
-                if constexpr (NOISY) moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::QPromotion));
+                if constexpr (NOISY) moves.Emplace(Move(target >> -OFFSET, target, MoveFlag::QPromotion));
 
                 // Other types of promotions are quiet moves by default, so
                 // their noisy-ness is determined like that of any other move:
                 // whether they are a capture or a non-capture.
                 if constexpr ((QUIET && !CAPTURE) || (NOISY && CAPTURE)) {
-                    moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::NPromotion));
-                    moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::BPromotion));
-                    moves.Emplace(Move(target >> -OFFSET, target, Move::Flag::RPromotion));
+                    moves.Emplace(Move(target >> -OFFSET, target, MoveFlag::NPromotion));
+                    moves.Emplace(Move(target >> -OFFSET, target, MoveFlag::BPromotion));
+                    moves.Emplace(Move(target >> -OFFSET, target, MoveFlag::RPromotion));
                 }
             }
         }
@@ -219,8 +219,8 @@ namespace Chess::Moves {
                 const BitBoard attacksW = (pinnedAttacksW & pinmaskD) | unpinnedAttacksW;
 
                 // Serialize the non-promotion attacks which actually capture an enemy.
-                serialize<UE, Move::Flag::Normal>((attacksE - PRRank) & enemies);
-                serialize<UW, Move::Flag::Normal>((attacksW - PRRank) & enemies);
+                serialize<UE, MoveFlag::Normal>((attacksE - PRRank) & enemies);
+                serialize<UW, MoveFlag::Normal>((attacksW - PRRank) & enemies);
 
                 // Serialize the promotion captures.
                 serializePromotions<UE, true>(attacksE & PRRank & enemies);
@@ -255,7 +255,7 @@ namespace Chess::Moves {
                             }
 
                             if (pinmaskD.IsDisjoint(passanters) || !pinmaskD.IsDisjoint(targetBB))
-                                moves.Emplace(Move(passanters.LSB(), target, Move::Flag::EnPassant));
+                                moves.Emplace(Move(passanters.LSB(), target, MoveFlag::EnPassant));
 
                             break;
                         }
@@ -265,7 +265,7 @@ namespace Chess::Moves {
                         case 2: {
                             for (const auto passanter : passanters)
                                 if (!pinmaskD[passanter] || !pinmaskD.IsDisjoint(targetBB))
-                                    moves.Emplace(Move(passanter, target, Move::Flag::EnPassant));
+                                    moves.Emplace(Move(passanter, target, MoveFlag::EnPassant));
                         }
                     }
                 }
@@ -299,8 +299,8 @@ namespace Chess::Moves {
                 // Serialize the single and double pushes. Remove the promotion rank
                 // from the serialization of the single pushes as they are handled
                 // separately so that all the promotions are properly generated.
-                serialize<   UP, Move::Flag::Normal    >(singlePushes - PRRank); // Single Pushes.
-                serialize<UP+UP, Move::Flag::DoublePush>(doublePushes);          // Double Pushes.
+                serialize<   UP, MoveFlag::Normal    >(singlePushes - PRRank); // Single Pushes.
+                serialize<UP+UP, MoveFlag::DoublePush>(doublePushes);          // Double Pushes.
 
                 // Serialize the promotions by extracting the pushes in the promotion rank.
                 serializePromotions<UP, false>(singlePushes & PRRank);
@@ -353,7 +353,7 @@ namespace Chess::Moves {
             for (const auto target : targets) {
                 // Check if king move is legal.
                 if (!position.Attacked<!STM>(target, blockers))
-                    moves.Emplace(Move(king, target, Move::Flag::Normal));
+                    moves.Emplace(Move(king, target, MoveFlag::Normal));
             }
         }
 
@@ -367,7 +367,7 @@ namespace Chess::Moves {
                     occupied.IsDisjoint(castlingInfo.BlockerMask(dimension)) && // Check for blockers in the castling path.
                     !position.Attacked<!STM>(castlingInfo.AttackMask(dimension), blockers) // Check for attackers in the king's path.
                 ) {
-                moves.Emplace(Move(king, castlingInfo.Rook(dimension), Move::Flag::FlagFrom(SIDE)));
+                moves.Emplace(Move(king, castlingInfo.Rook(dimension), MoveFlag(SIDE)));
             }
         }
 
