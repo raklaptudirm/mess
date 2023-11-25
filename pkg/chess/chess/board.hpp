@@ -33,14 +33,16 @@
 namespace Chess {
     class Board {
     private:
-        Castling::Info castlingInfo = Castling::Info();
+        const Castling::Info castlingInfo = Castling::Info();
 
         // Position stack.
         uint16_t top = 0; // Current top in stack.
         std::array<Position, Move::MaxInGame> history; // Stack.
 
         // Game ply-count. May differ from top by a constant.
-        uint16_t initialPlys = 0;
+        const uint16_t initialPlys = 0;
+
+        const bool frc;
 
         // push pushes a new Position into the Position stack.
         inline void push() {
@@ -72,14 +74,7 @@ namespace Chess {
 
     public:
         // Constructor of board using a fen string.
-        explicit Board(const std::string& fenString) {
-            // Parse the provided fen string.
-            const FEN fen = FEN(fenString);
-
-            // Copy the fields relevant to Board.
-            initialPlys  = fen.PlysCount;
-            castlingInfo = fen.CastlingInfo;
-
+        explicit Board(const FEN& fen) : castlingInfo(fen.CastlingInfo), initialPlys(fen.PlysCount), frc(fen.FRC) {
             // Create a new position from the fen and store it
             // at the top in the Position stack.
             history[top] = Chess::Position(fen);
@@ -231,6 +226,37 @@ namespace Chess {
             return Position().ToString();
         }
 
+        [[nodiscard]] constexpr std::string ToString(Move move) const {
+            if (!frc) {
+                switch (static_cast<uint8_t>(move.Flag())) {
+                    case MoveFlag::CastleASide:
+                        return Move(
+                                move.Source(),
+                                Castling::EndSquares(
+                                        Castling::Dimension(
+                                                Position().SideToMove,
+                                                Castling::Side::A
+                                        )
+                                ).first,
+                                MoveFlag::CastleASide
+                        ).ToString();
+                    case MoveFlag::CastleHSide:
+                        return Move(
+                                move.Source(),
+                                Castling::EndSquares(
+                                        Castling::Dimension(
+                                                Position().SideToMove,
+                                                Castling::Side::H
+                                        )
+                                ).first,
+                                MoveFlag::CastleHSide
+                        ).ToString();
+                }
+            }
+
+            return move.ToString();
+        }
+
         template <bool BULK_COUNT, bool SPLIT_MOVES>
         [[maybe_unused]] int64_t Perft(int32_t depth) {
             return perft<BULK_COUNT, SPLIT_MOVES>(*this, depth);
@@ -251,7 +277,7 @@ namespace Chess {
             // the legal move-list when depth is one. This saves a
             // lot of time cause it saves make moves and recursion.
             if (BULK_COUNT && !SPLIT_MOVES && depth == 1)
-                return moves.Length();
+                return static_cast<int64_t>(moves.Length());
 
             // Variable to cumulate node count in.
             int64_t nodes = 0;
@@ -267,7 +293,7 @@ namespace Chess {
                 // If split moves is enabled, display each child move's
                 // contribution to the node count separately.
                 if (SPLIT_MOVES)
-                    std::cout << move << ": " << delta << std::endl;
+                    std::cout << board.ToString(move) << ": " << delta << std::endl;
 
             }
 

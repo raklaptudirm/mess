@@ -222,8 +222,6 @@ namespace Chess::Castling {
     // castling legality and the correct castling move in both Standard and FRC.
     class Info {
     private:
-        bool chess960 = false;
-
         // Positions of the rooks.
         std::array<Square,   4> rooks = {};
 
@@ -241,18 +239,17 @@ namespace Chess::Castling {
 
         // Parse parses the given castling rights string with the additional context
         // of the position of both the Kings, and returns a parsed Info and Rights.
-        constexpr static inline std::pair<Info, Rights> Parse(std::string str, Square WhiteKing, Square BlackKing) {
+        constexpr static inline std::pair<std::pair<Info, Rights>, bool> Parse(std::string str, Square WhiteKing, Square BlackKing) {
             // - is the empty set of Rights.
             if (str == "-") {
                 // Positions of rooks and whether we are playing FRC chess is
                 // ambiguous/inconsequential and Standard chess is assumed.
-                return {
-                    Info(
-                        Square::E1, File::H, File::A,
-                        Square::E8, File::H, File::A,
-                        false
-                    ), None
-                };
+                return {{
+                            Info(
+                                Square::E1, File::H, File::A,
+                                Square::E8, File::H, File::A
+                            ), None
+                        }, false};
             }
 
             // Basic checks on the rights string.
@@ -303,22 +300,18 @@ namespace Chess::Castling {
                 }
             }
 
-            return {
-                Info(
-                    WhiteKing, whiteH, whiteA,
-                    BlackKing, blackH, blackA,
-                    chess960
-                ), rights
-            };
+            return {{
+                        Info(
+                            WhiteKing, whiteH, whiteA,
+                            BlackKing, blackH, blackA
+                        ), rights
+                    }, chess960};
         }
 
         constexpr inline Info(
                 Square whiteKing, File whiteRookHFile, File whiteRookAFile,
-                Square blackKing, File blackRookHFile, File blackRookAFile,
-                bool isChess960
+                Square blackKing, File blackRookHFile, File blackRookAFile
         ) {
-            chess960 = isChess960;
-
             // Convert the Rook Files to Squares.
             const Square whiteRookH = Square(whiteRookHFile, Rank::First);
             const Square whiteRookA = Square(whiteRookAFile, Rank::First);

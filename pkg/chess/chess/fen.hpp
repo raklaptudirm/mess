@@ -54,6 +54,7 @@ namespace Chess {
             static constexpr uint16_t MoveToPlyCount(int mc, Color stm) {
                 return static_cast<uint16_t>(mc * 2) - (stm == Color::White ? 2 : 1);
             }
+
             constexpr FEN(const std::string& fenString) {
                 const std::vector<std::string> fields = strutil::split(fenString, " ");
                 assert(fields.size() == 6);
@@ -85,8 +86,10 @@ namespace Chess {
                 SideToMove = Color(fields[SIDE_TM_ID]);
 
                 auto info = Castling::Info::Parse(fields[CASTLING_ID], whiteKing, blackKing);
-                CastlingInfo = info.first;
-                CastlingRights = info.second;
+                CastlingInfo = info.first.first;
+                CastlingRights = info.first.second;
+
+                FRC = info.second;
 
                 EPTarget = Square(fields[EP_TARGET_ID]);
 
