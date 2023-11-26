@@ -279,7 +279,7 @@ namespace Chess::Castling {
                             rights += Castling::BlackA;
                         }
                     } else {
-                        const auto file = File(std::string(1, right + 'a' - 'A'));
+                        const auto file = File(std::string(1, static_cast<char>(right + 'a' - 'A')));
                         if (file > WhiteKing.File()) {
                             whiteH = file;
                             rights += Castling::WhiteH;

@@ -47,6 +47,7 @@ namespace Chess {
 
         // Constructor to convert an internal representation into a File.
         // The File with the given internal representation.
+        // NOLINTNEXTLINE(google-explicit-constructor)
         constexpr File(internal_type file) : internal(file) {}
 
         // Constructor to parse a string for a File.
@@ -70,7 +71,7 @@ namespace Chess {
         //   Conversion function to convert a file into its string representation.
         // The target file's string representation.
         [[nodiscard]] constexpr inline std::string ToString() const {
-            return std::string(1, static_cast<uint8_t>(internal) + 'a');
+            return {1, static_cast<char>(internal + 'a')};
         }
 
         /************************
@@ -105,6 +106,7 @@ namespace Chess {
          * Constructor Definitions *
          ***************************/
 
+        // NOLINTNEXTLINE(google-explicit-constructor)
         constexpr inline Rank(internal_type rank) {
             internal = rank;
         }
@@ -127,7 +129,7 @@ namespace Chess {
         }
 
         [[nodiscard]] constexpr inline std::string ToString() const {
-            return std::string(1, static_cast<uint8_t>(internal) + '1');
+            return {1, static_cast<char>(internal + '1')};
         }
 
         /************************
@@ -163,6 +165,7 @@ namespace Chess {
 
         constexpr Square() = default;
 
+        // NOLINTNEXTLINE(google-explicit-constructor)
         constexpr inline Square(internal_type square) {
             internal = square;
         }

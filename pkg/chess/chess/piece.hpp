@@ -40,6 +40,7 @@ namespace Chess {
          * Constructor Definitions *
          ***************************/
 
+        // NOLINTNEXTLINE(google-explicit-constructor)
         constexpr inline Piece(internal_type piece) {
             internal = piece;
         }
@@ -94,6 +95,7 @@ namespace Chess {
             internal = ColoredPiece::None;
         }
 
+        // NOLINTNEXTLINE(google-explicit-constructor)
         constexpr inline ColoredPiece(internal_type piece) {
             internal = piece;
         }
@@ -150,7 +152,7 @@ namespace Chess {
     };
 
     constexpr inline ColoredPiece operator +(Piece piece, Color color) {
-        return ColoredPiece(piece, color);
+        return {piece, color};
     }
 }
 

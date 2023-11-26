@@ -31,11 +31,11 @@ namespace Chess {
         constexpr inline bool operator ==(const Direction&) const = default;
 
         constexpr inline Direction operator +(const Direction rhs) const {
-            return Direction(internal + static_cast<int8_t>(rhs));
+            return Direction(static_cast<int8_t>(internal + static_cast<int8_t>(rhs)));
         }
 
         constexpr inline Direction operator -() const {
-            return Direction(-internal);
+            return Direction(static_cast<int8_t>(-internal));
         }
     };
 
@@ -54,13 +54,11 @@ namespace Chess {
         constexpr Direction None = Direction(0);
 
         [[maybe_unused]] static constexpr inline Direction Up(Color stm) {
-            if (stm == Color::White) return Directions::North;
-            else                     return Directions::South;
+            return stm == Color::White ? Directions::North : Directions::South;
         }
 
         [[maybe_unused]] constexpr inline Direction Down(Color stm) {
-            if (stm == Color::White) return Directions::South;
-            else                     return Directions::North;
+            return stm == Color::White ? Directions::South : Directions::North;
         }
     }
 }

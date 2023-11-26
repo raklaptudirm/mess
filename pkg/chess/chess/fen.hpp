@@ -55,7 +55,7 @@ namespace Chess {
                 return static_cast<uint16_t>(mc * 2) - (stm == Color::White ? 2 : 1);
             }
 
-            constexpr FEN(const std::string& fenString) {
+            constexpr explicit FEN(const std::string& fenString) {
                 const std::vector<std::string> fields = strutil::split(fenString, " ");
                 assert(fields.size() == 6);
 

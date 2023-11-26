@@ -441,7 +441,7 @@ namespace Chess {
 
                         if (sq1 == sq2) continue;
 
-                        BitBoard mask;
+                        BitBoard mask; // NOLINT(cppcoreguidelines-pro-type-member-init)
 
                         // Check for lateral blockerMask.
                         if (sq1.Rank() == sq2.Rank()) mask = BitBoards::Rank(sq1.Rank());

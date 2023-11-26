@@ -33,6 +33,7 @@ namespace Chess {
 
         uint8_t internal;
 
+        // NOLINTNEXTLINE(google-explicit-constructor)
         constexpr MoveFlag(internal_flag flag) {
             internal = flag;
         }
@@ -49,7 +50,7 @@ namespace Chess {
             return NPromotion <= internal && internal <= QPromotion;
         }
 
-        [[nodiscard]] constexpr bool IsCastling() const {
+        [[maybe_unused]] [[nodiscard]] constexpr bool IsCastling() const {
             return internal == CastleHSide || internal == CastleASide;
         }
 

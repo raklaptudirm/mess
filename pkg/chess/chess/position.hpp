@@ -166,7 +166,7 @@ namespace Chess {
         // An overload of the standard Attacked function which uses
         // the occupied BitBoard as its blocker set automatically.
         template <Color BY>
-        [[nodiscard]] constexpr inline bool Attacked(const Square square) const {
+        [[maybe_unused]] [[nodiscard]] constexpr inline bool Attacked(const Square square) const {
             return Attacked<BY>(square, (*this)[BY] + (*this)[!BY]);
         }
 
@@ -291,6 +291,6 @@ namespace Chess {
         os << position.ToString();
         return os;
     }
-};
+}
 
 #endif //CHESS_POSITION
