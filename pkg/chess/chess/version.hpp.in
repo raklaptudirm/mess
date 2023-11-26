@@ -16,8 +16,10 @@
 
 #include <string>
 
-namespace Chess {
+namespace Chess::Meta {
     const std::string Version = "${chess_VERSION}";
+    const std::string Author  = "Rak Laptudirm";
+    const std::string License = "Apache License 2.0";
 }
 
 #endif // CHESS_VERSION

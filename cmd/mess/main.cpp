@@ -14,8 +14,8 @@ int main(int argc, char const *argv[]) {
     constexpr auto defaultDep = "6";
 
     std::cout << "Mess v1.0.0 by Rak Laptudirm\n" << std::endl;
-    std::cout << "pkg/uci   v1.0.0 by Rak Laptudirm" << std::endl;
-    std::cout << "pkg/chess v" << Chess::Version << " by Rak Laptudirm\n" << std::endl;
+    std::cout << "pkg/uci   v1.0.0 by Rak Laptudirm (Apache License 2.0)" << std::endl;
+    std::cout << "pkg/chess v" << Chess::Meta::Version << " by " << Chess::Meta::Author << " (" << Chess::Meta::License << ")\n" << std::endl;
 
     const auto fen = argc >= 2 && std::string(argv[1]) != "-" ? argv[1] : defaultFEN;
     const auto dep = argc >= 3 && std::string(argv[2]) != "-" ? argv[2] : defaultDep;
