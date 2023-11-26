@@ -182,7 +182,7 @@ namespace Chess::Moves {
         // in this position and are in accordance with the move generation type.
         inline void pawnMoves() const {
             // Some useful direction constants.
-            constexpr Direction UP = STM == Color::White ? Directions::North : Directions::South;
+            constexpr Direction UP = Directions::Up(STM);
             constexpr Direction UE = UP + Directions::East, UW = UP + Directions::West;
 
             // Some useful rank BitBoard constants including the double push and promotion ranks.
@@ -239,11 +239,10 @@ namespace Chess::Moves {
                     switch (passanters.PopCount()) {
                         // Only one passanter: possible king double pin.
                         case 1: {
-                            if ((targetBB + (targetBB >> -UP)).IsDisjoint(checkmask)) {
-                                break;
-                            }
-
                             const auto captured = target >> -UP;
+                            if ((targetBB + captured).IsDisjoint(checkmask))
+                                break;
+
                             if (king.Rank() == captured.Rank()) {
                                 const BitBoard pinners =
                                         (position[Piece::Rook] + position[Piece::Queen]) & enemies;
@@ -374,7 +373,7 @@ namespace Chess::Moves {
         // castlingMoves generates all legal castling moves.
         inline void castlingMoves() const {
             // Generate castling only if quiet moves are allowed.
-            if (!QUIET) return;
+            if constexpr (!QUIET) return;
 
             // Try to generate castling move for both sides.
             castlingMove<Castling::Side::H>();
@@ -436,18 +435,12 @@ namespace Chess::Moves {
 
     // Generate generates all the possible legal moves on the given Position and
     // with the given CastlingInfo which match the provided move generation type.
-    template<bool QUIET, bool NOISY>
+    template<Color STM, bool QUIET, bool NOISY>
     MoveList Generate(const Position& p, const Castling::Info& castlingInfo) {
         MoveList moves = {};
 
-        // Switch template arguments according to side to move.
-        if (p.SideToMove == Color::White) {
-            const auto generator = Generator<Color::White, QUIET, NOISY>(p, castlingInfo, moves);
-            generator.GenerateMoves();
-        } else {
-            const auto generator = Generator<Color::Black, QUIET, NOISY>(p, castlingInfo, moves);
-            generator.GenerateMoves();
-        }
+        const auto generator = Generator<STM, QUIET, NOISY>(p, castlingInfo, moves);
+        generator.GenerateMoves();
 
         return moves;
     }

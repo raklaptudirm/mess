@@ -218,7 +218,9 @@ namespace Chess {
         // follow the provided move-generation options, and returns a MoveList.
         template<bool QUIET, bool NOISY>
         [[nodiscard]] MoveList GenerateMoves() const {
-            return Moves::Generate<QUIET, NOISY>(Position(), castlingInfo);
+            return Position().SideToMove == Color::White ?
+                    Moves::Generate<Color::White, QUIET, NOISY>(Position(), castlingInfo) :
+                    Moves::Generate<Color::Black, QUIET, NOISY>(Position(), castlingInfo);
         }
 
         // ToString converts the target Board into its string representation.
