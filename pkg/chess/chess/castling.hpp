@@ -76,18 +76,18 @@ namespace Chess::Castling {
 
     public:
         // Number of castling Dimension (2 Sides x 2 Colors).
-        static constexpr int N = Side::N * Color::N;
+        [[maybe_unused]] static constexpr int N = Side::N * Color::N;
 
         constexpr inline Dimension(Color color, Side side)
                 : internal(static_cast<uint8_t>(color) * Side::N + static_cast<uint8_t>(side)) {}
 
         // Color returns the color of this Dimension.
-        [[nodiscard]] constexpr inline Color Color() const {
+        [[maybe_unused]] [[nodiscard]] constexpr inline Color Color() const {
             return Chess::Color(internal / Chess::Color::N);
         }
 
         // Side returns the Side of this Dimension.
-        [[nodiscard]] constexpr inline Side Side() const {
+        [[maybe_unused]] [[nodiscard]] constexpr inline Side Side() const {
             return Castling::Side(internal % Castling::Side::N);
         }
 
@@ -215,8 +215,8 @@ namespace Chess::Castling {
     constexpr static Rights White = WhiteH + WhiteA;
     constexpr static Rights Black = BlackH + BlackA;
 
-    constexpr static Rights All  = White + Black;
-    constexpr static Rights None = Rights(0ull);
+    constexpr static Rights All  [[maybe_unused]] = White + Black;
+    constexpr static Rights None [[maybe_unused]] = Rights(0ull);
 
     // Info contains all the castling metadata required to be able to determine
     // castling legality and the correct castling move in both Standard and FRC.

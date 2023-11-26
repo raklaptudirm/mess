@@ -53,24 +53,12 @@ namespace Chess {
         // No Direction.
         constexpr Direction None = Direction(0);
 
-        template<Color STM>
-        constexpr inline Direction Up() {
-            if (STM == Color::White) return Directions::North;
-            else                     return Directions::South;
-        }
-
-        template<Color STM>
-        constexpr inline Direction Down() {
-            if (STM == Color::White) return Directions::South;
-            else                     return Directions::North;
-        }
-
-        static constexpr inline Direction Up(Color stm) {
+        [[maybe_unused]] static constexpr inline Direction Up(Color stm) {
             if (stm == Color::White) return Directions::North;
             else                     return Directions::South;
         }
 
-        constexpr inline Direction Down(Color stm) {
+        [[maybe_unused]] constexpr inline Direction Down(Color stm) {
             if (stm == Color::White) return Directions::South;
             else                     return Directions::North;
         }

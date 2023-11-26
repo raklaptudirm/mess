@@ -36,7 +36,7 @@ namespace Chess {
             }
 
             // Clear empties the move-list, preparing it for reuse.
-            constexpr inline void Clear() {
+            [[maybe_unused]] constexpr inline void Clear() {
                 length = 0;
             }
 
