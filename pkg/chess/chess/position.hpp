@@ -148,11 +148,11 @@ namespace Chess {
             const BitBoard attackingQueens = (*this)[Piece::Queen];
 
             // Check for bishop type attackers.
-            const BitBoard attackingBishops = ((*this)[Piece::Bishop] | attackingQueens) & attackers;
+            const BitBoard attackingBishops = ((*this)[Piece::Bishop] + attackingQueens) & attackers;
             if (!attackingBishops.IsDisjoint(MoveTable::Bishop(square, blockers))) return true;
 
             // Check for rook type attackers.
-            const BitBoard attackingRooks = ((*this)[Piece::Rook] | attackingQueens) & attackers;
+            const BitBoard attackingRooks = ((*this)[Piece::Rook] + attackingQueens) & attackers;
             if (!attackingRooks.IsDisjoint(MoveTable::Rook(square, blockers))) return true;
 
             // Check for a king attacker.
@@ -167,7 +167,7 @@ namespace Chess {
         // the occupied BitBoard as its blocker set automatically.
         template <Color BY>
         [[nodiscard]] constexpr inline bool Attacked(const Square square) const {
-            return Attacked<BY>(square, (*this)[BY] | (*this)[!BY]);
+            return Attacked<BY>(square, (*this)[BY] + (*this)[!BY]);
         }
 
         // An overload of the standard Attacked function which checks for attacks to
@@ -184,7 +184,7 @@ namespace Chess {
         // to be the occupied BitBoard.
         template<Color BY>
         [[nodiscard]] inline bool Attacked(const BitBoard targets) const {
-            return Attacked<BY>(targets, (*this)[BY] | (*this)[!BY]);
+            return Attacked<BY>(targets, (*this)[BY] + (*this)[!BY]);
         }
 
         // Constructor of Position which operates on a raw FEN string.

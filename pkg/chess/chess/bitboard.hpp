@@ -129,14 +129,6 @@ namespace Chess {
 
         [[maybe_unused]] constexpr inline bool operator==(const BitBoard &) const = default;
 
-        [[maybe_unused]] constexpr inline BitBoard operator|(const BitBoard bb) const {
-            return BitBoard(internal | static_cast<uint64_t>(bb));
-        }
-
-        [[maybe_unused]] constexpr inline void operator|=(const BitBoard bb) {
-            internal |= static_cast<uint64_t>(bb);
-        }
-
         [[maybe_unused]] constexpr inline BitBoard operator&(const BitBoard bb) const {
             return BitBoard(internal & static_cast<uint64_t>(bb));
         }
@@ -157,12 +149,8 @@ namespace Chess {
             return BitBoard(~internal);
         }
 
-        [[maybe_unused]] constexpr inline BitBoard operator!() const {
-            return BitBoard(~internal);
-        }
-
         [[maybe_unused]] constexpr inline BitBoard operator+(const BitBoard bb) const {
-            return *this | bb;
+            return BitBoard(internal | static_cast<uint64_t>(bb));
         }
 
         [[maybe_unused]] constexpr inline void operator+=(const BitBoard bb) {
@@ -178,11 +166,11 @@ namespace Chess {
         }
 
         [[maybe_unused]] constexpr inline BitBoard operator+(const Square square) const {
-            return *this | BitBoard(square);
+            return *this + BitBoard(square);
         }
 
         [[maybe_unused]] constexpr inline void operator+=(const Square square) {
-            *this |= BitBoard(square);
+            *this += BitBoard(square);
         }
 
         [[maybe_unused]] constexpr inline BitBoard operator-(const Square square) const {

@@ -158,7 +158,7 @@ namespace Chess::Moves {
                 // If the number of friendly pieces in the pinning ray is exactly
                 // one, then that piece is being pinned along that ray.
                 if ((friends & possiblePin).Singular())
-                    pinmask |= possiblePin;
+                    pinmask += possiblePin;
             }
 
             return pinmask;
@@ -174,8 +174,8 @@ namespace Chess::Moves {
 
             // Fetch the possibly pinning Bishops, Rooks, and Queens: the ones whose attacks line
             // up with the position of the side to move's king, and generate the pinmasks.
-            pinmaskL = generatePinMask((r | q) & MoveTable::Rook  (king, enemies));
-            pinmaskD = generatePinMask((b | q) & MoveTable::Bishop(king, enemies));
+            pinmaskL = generatePinMask((r + q) & MoveTable::Rook  (king, enemies));
+            pinmaskD = generatePinMask((b + q) & MoveTable::Bishop(king, enemies));
         }
 
         // pawnMoves generates all the different types of pawn moves that are legal
@@ -215,8 +215,8 @@ namespace Chess::Moves {
                 // Concatenate the attacks of the pinned and the unpinned pawns into
                 // singular variables in each direction. Notice we do an intersection
                 // of the pinned attacks and the pinmask to remove illegal moves.
-                const BitBoard attacksE = (pinnedAttacksE & pinmaskD) | unpinnedAttacksE;
-                const BitBoard attacksW = (pinnedAttacksW & pinmaskD) | unpinnedAttacksW;
+                const BitBoard attacksE = (pinnedAttacksE & pinmaskD) + unpinnedAttacksE;
+                const BitBoard attacksW = (pinnedAttacksW & pinmaskD) + unpinnedAttacksW;
 
                 // Serialize the non-promotion attacks which actually capture an enemy.
                 serialize<UE, MoveFlag::Normal>((attacksE - PRRank) & enemies);
@@ -393,8 +393,8 @@ namespace Chess::Moves {
 
             // Initialize the territory BitBoard.
             territory = BitBoards::Empty;
-            if constexpr (QUIET) territory |= ~occupied; // QUIET => Can move to empty squares.
-            if constexpr (NOISY) territory |= enemies;   // NOISY => Can move to enemy squares.
+            if constexpr (QUIET) territory += ~occupied; // QUIET => Can move to empty squares.
+            if constexpr (NOISY) territory += enemies;   // NOISY => Can move to enemy squares.
 
             const auto kingBB = position[Piece::King] & friends;
 
