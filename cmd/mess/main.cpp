@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "chess/board.hpp"
+#include "chess/version.hpp"
 
 // NOLINTNEXTLINE chrono header unnecessary in Darwin.
 #include <chrono>
@@ -11,6 +12,10 @@ using namespace Chess;
 int main(int argc, char const *argv[]) {
     constexpr auto defaultFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     constexpr auto defaultDep = "6";
+
+    std::cout << "Mess v1.0.0 by Rak Laptudirm\n" << std::endl;
+    std::cout << "pkg/uci   v1.0.0 by Rak Laptudirm" << std::endl;
+    std::cout << "pkg/chess v" << Chess::Version << " by Rak Laptudirm\n" << std::endl;
 
     const auto fen = argc >= 2 && std::string(argv[1]) != "-" ? argv[1] : defaultFEN;
     const auto dep = argc >= 3 && std::string(argv[2]) != "-" ? argv[2] : defaultDep;
