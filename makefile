@@ -22,15 +22,15 @@ override SRC_PATH = cmd/$(PROGRAM)
 # ====================== #
 # Engine Executable Name #
 # ====================== #
-EXE = bin/${PROGRAM}
+EXE = bin/$(PROGRAM)
 
 # ======================= #
 # Code Building Directory #
 # ======================= #
 override BUILD_ROOT = cmake-build
-override BUILD_DIR  = ${BUILD_ROOT}/${PROGRAM}/${CONFIG}
+override BUILD_DIR  = $(BUILD_ROOT)/$(PROGRAM)/$(CONFIG)
 
-CONFIG = RelWithDebInfo
+CONFIG = Release
 
 # =========================================================== #
 # Compiler Selection: If CC and CXX variables are not set,    #
@@ -73,8 +73,7 @@ default: build
 # =============================================================================== #
 build:
 	cmake $(SRC_PATH) -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=$(CONFIG)   \
-	-DCMAKE_C_COMPILER=$(CC) -DCMAKE_CXX_COMPILER=$(CXX) \
-	-G Ninja
+	-DCMAKE_C_COMPILER=$(CC) -DCMAKE_CXX_COMPILER=$(CXX) -G Ninja
 	cmake --build $(BUILD_DIR) --config $(CONFIG)
 	@$(CP) $(BUILD_DIR)/$(PROGRAM)$(EXTENSION) $(EXE)$(EXTENSION)
 
@@ -100,7 +99,7 @@ help:
 	@echo "                                - mess: the actual chess engine"
 	@echo "                                - tests: catch2 exe containing all unit tests"
 	@echo
-	@echo "    CONFIG  = RelWithDebInfo    the build configuration to use. possible values:"
+	@echo "    CONFIG  = Release           the build configuration to use. possible values:"
 	@echo "                                - Debug: full debug and sanitization information"
 	@echo "                                - Release: fastest and most optimized build"
 	@echo "                                - RelWithDebInfo: Release + asserts"
