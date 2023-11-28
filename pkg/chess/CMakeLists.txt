@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(chess)
-
-set(chess_VERSION_MAJOR 1)
-set(chess_VERSION_MINOR 0)
-set(chess_VERSION_PATCH 0)
-set(chess_VERSION "${chess_VERSION_MAJOR}.${chess_VERSION_MINOR}.${chess_VERSION_PATCH}")
+project(chess VERSION 1.0.0)
 
 configure_file(${PROJECT_SOURCE_DIR}/chess/version.hpp.in ${PROJECT_SOURCE_DIR}/chess/version.hpp)
 
