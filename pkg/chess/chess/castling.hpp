@@ -23,6 +23,9 @@
 #include "bitboard.hpp"
 
 namespace Chess::Castling {
+
+    // Side represents the various sides that a given Color
+    // can castle towards when the proper conditions are met.
     struct Side {
         /* ******************************
          * Internal Enum Representation *
@@ -91,6 +94,7 @@ namespace Chess::Castling {
             return Castling::Side(internal % Castling::Side::N);
         }
 
+        // Conversion function to convert a side into its uint8_t representation.
         constexpr inline explicit operator uint8_t() const {
             return internal;
         }

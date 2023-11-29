@@ -42,6 +42,7 @@ namespace Chess {
         // Game ply-count. May differ from top by a constant.
         const uint16_t initialPlys = 0;
 
+        // Boolean representing if the Board is an FRC/DFRC Board.
         const bool frc;
 
         // push pushes a new Position into the Position stack.
@@ -86,7 +87,7 @@ namespace Chess {
         }
 
         // PlyCount returns the number of plys in the current game.
-        [[nodiscard]] uint16_t PlyCount() const {
+        [[maybe_unused]] [[nodiscard]] uint16_t PlyCount() const {
             // Number of plys is equal to initial number of plys at
             // root (which may be non-zero for non-startpos positions)
             // + the number of plys since the root (top).
@@ -204,6 +205,7 @@ namespace Chess {
             // Generate checker BitBoard.
             position.GenerateCheckers();
 
+            // Ensure the incremental hash is equal to the correct hash.
             assert(position.Hash == Position::ZobristHash(position));
         }
 
@@ -228,8 +230,12 @@ namespace Chess {
             return Position().ToString();
         }
 
+        // ToString converts the given move to its string representation,
+        // using the correct representation for standard castling moves.
         [[nodiscard]] constexpr std::string ToString(Move move) const {
             if (!frc) {
+                // Use the king to king target expression
+                // for castling in non-frc boards.
                 switch (static_cast<uint8_t>(move.Flag())) {
                     case MoveFlag::CastleASide:
                         return Move(
@@ -256,9 +262,15 @@ namespace Chess {
                 }
             }
 
+            // Use the internal representation in all other cases.
             return move.ToString();
         }
 
+        // Perft implements the perft function, which counts the number
+        // of nodes at a given depth from the given position. BULK_COUNT
+        // enables bulk counting which makes perft much faster, but is
+        // unusable in standard search. SPLIT_MOVES gives a breakdown of
+        // the nodes contributed by each move from the root.
         template <bool BULK_COUNT, bool SPLIT_MOVES>
         [[maybe_unused]] int64_t Perft(int32_t depth) {
             return perft<BULK_COUNT, SPLIT_MOVES>(*this, depth);
