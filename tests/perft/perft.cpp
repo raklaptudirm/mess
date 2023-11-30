@@ -97,7 +97,7 @@ namespace Perft {
                 n++; // Increase the index
 
                 // Test the perft results from Chess::Board.
-                auto chessboard = Chess::Board(test.FEN);
+                auto chessboard = Chess::Board(FEN(test.FEN));
                 CHECK(chessboard.Perft<true, false>(depth) == test.Expected[depth]);
             }
         }
