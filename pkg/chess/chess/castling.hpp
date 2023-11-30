@@ -332,7 +332,7 @@ namespace Chess::Castling {
             // The king's path to its end square and the rooks path to its end square should be empty except for the
             // castling king and rook themselves. Therefore, the blocker mask is (kingPath + rookPath) - (king + rook).
             auto BLOCKER_MASK = [](Square king, Square rook, Square kingEnd, Square rookEnd) {
-                return (BitBoards::Between2(king,  kingEnd) + BitBoards::Between2(rook, rookEnd)) - (BitBoard(king) + BitBoard(rook));
+                return (BitBoards::Between2(king,  kingEnd) | BitBoards::Between2(rook, rookEnd)) - (BitBoard(king) | BitBoard(rook));
             };
 
             // Populate the blockerMask field of Info.

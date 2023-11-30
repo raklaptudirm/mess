@@ -158,7 +158,7 @@ namespace Chess::Moves {
                 // If the number of friendly pieces in the pinning ray is exactly
                 // one, then that piece is being pinned along that ray.
                 if ((friends & possiblePin).Singular())
-                    pinmask += possiblePin;
+                    pinmask |= possiblePin;
             }
 
             return pinmask;
@@ -174,8 +174,8 @@ namespace Chess::Moves {
 
             // Fetch the possibly pinning Bishops, Rooks, and Queens: the ones whose attacks line
             // up with the position of the side to move's king, and generate the pinmasks.
-            pinmaskL = generatePinMask((r + q) & MoveTable::Rook  (king, enemies));
-            pinmaskD = generatePinMask((b + q) & MoveTable::Bishop(king, enemies));
+            pinmaskL = generatePinMask((r | q) & MoveTable::Rook  (king, enemies));
+            pinmaskD = generatePinMask((b | q) & MoveTable::Bishop(king, enemies));
         }
 
         // pawnMoves generates all the different types of pawn moves that are legal
@@ -215,8 +215,8 @@ namespace Chess::Moves {
                 // Concatenate the attacks of the pinned and the unpinned pawns into
                 // singular variables in each direction. Notice we do an intersection
                 // of the pinned attacks and the pinmask to remove illegal moves.
-                const BitBoard attacksE = (pinnedAttacksE & pinmaskD) + unpinnedAttacksE;
-                const BitBoard attacksW = (pinnedAttacksW & pinmaskD) + unpinnedAttacksW;
+                const BitBoard attacksE = (pinnedAttacksE & pinmaskD) | unpinnedAttacksE;
+                const BitBoard attacksW = (pinnedAttacksW & pinmaskD) | unpinnedAttacksW;
 
                 // Serialize the non-promotion attacks which actually capture an enemy.
                 serialize<UE, MoveFlag::Normal>((attacksE - PRRank) & enemies);
@@ -245,9 +245,9 @@ namespace Chess::Moves {
 
                             if (king.Rank() == captured.Rank()) {
                                 const BitBoard pinners =
-                                        (position[Piece::Rook] + position[Piece::Queen]) & enemies;
+                                        (position[Piece::Rook] | position[Piece::Queen]) & enemies;
 
-                                const BitBoard vanishers = passanters + BitBoard(captured);
+                                const BitBoard vanishers = passanters | BitBoard(captured);
 
                                 if (!MoveTable::Rook(king, occupied ^ vanishers).IsDisjoint(pinners))
                                     break;
@@ -289,7 +289,7 @@ namespace Chess::Moves {
                 const BitBoard unpinnedSinglePush = ((unpinnedPushers >> UP) - occupied);
 
                 // Combine the pinned and unpinned single pushes into a single BitBoard.
-                const BitBoard singlePushes = ((pinnedSinglePush & pinmaskL) + unpinnedSinglePush);
+                const BitBoard singlePushes = ((pinnedSinglePush & pinmaskL) | unpinnedSinglePush);
 
                 // Push the single pushed from the double push rank upwards and remove
                 // the ones which collide with other pieces to get the double pushes.
@@ -309,7 +309,7 @@ namespace Chess::Moves {
         // knightMoves generates legal moves for knights.
         inline void knightMoves() const {
             // Knights which are pinned either laterally or diagonally can't move.
-            const BitBoard knights = (position[Piece::Knight] & friends) - (pinmaskL + pinmaskD);
+            const BitBoard knights = (position[Piece::Knight] & friends) - (pinmaskL | pinmaskD);
             for (const auto knight : knights) serialize(knight, MoveTable::Knight(knight));
         }
 
@@ -317,7 +317,7 @@ namespace Chess::Moves {
         inline void bishopMoves() const {
             // Consider both bishops and queens. Pieces which are pinned
             // laterally can't make any diagonal moves, so remove those.
-            const BitBoard bishops = ((position[Piece::Bishop] + position[Piece::Queen]) & friends) - pinmaskL;
+            const BitBoard bishops = ((position[Piece::Bishop] | position[Piece::Queen]) & friends) - pinmaskL;
 
             // Pieces pinned diagonally can only make moves within
             // the pinned diagonal, so remove all other targets.
@@ -333,7 +333,7 @@ namespace Chess::Moves {
         inline void rookMoves() const {
             // Consider both rooks and queens. Pieces which are pinned
             // diagonally can't make any lateral moves, so remove them.
-            const BitBoard rooks = ((position[Piece::Rook] + position[Piece::Queen]) & friends) - pinmaskD;
+            const BitBoard rooks = ((position[Piece::Rook] | position[Piece::Queen]) & friends) - pinmaskD;
 
             // Pieces pinned laterally can only make moves within
             // the pinned file/rank, so remove all other targets.
@@ -389,12 +389,12 @@ namespace Chess::Moves {
             // Initialize various BitBoards.
             friends  = position[ STM];
             enemies  = position[!STM];
-            occupied = friends + enemies;
+            occupied = friends | enemies;
 
             // Initialize the territory BitBoard.
             territory = BitBoards::Empty;
-            if constexpr (QUIET) territory += ~occupied; // QUIET => Can move to empty squares.
-            if constexpr (NOISY) territory += enemies;   // NOISY => Can move to enemy squares.
+            if constexpr (QUIET) territory |= ~occupied; // QUIET => Can move to empty squares.
+            if constexpr (NOISY) territory |= enemies;   // NOISY => Can move to enemy squares.
 
             const auto kingBB = position[Piece::King] & friends;
 

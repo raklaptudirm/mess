@@ -230,42 +230,6 @@ namespace Chess {
             return Position().ToString();
         }
 
-        // ToString converts the given move to its string representation,
-        // using the correct representation for standard castling moves.
-        [[nodiscard]] constexpr std::string ToString(Move move) const {
-            if (!frc) {
-                // Use the king to king target expression
-                // for castling in non-frc boards.
-                switch (static_cast<uint8_t>(move.Flag())) {
-                    case MoveFlag::CastleASide:
-                        return Move(
-                                move.Source(),
-                                Castling::EndSquares(
-                                        Castling::Dimension(
-                                                Position().SideToMove,
-                                                Castling::Side::A
-                                        )
-                                ).first,
-                                MoveFlag::CastleASide
-                        ).ToString();
-                    case MoveFlag::CastleHSide:
-                        return Move(
-                                move.Source(),
-                                Castling::EndSquares(
-                                        Castling::Dimension(
-                                                Position().SideToMove,
-                                                Castling::Side::H
-                                        )
-                                ).first,
-                                MoveFlag::CastleHSide
-                        ).ToString();
-                }
-            }
-
-            // Use the internal representation in all other cases.
-            return move.ToString();
-        }
-
         // Perft implements the perft function, which counts the number
         // of nodes at a given depth from the given position. BULK_COUNT
         // enables bulk counting which makes perft much faster, but is
@@ -307,7 +271,7 @@ namespace Chess {
                 // If split moves is enabled, display each child move's
                 // contribution to the node count separately.
                 if (SPLIT_MOVES)
-                    std::cout << board.ToString(move) << ": " << delta << std::endl;
+                    std::cout << move << ": " << delta << std::endl;
 
             }
 

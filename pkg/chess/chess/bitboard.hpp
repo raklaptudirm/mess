@@ -14,7 +14,6 @@
 #ifndef CHESS_BITBOARD
 #define CHESS_BITBOARD
 
-#include <bit>
 #include <array>
 #include <cstdint>
 
@@ -148,17 +147,17 @@ namespace Chess {
             return BitBoard(~internal);
         }
 
-        // The + operator implements the set union operation between the two
+        // The | operator implements the set union operation between the two
         // provided BitBoards. A union operation is defined as the operation
         // which returns a set containing all the elements present in either of
         // its two operands.
-        [[maybe_unused]] constexpr inline BitBoard operator +(const BitBoard bb) const {
+        [[maybe_unused]] constexpr inline BitBoard operator |(const BitBoard bb) const {
             return BitBoard(internal | static_cast<uint64_t>(bb));
         }
 
-        // The += operator is the assigning version of the + operator, and it performs
+        // The |= operator is the assigning version of the | operator, and it performs
         // a union operation with the target variable of the assignment.
-        [[maybe_unused]] constexpr inline void operator +=(const BitBoard bb) {
+        [[maybe_unused]] constexpr inline void operator |=(const BitBoard bb) {
             internal |= static_cast<uint64_t>(bb);
         }
 
@@ -206,13 +205,13 @@ namespace Chess {
         // The + Square operator is an overload which converts the provided square to its
         // BitBoard representation and then performs a set union operation on its operands.
         [[maybe_unused]] constexpr inline BitBoard operator +(const Square square) const {
-            return *this + BitBoard(square);
+            return *this | BitBoard(square);
         }
 
         // The += Square operator is the assigning version of the + Square operator, which
         // performs the same operation with the target variable of the assignment.
         [[maybe_unused]] constexpr inline void operator +=(const Square square) {
-            *this += BitBoard(square);
+            *this |= BitBoard(square);
         }
 
         // The - Square operator is an overload which converts the provided square to its
@@ -497,7 +496,7 @@ namespace Chess {
                             continue;
                         }
 
-                        const BitBoard blockers = BitBoard(sq1) + BitBoard(sq2);
+                        const BitBoard blockers = BitBoard(sq1) | BitBoard(sq2);
 
                         // This step generates the between BitBoard for the current pair of Squares.
                         // We use the mask generated in the previous step to apply the Hyperbola
@@ -527,19 +526,19 @@ namespace Chess {
         // Between returns a BitBoard containing all the squares between the two provided
         // squares, inclusive of the first square only.
         [[maybe_unused]] constexpr inline BitBoard Between1(Square square1, Square square2) {
-            return Between(square1, square2) + BitBoard(square1);
+            return Between(square1, square2) | BitBoard(square1);
         }
 
         // Between returns a BitBoard containing all the squares between the two provided
         // squares, inclusive of the second square only.
         [[maybe_unused]] constexpr inline BitBoard Between2(Square square1, Square square2) {
-            return Between(square1, square2) + BitBoard(square2);
+            return Between(square1, square2) | BitBoard(square2);
         }
 
         // Between returns a BitBoard containing all the squares between the two provided
         // squares, inclusive of both the squares.
         [[maybe_unused]] constexpr inline BitBoard Between12(Square square1, Square square2) {
-            return Between(square1, square2) + BitBoard(square1) + BitBoard(square2);
+            return Between(square1, square2) | BitBoard(square1) | BitBoard(square2);
         }
     }
 }

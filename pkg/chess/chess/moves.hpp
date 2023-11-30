@@ -150,12 +150,12 @@ namespace Chess::MoveTable {
         }
 
         constexpr inline BitBoard bishopSlow(Square square, BitBoard blockers) {
-            return BitBoard::Hyperbola(square, blockers, BitBoards::    Diagonal(square.    Diagonal())) +
+            return BitBoard::Hyperbola(square, blockers, BitBoards::    Diagonal(square.    Diagonal())) |
                    BitBoard::Hyperbola(square, blockers, BitBoards::AntiDiagonal(square.AntiDiagonal()));
         }
 
         constexpr inline BitBoard rookSlow(Square square, BitBoard blockers) {
-           return BitBoard::Hyperbola(square, blockers, BitBoards::File(square.File())) +
+           return BitBoard::Hyperbola(square, blockers, BitBoards::File(square.File())) |
                   BitBoard::Hyperbola(square, blockers, BitBoards::Rank(square.Rank()));
         }
 
