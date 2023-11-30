@@ -60,6 +60,12 @@ namespace Chess {
 
         // Several checks if the BitBoard has more than 1 element.
         [[maybe_unused]] [[nodiscard]] constexpr inline bool Several() const {
+            // The (internal - 1) gives a number with the lsb set to 0 and all
+            // the lower bits set to 1. Doing a bitwise and of this number with
+            // the original removes just the lsb (& 0) since all the lower bits
+            // are already 0 by definition of the lsb. Therefore, the whole
+            // operation is equivalent to a lsb-pop, thus making the number
+            // 0 (false) if there are only 0-1 bits in the number.
             return internal & (internal - 1);
         }
 
@@ -103,6 +109,9 @@ namespace Chess {
         // PopLSB removes the least significant set-bit from the BitBoard.
         [[maybe_unused]] constexpr inline Square PopLSB() {
             Square lsb = LSB();
+
+            // Specifics of this operation are described in the documentation of
+            // the Several function which uses the same lsb-popping mechanism.
             internal = internal & (internal - 1);
             return lsb;
         }
@@ -116,7 +125,7 @@ namespace Chess {
 
         /* **********************
          * Conversion Functions *
-         *********************** */
+         ********************** */
 
         // Conversion function to convert the BitBoard into an uint64_t.
         [[maybe_unused]] constexpr inline explicit operator uint64_t() const {
@@ -127,96 +136,146 @@ namespace Chess {
          * Operator Definitions *
          ********************** */
 
-        [[maybe_unused]] constexpr inline bool operator==(const BitBoard &) const = default;
+        // The == operator checks for equality between the two provided BitBoards.
+        // The definition of the not-equal/ operator is also automatically generated
+        // from this function.
+        [[maybe_unused]] constexpr inline bool operator ==(const BitBoard &) const = default;
 
-        [[maybe_unused]] constexpr inline BitBoard operator&(const BitBoard bb) const {
-            return BitBoard(internal & static_cast<uint64_t>(bb));
-        }
-
-        [[maybe_unused]] constexpr inline void operator&=(const BitBoard bb) {
-            internal &= static_cast<uint64_t>(bb);
-        }
-
-        [[maybe_unused]] constexpr inline BitBoard operator^(const BitBoard bb) const {
-            return BitBoard(internal ^ static_cast<uint64_t>(bb));
-        }
-
-        [[maybe_unused]] constexpr inline void operator^=(const BitBoard bb) {
-            internal ^= static_cast<uint64_t>(bb);
-        }
-
-        [[maybe_unused]] constexpr inline BitBoard operator~() const {
+        // The ~ operator implements the set complement operation on the provided
+        // BitBoard. A complement operation is defined as the operation which returns a
+        // set containing all the elements missing from its operand.
+        [[maybe_unused]] constexpr inline BitBoard operator ~() const {
             return BitBoard(~internal);
         }
 
-        [[maybe_unused]] constexpr inline BitBoard operator+(const BitBoard bb) const {
+        // The + operator implements the set union operation between the two
+        // provided BitBoards. A union operation is defined as the operation
+        // which returns a set containing all the elements present in either of
+        // its two operands.
+        [[maybe_unused]] constexpr inline BitBoard operator +(const BitBoard bb) const {
             return BitBoard(internal | static_cast<uint64_t>(bb));
         }
 
-        [[maybe_unused]] constexpr inline void operator+=(const BitBoard bb) {
+        // The += operator is the assigning version of the + operator, and it performs
+        // a union operation with the target variable of the assignment.
+        [[maybe_unused]] constexpr inline void operator +=(const BitBoard bb) {
             internal |= static_cast<uint64_t>(bb);
         }
 
-        [[maybe_unused]] constexpr inline BitBoard operator-(const BitBoard bb) const {
+        // The & operator implements the set intersection operation between the two
+        // provided BitBoards. An intersection operation is defined as the operation
+        // which returns a set containing the common elements of its operands.
+        [[maybe_unused]] constexpr inline BitBoard operator & (const BitBoard bb) const {
+            return BitBoard(internal & static_cast<uint64_t>(bb));
+        }
+
+        // The &= operator is the assigning version of the & operator, and it performs
+        // an intersection operation with the target variable of the assignment.
+        [[maybe_unused]] constexpr inline void operator &= (const BitBoard bb) {
+            internal &= static_cast<uint64_t>(bb);
+        }
+
+        // The - operator implements the set difference operation between the two
+        // provided BitBoards. A set difference operation is defined as the operation
+        // which returns a set containing all the elements present in the first set
+        // but not present in the second one.
+        [[maybe_unused]] constexpr inline BitBoard operator -(const BitBoard bb) const {
             return *this & ~bb;
         }
 
-        [[maybe_unused]] constexpr inline void operator-=(const BitBoard bb) {
+        // The -= operator is the assigning version for the - operator, and it performs
+        // an exclusive or operation with the target variable of the assignment.
+        [[maybe_unused]] constexpr inline void operator -=(const BitBoard bb) {
             *this &= ~bb;
         }
 
-        [[maybe_unused]] constexpr inline BitBoard operator+(const Square square) const {
+        // The ^ operator implements the set exclusive or operation between the two
+        // provided BitBoards. An exclusive or operation is defined as the operation
+        // which returns a set containing the elements missing or shared between its
+        // operands.
+        [[maybe_unused]] constexpr inline BitBoard operator ^ (const BitBoard bb) const {
+            return BitBoard(internal ^ static_cast<uint64_t>(bb));
+        }
+
+        // The ^= operator is the assigning version for the ^ operator, and it performs
+        // an exclusive or operation with the target variable of the assignment.
+        [[maybe_unused]] constexpr inline void operator ^=(const BitBoard bb) {
+            internal ^= static_cast<uint64_t>(bb);
+        }
+
+        // The + Square operator is an overload which converts the provided square to its
+        // BitBoard representation and then performs a set union operation on its operands.
+        [[maybe_unused]] constexpr inline BitBoard operator +(const Square square) const {
             return *this + BitBoard(square);
         }
 
-        [[maybe_unused]] constexpr inline void operator+=(const Square square) {
+        // The += Square operator is the assigning version of the + Square operator, which
+        // performs the same operation with the target variable of the assignment.
+        [[maybe_unused]] constexpr inline void operator +=(const Square square) {
             *this += BitBoard(square);
         }
 
-        [[maybe_unused]] constexpr inline BitBoard operator-(const Square square) const {
+        // The - Square operator is an overload which converts the provided square to its
+        // BitBoard representation and then performs a set difference operation on its operands.
+        [[maybe_unused]] constexpr inline BitBoard operator -(const Square square) const {
             return *this - BitBoard(square);
         }
 
-        [[maybe_unused]] constexpr inline void operator-=(const Square square) {
+        // The -= Square operator is the assigning version of the - Square operator, which
+        // performs the same operation with the target variable of the assignment.
+        [[maybe_unused]] constexpr inline void operator -=(const Square square) {
             *this -= BitBoard(square);
         }
 
-        // Definition of the less-than-equal operator, which checks if the
-        // target BitBoard is a subset of the rhs BitBoard.
-        [[maybe_unused]] constexpr inline bool operator<=(const BitBoard bb) const {
+        // The <= operator implements the subset checking operation between the two
+        // provided BitBoards. A BitBoard is said to be the subset of another if the
+        // other BitBoard contains all the elements present in this BitBoard.
+        [[maybe_unused]] constexpr inline bool operator <=(const BitBoard bb) const {
             return (*this & bb) == *this;
         }
 
-        // Definition of the greater-than-equal operator, which checks if the
-        // target BitBoard is a superset of the rhs BitBoard.
-        [[maybe_unused]] constexpr inline bool operator>=(const BitBoard bb) const {
+        // The >= operator implements the superset checking operation between the two
+        // provided BitBoards. A BitBoard is said to be the superset of another if it
+        // contains all the elements present in the other BitBoard.
+        [[maybe_unused]] constexpr inline bool operator >=(const BitBoard bb) const {
             return (*this & bb) == bb;
         }
 
-        // Definition of the less-than operator, which checks if the target
-        // BitBoard is a proper subset of the rhs BitBoard.
-        [[maybe_unused]] constexpr inline bool operator<(const BitBoard bb) const {
+        // The < operator implements the proper subset checking operation between the two
+        // provided BitBoards. A BitBoard is said to be the proper subset of another if
+        // it is both a subset and not equal to the other BitBoard.
+        [[maybe_unused]] constexpr inline bool operator <(const BitBoard bb) const {
             return *this <= bb && *this != bb;
         }
 
-        // Definition of the greater-than operator, which checks if the rhs
-        // BitBoard is a proper subset of the target BitBoard.
-        [[maybe_unused]] constexpr inline bool operator>(const BitBoard bb) const {
+        // The > operator implements the proper superset checking operation between the two
+        // provided BitBoards. A BitBoard is said to be the proper superset of another if
+        // it is both a superset and not equal to the other BitBoard.
+        [[maybe_unused]] constexpr inline bool operator >(const BitBoard bb) const {
             return *this >= bb && *this != bb;
         }
 
-        // Definition of the indexing with Squares on a BitBoard.
-        [[maybe_unused]] constexpr inline bool operator[](const Square square) const {
+        // The [] operator implements indexing on the BitBoard with a Square. An index
+        // operation returns a boolean representing if the BitBoard contains the square.
+        [[maybe_unused]] constexpr inline bool operator [](const Square square) const {
             return (*this & BitBoard(square)).Some();
         }
 
-        [[maybe_unused]] constexpr inline BitBoard operator>>(const Direction direction) const {
+        // The >> operator implements the BitBoard shift operation which shifts the
+        // BitBoard in a given Direction. Shifting a BitBoard is equivalent to replacing
+        // each of its element squares with another square where the difference between
+        // the old and the new squares are the same and determined by the Direction.
+        [[maybe_unused]] constexpr inline BitBoard operator >>(const Direction direction) const {
             const auto shift = static_cast<int8_t>(direction);
 
+            // Straight up and down (and double that) shifts can be done without any masking
+            // because of the internal representation used by the BitBoard.
             if (direction == Directions::North || direction == Directions::North+Directions::North)
                 return BitBoard(internal << shift);
             if (direction == Directions::South || direction == Directions::South+Directions::South)
                 return BitBoard(internal >> -shift);
+
+            // Shifts to the east and west however need masking to prevent spills.
 
             constexpr uint64_t NOT_FILE_A = ~0x0101010101010101ULL;
             constexpr uint64_t NOT_FILE_H = ~0x8080808080808080ULL;
@@ -231,10 +290,13 @@ namespace Chess {
             if (direction == Directions::SouthEast)
                 return BitBoard((internal & NOT_FILE_H) >> -shift);
 
+            // Ignore shifts towards unknown directions.
             return *this;
         }
 
-        [[maybe_unused]] constexpr inline void operator>>=(const Direction direction) {
+        // The >>= operator is the assigning version of the >> operator, which performs
+        // the same operation with the target variable of the assignment.
+        [[maybe_unused]] constexpr inline void operator >>=(const Direction direction) {
             *this = *this >> direction;
         }
 
@@ -256,8 +318,8 @@ namespace Chess {
 
             // ++ takes the iterator forward by popping the LSB.
             // A reference to itself as required of an iterator.
-            constexpr inline Iterator operator++() {
-                internal = internal & (internal - 1);
+            constexpr inline Iterator operator ++() {
+                internal = internal & (internal - 1); // Pop LSB.
                 return *this;
             }
 
@@ -267,7 +329,7 @@ namespace Chess {
 
             // * operator finds the least significant set bit in the uint64_t.
             // Square representing the least significant set bit.
-            constexpr Square operator*() const {
+            constexpr Square operator *() const {
                 return BitBoard(internal).LSB();
             }
         };
@@ -305,6 +367,7 @@ namespace Chess {
 
     private:
         // reverse reverses the bits of the given uint64_t number.
+        // https://graphics.stanford.edu/~seander/bithacks.html#BitReverseTable
         constexpr static inline uint64_t reverse(uint64_t n) {
             // Lookup table with precomputed reverses for each byte value.
             constexpr uint64_t BitReverseTable256[256] = {
@@ -314,6 +377,7 @@ namespace Chess {
                 R6(0), R6(2), R6(1), R6(3)
             };
 
+            // Reverse each byte in the number and append them together in reverse.
             return (BitReverseTable256[(n >>  0) & 0xff] << 56) |
                    (BitReverseTable256[(n >>  8) & 0xff] << 48) |
                    (BitReverseTable256[(n >> 16) & 0xff] << 40) |
@@ -326,11 +390,9 @@ namespace Chess {
 
     public:
         // Hyperbola implements the Hyperbola Quintessence algorithm for calculating ray
-        // attacks. It uses the o - 2r trick to find the ray from the given blockers.
-        //
-        // square:   Square of the attacker.
-        // blockers: Blockers blocking the attacks.
-        // mask:     Mask of the ray attack.
+        // attacks. Provided with the sliding piece square, the piece's ray mask, and
+        // the BitBoard of blockers, it returns a BitBoard of all the Squares to which
+        // the given piece can move, without masking out any friendly squares.
         constexpr static inline BitBoard Hyperbola(Square square, BitBoard blockers, BitBoard mask) {
             const uint64_t r = static_cast<uint64_t>(BitBoard(square)); // Piece's BitBoard as an uint64_t.
             const uint64_t o = static_cast<uint64_t>(blockers & mask);  // Position's Masked Occupancy.
@@ -346,141 +408,140 @@ namespace Chess {
     }
 
     namespace BitBoards {
-        namespace {
-            constexpr std::array<uint64_t, File::N> files = {
-                    0x0101010101010101,
-                    0x0202020202020202,
-                    0x0404040404040404,
-                    0x0808080808080808,
-                    0x1010101010101010,
-                    0x2020202020202020,
-                    0x4040404040404040,
-                    0x8080808080808080,
-            };
-
-            constexpr std::array<uint64_t, Rank::N> ranks = {
-                    0x00000000000000FF,
-                    0x000000000000FF00,
-                    0x0000000000FF0000,
-                    0x00000000FF000000,
-                    0x000000FF00000000,
-                    0x0000FF0000000000,
-                    0x00FF000000000000,
-                    0xFF00000000000000,
-            };
-
-            constexpr std::array<uint64_t, 15> diagonals = {
-                    0x0000000000000080,
-                    0x0000000000008040,
-                    0x0000000000804020,
-                    0x0000000080402010,
-                    0x0000008040201008,
-                    0x0000804020100804,
-                    0x0080402010080402,
-                    0x8040201008040201,
-                    0x4020100804020100,
-                    0x2010080402010000,
-                    0x1008040201000000,
-                    0x0804020100000000,
-                    0x0402010000000000,
-                    0x0201000000000000,
-                    0x0100000000000000,
-            };
-            constexpr std::array<uint64_t, 15> antiDiagonals = {
-                    0x0000000000000001,
-                    0x0000000000000102,
-                    0x0000000000010204,
-                    0x0000000001020408,
-                    0x0000000102040810,
-                    0x0000010204081020,
-                    0x0001020408102040,
-                    0x0102040810204080,
-                    0x0204081020408000,
-                    0x0408102040800000,
-                    0x0810204080000000,
-                    0x1020408000000000,
-                    0x2040800000000000,
-                    0x4080000000000000,
-                    0x8000000000000000,
-            };
-        }
-
         [[maybe_unused]] constexpr BitBoard Empty = BitBoard(0);
-        [[maybe_unused]] constexpr BitBoard Full = BitBoard(~0);
+        [[maybe_unused]] constexpr BitBoard Full = ~BitBoard(0);
 
         [[maybe_unused]] constexpr BitBoard White = BitBoard(0x55AA55AA55AA55AA);
         [[maybe_unused]] constexpr BitBoard Black = BitBoard(0xAA55AA55AA55AA55);
 
         [[maybe_unused]] constexpr BitBoard Edges = BitBoard(0xff818181818181ff);
 
+        // File returns the BitBoard representing the given File.
         [[maybe_unused]] constexpr inline BitBoard File(Chess::File file) {
-            if (file == File::None) return Empty;
+            constexpr std::array<uint64_t, File::N> files = {
+                    0x0101010101010101, 0x0202020202020202,
+                    0x0404040404040404, 0x0808080808080808,
+                    0x1010101010101010, 0x2020202020202020,
+                    0x4040404040404040, 0x8080808080808080,
+            };
+
             return BitBoard(files[static_cast<uint8_t>(file)]);
         }
 
+        // Rank returns the BitBoard representing the given Rank.
         [[maybe_unused]] constexpr inline BitBoard Rank(Chess::Rank rank) {
+            constexpr std::array<uint64_t, Rank::N> ranks = {
+                    0x00000000000000FF, 0x000000000000FF00,
+                    0x0000000000FF0000, 0x00000000FF000000,
+                    0x000000FF00000000, 0x0000FF0000000000,
+                    0x00FF000000000000, 0xFF00000000000000,
+            };
+
             return BitBoard(ranks[static_cast<uint8_t>(rank)]);
         }
 
+        // Diagonal returns the BitBoard representing the given Diagonal.
         [[maybe_unused]] constexpr inline BitBoard Diagonal(uint8_t diagonal) {
+            constexpr std::array<uint64_t, 15> diagonals = {
+                    0x0000000000000080, 0x0000000000008040, 0x0000000000804020,
+                    0x0000000080402010, 0x0000008040201008, 0x0000804020100804,
+                    0x0080402010080402, 0x8040201008040201, 0x4020100804020100,
+                    0x2010080402010000, 0x1008040201000000, 0x0804020100000000,
+                    0x0402010000000000, 0x0201000000000000, 0x0100000000000000,
+            };
+
             return BitBoard(diagonals[diagonal]);
         }
 
+        // AntiDiagonal returns the BitBoard representing the given AntiDiagonal.
         [[maybe_unused]] constexpr inline BitBoard AntiDiagonal(uint8_t antiDiagonal) {
+            constexpr std::array<uint64_t, 15> antiDiagonals = {
+                    0x0000000000000001, 0x0000000000000102, 0x0000000000010204,
+                    0x0000000001020408, 0x0000000102040810, 0x0000010204081020,
+                    0x0001020408102040, 0x0102040810204080, 0x0204081020408000,
+                    0x0408102040800000, 0x0810204080000000, 0x1020408000000000,
+                    0x2040800000000000, 0x4080000000000000, 0x8000000000000000,
+            };
+
             return BitBoard(antiDiagonals[antiDiagonal]);
         }
 
-        namespace {
-            constexpr std::array<std::array<BitBoard, Square::N>, Square::N> between = []() {
-                std::array<std::array<BitBoard, Square::N>, Square::N> between = {};
+        [[maybe_unused]] constexpr inline BitBoard Between(Square square1, Square square2) {
+            // A Table of between BitBoards should be indexed with two squares, which
+            // should index the between BitBoard of the two squares, i.e. a BitBoard
+            // containing all the squares between the given two exclusive of both.
+            using Table = std::array<std::array<BitBoard, Square::N>, Square::N>;
+
+            // between is the above-mentioned between table. It is generated
+            // automatically during compile-time using the given lambda function.
+            constexpr Table between = []() {
+                Table between = {};
 
                 for (uint8_t square1 = 0; square1 < Square::N; square1++) {
                     for (uint8_t square2 = 0; square2 < Square::N; square2++) {
                         const Square sq1 = Square(square1);
                         const Square sq2 = Square(square2);
 
-                        if (sq1 == sq2) continue;
+                        // Try to find a common Rank, File, or Diagonal between the squares, which,
+                        // if it exists, will be a superset of the between BitBoard for the pair.
+                        const BitBoard mask = sq1.Diagonal() == sq2.Diagonal() ? Diagonal(sq1.Diagonal()) :
+                                sq1.AntiDiagonal() == sq2.AntiDiagonal() ? AntiDiagonal(sq1.AntiDiagonal()) :
+                                sq1.File() == sq2.File() ? File(sq1.File()) :
+                                sq1.Rank() == sq2.Rank() ? Rank(sq1.Rank()) : Empty;
 
-                        BitBoard mask; // NOLINT(cppcoreguidelines-pro-type-member-init)
-
-                        // Check for lateral blockerMask.
-                        if (sq1.Rank() == sq2.Rank()) mask = BitBoards::Rank(sq1.Rank());
-                        else if (sq1.File() == sq2.File()) mask = BitBoards::File(sq1.File());
-
-                            // Check for diagonal blockerMask.
-                        else if (sq1.Diagonal() == sq2.Diagonal()) mask = BitBoards::Diagonal(sq1.Diagonal());
-                        else if (sq1.AntiDiagonal() == sq2.AntiDiagonal())
-                            mask = BitBoards::AntiDiagonal(sq1.AntiDiagonal());
-
-                            // No blockerMask between the two squares.
-                        else continue;
+                        // Check if the between BitBoard will be Empty. This will be the case if
+                        // there is no ray linking the squares together, or the squares are equal.
+                        if (mask.Empty() || sq1 == sq2) {
+                            // Set the between BitBoard to Empty and continue.
+                            between[square1][square2] = Empty;
+                            continue;
+                        }
 
                         const BitBoard blockers = BitBoard(sq1) + BitBoard(sq2);
+
+                        // This step generates the between BitBoard for the current pair of Squares.
+                        // We use the mask generated in the previous step to apply the Hyperbola
+                        // algorithm along the rays joining the Squares together, using the two
+                        // Squares as the blocker set.
+                        //
+                        // Blockers: . x . . . x . .
+                        // Square 1: x x x x x x . .
+                        // Square 2: . x x x x x x x
+                        //
+                        // The intersection between the two blocked rays will be the between
+                        // BitBoard + Squares 1 and 2. Therefore, to get the between BitBoard, a
+                        // final intersection operator with the union of Squares 1 and 2 is done.
                         between[square1][square2] = BitBoard::Hyperbola(sq1, blockers, mask) &
                                                     BitBoard::Hyperbola(sq2, blockers, mask);
+                        between[square1][square2] -= blockers;
                     }
                 }
 
                 return between;
             }();
-        }
 
-        [[maybe_unused]] constexpr inline BitBoard Between(Square square1, Square square2) {
+            // Query the between table with the given Squares and return the result.
             return between[static_cast<uint8_t>(square1)][static_cast<uint8_t>(square2)];
         }
 
+        // Between returns a BitBoard containing all the squares between the two provided
+        // squares, inclusive of the first square only.
         [[maybe_unused]] constexpr inline BitBoard Between1(Square square1, Square square2) {
             return Between(square1, square2) + BitBoard(square1);
         }
 
+        // Between returns a BitBoard containing all the squares between the two provided
+        // squares, inclusive of the second square only.
         [[maybe_unused]] constexpr inline BitBoard Between2(Square square1, Square square2) {
             return Between(square1, square2) + BitBoard(square2);
         }
 
+        // Between returns a BitBoard containing all the squares between the two provided
+        // squares, inclusive of both the squares.
         [[maybe_unused]] constexpr inline BitBoard Between12(Square square1, Square square2) {
             return Between(square1, square2) + BitBoard(square1) + BitBoard(square2);
         }
     }
 }
 
-#endif //CHESS_BITBOARD
+#endif // CHESS_BITBOARD
