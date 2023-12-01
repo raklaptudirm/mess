@@ -31,16 +31,20 @@
 #include "position.hpp"
 
 namespace Chess {
+
+    // Board represents an interactive chessboard, which exposes various
+    // methods that can be utilized to safely manipulate it, like by
+    // making/undoing moves, generating legal moves, etc.
     class Board {
     private:
         const Castling::Info castlingInfo = Castling::Info();
 
         // Position stack.
-        uint16_t top = 0; // Current top in stack.
+        uint16_t top; // Current top in stack.
         std::array<Position, Move::MaxInGame> history; // Stack.
 
         // Game ply-count. May differ from top by a constant.
-        const uint16_t initialPlys = 0;
+        const uint16_t initialPlys;
 
         // Boolean representing if the Board is an FRC/DFRC Board.
         const bool frc;
@@ -51,6 +55,9 @@ namespace Chess {
 
             // Bounds check.
             assert(top < Move::MaxInGame);
+
+            // Copy the last position into the current position.
+            history[top] = history[top - 1];
         }
 
         // pop pops the top Position from the Position stack.
@@ -99,10 +106,6 @@ namespace Chess {
         // is legal, therefore making it the responsibility of the caller.
         void MakeMove(Move move) {
             push(); // Push a new position into the Position stack.
-
-            // Copy the last position into the current position
-            // so that we can make the move without editing.
-            history[top] = history[top - 1];
 
             // Create a reference of the top position, so we can
             // reference and edit it easily without indexing history.
