@@ -11,11 +11,15 @@
   <a href="https://github.com/raklaptudirm/mess/actions/workflows/ci.yml">
     <img src="https://img.shields.io/github/actions/workflow/status/rakarchive/mess/ci.yml?style=for-the-badge">
   </a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fraklaptudirm%2Fmess?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fraklaptudirm%2Fmess.svg?type=shield"/></a>
   <br>
   <a href="https://github.com/raklaptudirm/mess/releases">
     <img src="https://img.shields.io/github/v/release/rakarchive/mess?style=for-the-badge">
   </a>
 </div>
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fraklaptudirm%2Fmess.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fraklaptudirm%2Fmess?ref=badge_large)
 
 # Overview
 
