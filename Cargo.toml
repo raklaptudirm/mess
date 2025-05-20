@@ -1,0 +1,7 @@
+[package]
+name = "mess"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tetka = { git = "https://github.com/raklaptudirm/tetka.git" }
