@@ -1,17 +1,38 @@
-use std::{str::FromStr, time};
+use std::env;
 
-use tetka::games::{common::perft::perft, games::chess, interface::PositionType};
+use tetka::uxi::Client;
+
+mod commands;
+mod core;
+mod options;
 
 fn main() {
-    let position = chess::Position::from_str(chess::Position::STARTPOS).unwrap();
+    let client = Client::new()
+        .protocol("uci")
+        .engine("mess v1.0.0")
+        .author("Rak Laptudirm")
+        // Register engine options.
+        .option("Hash", options::hash())
+        .option("Threads", options::threads())
+        // Register the custom commands.
+        .command("d", commands::d())
+        .command("go", commands::go())
+        .command("bench", commands::bench())
+        .command("protocol", commands::protocol())
+        .command("position", commands::position())
+        .command("ucinewgame", commands::ucinewgame());
 
-    let start = time::Instant::now();
-    let nodes = perft::<true, false, _>(position, 6);
-    let runtime = start.elapsed();
-
-    println!(
-        "nodes {} nps {}",
-        nodes,
-        (nodes as u128 * 1000) / runtime.as_millis()
-    )
+    let args = env::args()
+        .skip(1)
+        .reduce(|acc, e| format!("{} {}", acc, e))
+        .unwrap_or("".to_string());
+    let args = args.trim().to_string();
+    if args.is_empty() {
+        client.start();
+    } else {
+        println!("args found {}", args);
+        if let Err(err) = client.run_cmd_string(&args) {
+            println!("{}", err);
+        };
+    }
 }
