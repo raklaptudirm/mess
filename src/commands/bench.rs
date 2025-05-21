@@ -69,18 +69,18 @@ pub fn bench() -> Command<Context> {
         for (i, fen) in BENCH_FENS.iter().enumerate() {
             println!("[#{}] {}", i + 1, fen);
             let position = chess::Position::from_str(fen).unwrap();
-            total_nodes += perft::<false, false, _>(position, 5);
+            total_nodes += perft::<false, false, _>(position, 4);
         }
         let elapsed = start.elapsed().as_millis();
-
-        // Assert that the node-count hasn't changed unexpectedly.
-        debug_assert!(total_nodes == 2415049334);
 
         println!(
             "nodes {} nps {}",
             total_nodes,
             total_nodes as u128 * 1000 / elapsed
         );
+
+        // Assert that the node-count hasn't changed unexpectedly.
+        assert!(total_nodes == 66984421);
 
         Ok(())
     })

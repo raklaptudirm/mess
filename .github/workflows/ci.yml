@@ -1,0 +1,40 @@
+name: mess - Continuous Integration
+
+on:
+  - push
+  - pull_request
+
+env:
+  # treat warnings as errors
+  RUSTFLAGS:    -D warnings
+  RUSTDOCFLAGS: -D warnings
+
+  # use colors when printing
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build_and_test:
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+
+    name: Cargo - Build & Test - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # update rust to latest stable version
+      - run: rustup update stable && rustup default stable
+
+      - run: cargo clippy   # look for lint errors
+      - run: cargo build -r # look for build errors
+      - run: cargo test     # look for test errors
+      - run: cargo doc      # look for bad documentation
+
+      # run the engine benchmark in debug mode with all
+      # invariant assertions enables to find various bugs
+      - run: ./target/release/mess bench

@@ -11,7 +11,9 @@ pub use self::params::*;
 
 #[derive(Clone)]
 pub struct Searcher {
+    #[allow(unused)]
     limits: Limits,
+    #[allow(unused)]
     params: Params,
 
     start: time::Instant,
@@ -21,8 +23,11 @@ pub struct Searcher {
 
 #[derive(Debug, Default, Clone)]
 pub struct Limits {
+    #[allow(unused)]
     pub maxdepth: Option<usize>,
+    #[allow(unused)]
     pub maxnodes: Option<usize>,
+    #[allow(unused)]
     pub movetime: Option<u128>,
 
     #[allow(unused)]
@@ -42,8 +47,8 @@ impl Searcher {
     pub fn search(
         &mut self,
         position: &chess::Position,
-        limits: Limits,
-        total_nodes: &mut u64,
+        #[allow(unused)] limits: Limits,
+        #[allow(unused)] total_nodes: &mut u64,
     ) -> chess::Move {
         self.start = time::Instant::now();
         self.seldepth = 0;

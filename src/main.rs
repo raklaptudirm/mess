@@ -29,10 +29,7 @@ fn main() {
     let args = args.trim().to_string();
     if args.is_empty() {
         client.start();
-    } else {
-        println!("args found {}", args);
-        if let Err(err) = client.run_cmd_string(&args) {
-            println!("{}", err);
-        };
+    } else if let Err(err) = client.run_cmd_string(&args) {
+        println!("{}", err);
     }
 }
