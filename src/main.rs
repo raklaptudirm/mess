@@ -18,6 +18,7 @@ fn main() {
         .command("d", commands::d())
         .command("go", commands::go())
         .command("bench", commands::bench())
+        .command("perft", commands::perft_cmd())
         .command("protocol", commands::protocol())
         .command("position", commands::position())
         .command("ucinewgame", commands::ucinewgame());

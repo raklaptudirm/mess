@@ -1,8 +1,5 @@
-use std::time;
-
 use tetka::{
     games::{
-        common::perft::perft,
         games::chess,
         interface::{MoveType, PositionType},
     },
@@ -43,47 +40,19 @@ pub fn go() -> Command<Context> {
 
         let mut nodes = 0;
 
-        match parse_limits(&bundle, &position)? {
-            // Search flags received, search the position.
-            Config::Search(limits) => {
-                let bestmove = searcher.search(&position, limits, &mut nodes);
+        let limits = parse_limits(&bundle, &position)?;
 
-                println!("bestmove {}", bestmove.with_position(&position));
+        let bestmove = searcher.search(&position, limits, &mut nodes);
 
-                lock! {
-                    bundle > mut ctx =>
-                    // Push the new search state to the context.
-                    ctx.searcher = searcher;
-                }
+        println!("bestmove {}", bestmove.with_position(&position));
 
-                Ok(())
-            }
-
-            // Perft flags received, run a perft on the position.
-            Config::Perft(bulk, max_depth) => {
-                for depth in 1..=max_depth {
-                    let start = time::Instant::now();
-                    let nodes = if bulk {
-                        perft::<false, true, _>(position.clone(), depth)
-                    } else {
-                        perft::<true, false, _>(position.clone(), depth)
-                    };
-                    let duration = start.elapsed();
-
-                    let time = duration.as_millis().max(1);
-
-                    println!(
-                        "info depth {} nodes {} time {} nps {}",
-                        depth,
-                        nodes,
-                        time,
-                        1000 * nodes as u128 / time
-                    );
-                }
-
-                Ok(())
-            }
+        lock! {
+            bundle > mut ctx =>
+            // Push the new search state to the context.
+            ctx.searcher = searcher;
         }
+
+        Ok(())
     })
     // Flags for reporting the current time situation.
     .flag("binc", Flag::Single)
@@ -98,20 +67,12 @@ pub fn go() -> Command<Context> {
     // Flags for setting the search type.
     // .flag("ponder", Flag::Single)
     .flag("infinite", Flag::Single)
-    // Flags for go perft command.
-    .flag("perft", Flag::Single)
-    .flag("bulk", Flag::Boolean)
     // This command should be run in a separate thread so that the Client
     // can still respond to and run other Commands while this one is running.
     .parallelize(true)
 }
 
-enum Config {
-    Perft(bool, u8),
-    Search(Limits),
-}
-
-fn parse_limits(bundle: &Bundle<Context>, position: &chess::Position) -> Result<Config, RunError> {
+fn parse_limits(bundle: &Bundle<Context>, position: &chess::Position) -> Result<Limits, RunError> {
     ////////////////////////////////////////////
     // Check which of the limit flags are set //
     ////////////////////////////////////////////
@@ -130,10 +91,6 @@ fn parse_limits(bundle: &Bundle<Context>, position: &chess::Position) -> Result<
     // Infinite flag
     let infinite = bundle.is_flag_set("infinite");
 
-    // Perft flags
-    let perft = bundle.is_flag_set("perft");
-    let bulk = bundle.is_flag_set("bulk");
-
     ///////////////////////////////////////////////////////
     // Ensure that the given flag configuration is valid //
     ///////////////////////////////////////////////////////
@@ -151,16 +108,6 @@ fn parse_limits(bundle: &Bundle<Context>, position: &chess::Position) -> Result<
         return error!("bad flag set: time control flags set alongside infinite");
     }
 
-    // The bulk flag can't be set without the perft flag.
-    if !perft && bulk {
-        return error!("bad flag set: bulk flag set without perft flag");
-    }
-
-    // The perft flag can't be set alongside time control flags.
-    if perft && (std_tc || oth_tc || infinite) {
-        return error!("bad flag set: time control flags set alongside perft");
-    }
-
     // A little utility macro to parse the given flag into the required type.
     macro_rules! get_flag {
         ($name:expr) => {
@@ -175,26 +122,22 @@ fn parse_limits(bundle: &Bundle<Context>, position: &chess::Position) -> Result<
     // Parse the provided search/perft limits //
     ////////////////////////////////////////////
 
-    if perft {
-        Ok(Config::Perft(bulk, get_flag!("perft").unwrap()))
-    } else {
-        Ok(Config::Search(Limits {
-            maxnodes: get_flag!("nodes"),
-            maxdepth: get_flag!("depth"),
-            movetime: if std_tc {
-                let (time, incr) = match position.side_to_move() {
-                    chess::Color::Black => ("btime", "binc"),
-                    chess::Color::White => ("wtime", "winc"),
-                };
+    Ok(Limits {
+        maxnodes: get_flag!("nodes"),
+        maxdepth: get_flag!("depth"),
+        movetime: if std_tc {
+            let (time, incr) = match position.side_to_move() {
+                chess::Color::Black => ("btime", "binc"),
+                chess::Color::White => ("wtime", "winc"),
+            };
 
-                let time: u128 = get_flag!(time).unwrap();
-                let incr: u128 = get_flag!(incr).unwrap();
+            let time: u128 = get_flag!(time).unwrap();
+            let incr: u128 = get_flag!(incr).unwrap();
 
-                Some((time / 20 + incr / 2).max(1))
-            } else {
-                get_flag!("movetime")
-            },
-            movestogo: get_flag!("movestogo"),
-        }))
-    }
+            Some((time / 20 + incr / 2).max(1))
+        } else {
+            get_flag!("movetime")
+        },
+        movestogo: get_flag!("movestogo"),
+    })
 }
