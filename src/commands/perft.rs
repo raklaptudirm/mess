@@ -34,7 +34,7 @@ pub fn perft_cmd() -> Command<Context> {
             let position = ctx.position.clone(); // Get the position to search
         }
 
-        let (depth, bulk, split) = parse_flags(&bundle)?;
+        let (depth, split, bulk) = parse_flags(&bundle)?;
 
         if split {
             if bulk {
@@ -91,7 +91,7 @@ fn parse_flags(bundle: &Bundle<Context>) -> Result<(u8, bool, bool), RunError> {
 
     Ok((
         get_flag!("depth").unwrap_or(6),
-        get_flag!("bulk").unwrap_or(false),
-        get_flag!("split").unwrap_or(false),
+        bundle.is_flag_set("split"),
+        bundle.is_flag_set("bulk"),
     ))
 }
