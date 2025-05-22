@@ -35,24 +35,23 @@ pub fn go() -> Command<Context> {
         lock! {
             bundle > ctx =>
             let position = ctx.position.clone(); // Get the position to search
-            let mut searcher = ctx.searcher.clone(); // Get the previous search state
+            let searcher = ctx.searcher.clone(); // Get the previous search state
         }
 
-        let mut nodes = 0;
+        match searcher.lock() {
+            Ok(mut searcher) => {
+                let mut nodes = 0;
 
-        let limits = parse_limits(&bundle, &position)?;
+                let limits = parse_limits(&bundle, &position)?;
 
-        let bestmove = searcher.search(&position, limits, &mut nodes);
+                let bestmove = searcher.search(&position, limits, &mut nodes);
 
-        println!("bestmove {}", bestmove.with_position(&position));
+                println!("bestmove {}", bestmove.with_position(&position));
 
-        lock! {
-            bundle > mut ctx =>
-            // Push the new search state to the context.
-            ctx.searcher = searcher;
+                Ok(())
+            }
+            Err(_) => error!("unable to acquire searcher"),
         }
-
-        Ok(())
     })
     // Flags for reporting the current time situation.
     .flag("binc", Flag::Single)
