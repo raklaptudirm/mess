@@ -9,7 +9,7 @@ mod options;
 fn main() {
     let client = Client::new()
         .protocol("uci")
-        .engine("mess v1.0.0")
+        .engine("Mess v1.0.0")
         .author("Rak Laptudirm")
         // Register engine options.
         .option("Hash", options::hash())
