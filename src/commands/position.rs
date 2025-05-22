@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use tetka::games::interface::MoveType;
 use tetka::games::{games::chess, interface::PositionType};
 use tetka::uxi::{Bundle, Command, Flag, RunError, error};
 
@@ -28,17 +29,15 @@ pub fn position() -> Command<Context> {
 
         if bundle.is_flag_set("moves") {
             for mov in bundle.get_array_flag("moves").unwrap() {
-                if let Ok(mv) = chess::Move::from_str(&mov) {
-                    ctx.position = ctx.position.after_move::<true>(mv);
-                } else {
-                    return error!("invalid move in move list");
-                }
+                ctx.position = ctx
+                    .position
+                    .after_move::<false>(chess::Move::from_str(&mov, &ctx.position)?);
             }
         }
 
         Ok(())
     })
-    .flag("fen", Flag::Array(4))
+    .flag("fen", Flag::Array(6))
     .flag("startpos", Flag::Boolean)
     .flag("moves", Flag::Variadic)
 }

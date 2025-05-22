@@ -6,4 +6,9 @@ edition = "2024"
 [dependencies]
 derive-new = "0.7.0"
 rand = "0.9.1"
-tetka = { git = "https://github.com/raklaptudirm/tetka.git" }
+tetka = { git = "https://github.com/raklaptudirm/tetka.git", branch = "fixes" }
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+lto = true

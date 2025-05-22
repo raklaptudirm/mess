@@ -59,9 +59,15 @@ impl Searcher {
             move_vec.push(mv);
         }
 
-        match move_vec.choose(&mut rand::rng()) {
+        let best_move = match move_vec.choose(&mut rand::rng()) {
             Some(mv) => *mv,
             None => chess::Move::NULL,
-        }
+        };
+
+        #[allow(clippy::let_and_return)]
+        best_move
     }
+
+    #[allow(unused)]
+    fn uci_report() {}
 }

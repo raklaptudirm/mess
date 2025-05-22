@@ -62,7 +62,7 @@ pub fn go() -> Command<Context> {
                     let nodes = if bulk {
                         perft::<false, true, _>(position.clone(), depth)
                     } else {
-                        perft::<false, false, _>(position.clone(), depth)
+                        perft::<true, false, _>(position.clone(), depth)
                     };
                     let duration = start.elapsed();
 
