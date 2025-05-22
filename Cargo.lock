@@ -231,7 +231,7 @@ dependencies = [
 [[package]]
 name = "tetka"
 version = "0.1.0"
-source = "git+https://github.com/raklaptudirm/tetka.git?branch=fixes#292f5de20cf11218ddcf99e40eb385e6fb96caf0"
+source = "git+https://github.com/raklaptudirm/tetka.git?branch=fixes#2784cd902ce5d471fed9e79488a033efc294d59c"
 dependencies = [
  "strum",
  "tetka-games",
@@ -241,7 +241,7 @@ dependencies = [
 [[package]]
 name = "tetka-games"
 version = "0.1.0"
-source = "git+https://github.com/raklaptudirm/tetka.git?branch=fixes#292f5de20cf11218ddcf99e40eb385e6fb96caf0"
+source = "git+https://github.com/raklaptudirm/tetka.git?branch=fixes#2784cd902ce5d471fed9e79488a033efc294d59c"
 dependencies = [
  "arrayvec",
  "derive_more",
@@ -282,7 +282,7 @@ checksum = "5a5f39404a5da50712a4c1eecf25e90dd62b613502b7e925fd4e4d19b5c96512"
 [[package]]
 name = "uxi"
 version = "0.1.0"
-source = "git+https://github.com/raklaptudirm/tetka.git?branch=fixes#292f5de20cf11218ddcf99e40eb385e6fb96caf0"
+source = "git+https://github.com/raklaptudirm/tetka.git?branch=fixes#2784cd902ce5d471fed9e79488a033efc294d59c"
 
 [[package]]
 name = "wasi"

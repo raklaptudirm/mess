@@ -1,7 +1,11 @@
 use std::time;
 
 use tetka::{
-    games::{common::perft::perft, games::chess, interface::PositionType},
+    games::{
+        common::perft::perft,
+        games::chess,
+        interface::{MoveType, PositionType},
+    },
     uxi::{Bundle, Command, Flag, RunError, error},
 };
 
@@ -44,7 +48,7 @@ pub fn go() -> Command<Context> {
             Config::Search(limits) => {
                 let bestmove = searcher.search(&position, limits, &mut nodes);
 
-                println!("bestmove {}", bestmove);
+                println!("bestmove {}", bestmove.with_position(&position));
 
                 lock! {
                     bundle > mut ctx =>
