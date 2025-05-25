@@ -97,11 +97,6 @@ fn parse_limits(bundle: &Bundle<Context>, position: &chess::Position) -> Result<
     let std_tc = btime || wtime || binc || winc;
     let oth_tc = depth || nodes || movetime;
 
-    // Either all or none of the standard time control flags must be set.
-    if std_tc && !(btime && wtime && binc && winc) {
-        return error!("bad flag set: missing standard time control flags");
-    }
-
     // No other time control flags may be set alongside 'infinite'.
     if infinite && (std_tc || oth_tc) {
         return error!("bad flag set: time control flags set alongside infinite");
@@ -130,8 +125,8 @@ fn parse_limits(bundle: &Bundle<Context>, position: &chess::Position) -> Result<
                 chess::Color::White => ("wtime", "winc"),
             };
 
-            let time: u128 = get_flag!(time).unwrap();
-            let incr: u128 = get_flag!(incr).unwrap();
+            let time: u128 = get_flag!(time).unwrap_or(0);
+            let incr: u128 = get_flag!(incr).unwrap_or(0);
 
             Some((time / 20 + incr / 2).max(1))
         } else {
