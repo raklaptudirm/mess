@@ -1,12 +1,6 @@
-use std::{
-    str::FromStr,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use tetka::{
-    games::{games::chess, interface::PositionType},
-    uxi::Command,
-};
+use tetka::{games::games::chess, uxi::Command};
 
 use crate::core::Searcher;
 
@@ -27,7 +21,7 @@ pub struct Context {
 
 impl Default for Context {
     fn default() -> Self {
-        let position = chess::Position::from_str(chess::Position::STARTPOS).unwrap();
+        let position = chess::Position::default();
         Context {
             position,
             searcher: Arc::new(Mutex::new(Searcher::new())),
@@ -47,7 +41,7 @@ pub fn d() -> Command<Context> {
 pub fn ucinewgame() -> Command<Context> {
     Command::new(|bundle| {
         let mut ctx = bundle.lock();
-        ctx.position = chess::Position::from_str(chess::Position::STARTPOS)?;
+        ctx.position = chess::Position::default();
 
         Ok(())
     })
