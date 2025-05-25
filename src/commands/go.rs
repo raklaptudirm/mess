@@ -3,32 +3,12 @@ use tetka::{
         games::chess,
         interface::{MoveType, PositionType},
     },
-    uxi::{Bundle, Command, Flag, RunError, error},
+    uxi::{Bundle, Command, Flag, RunError, error, lock},
 };
 
 use crate::core::Limits;
 
 use super::Context;
-
-// TODO: Move these macros into UXI
-
-macro_rules! lock {
-    ($bundle:ident > $ctx:ident => $($stmt:stmt;)*) => {
-        let $ctx = $bundle.lock();
-        $(
-            $stmt
-        )*
-        drop($ctx);
-    };
-
-    ($bundle:ident > mut $ctx:ident => $($stmt:stmt;)*) => {
-        let mut $ctx = $bundle.lock();
-        $(
-            $stmt
-        )*
-        drop($ctx);
-    };
-}
 
 pub fn go() -> Command<Context> {
     Command::new(|bundle: Bundle<Context>| {
@@ -102,36 +82,26 @@ fn parse_limits(bundle: &Bundle<Context>, position: &chess::Position) -> Result<
         return error!("bad flag set: time control flags set alongside infinite");
     }
 
-    // A little utility macro to parse the given flag into the required type.
-    macro_rules! get_flag {
-        ($name:expr) => {
-            match bundle.get_single_flag($name) {
-                Some(value) => Some(value.parse()?),
-                None => None,
-            }
-        };
-    }
-
     ////////////////////////////////////////////
     // Parse the provided search/perft limits //
     ////////////////////////////////////////////
 
     Ok(Limits {
-        maxnodes: get_flag!("nodes"),
-        maxdepth: get_flag!("depth"),
+        maxnodes: bundle.get_parsed_flag("nodes")?,
+        maxdepth: bundle.get_parsed_flag("depth")?,
         movetime: if std_tc {
             let (time, incr) = match position.side_to_move() {
                 chess::Color::Black => ("btime", "binc"),
                 chess::Color::White => ("wtime", "winc"),
             };
 
-            let time: u128 = get_flag!(time).unwrap_or(0);
-            let incr: u128 = get_flag!(incr).unwrap_or(0);
+            let time: u128 = bundle.get_parsed_flag(time)?.unwrap_or(0);
+            let incr: u128 = bundle.get_parsed_flag(incr)?.unwrap_or(0);
 
             Some((time / 20 + incr / 2).max(1))
         } else {
-            get_flag!("movetime")
+            bundle.get_parsed_flag("movetime")?
         },
-        movestogo: get_flag!("movestogo"),
+        movestogo: bundle.get_parsed_flag("movestogo")?,
     })
 }

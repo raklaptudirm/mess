@@ -2,30 +2,10 @@ use std::time;
 
 use tetka::{
     games::{common::perft::perft, games::chess},
-    uxi::{Bundle, Command, Flag, RunError},
+    uxi::{Bundle, Command, Flag, RunError, lock},
 };
 
 use super::Context;
-
-// TODO: Move these macros into UXI
-
-macro_rules! lock {
-    ($bundle:ident > $ctx:ident => $($stmt:stmt;)*) => {
-        let $ctx = $bundle.lock();
-        $(
-            $stmt
-        )*
-        drop($ctx);
-    };
-
-    ($bundle:ident > mut $ctx:ident => $($stmt:stmt;)*) => {
-        let mut $ctx = $bundle.lock();
-        $(
-            $stmt
-        )*
-        drop($ctx);
-    };
-}
 
 pub fn perft_cmd() -> Command<Context> {
     Command::new(|bundle: Bundle<Context>| {
@@ -80,17 +60,8 @@ fn timed_perft<const SPLIT: bool, const BULK: bool>(position: chess::Position, d
 }
 
 fn parse_flags(bundle: &Bundle<Context>) -> Result<(u8, bool, bool), RunError> {
-    macro_rules! get_flag {
-        ($name:expr) => {
-            match bundle.get_single_flag($name) {
-                Some(value) => Some(value.parse()?),
-                None => None,
-            }
-        };
-    }
-
     Ok((
-        get_flag!("depth").unwrap_or(6),
+        bundle.get_parsed_flag("depth")?.unwrap_or(6),
         bundle.is_flag_set("split"),
         bundle.is_flag_set("bulk"),
     ))
