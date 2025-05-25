@@ -23,11 +23,7 @@ fn main() {
         .command("position", commands::position())
         .command("ucinewgame", commands::ucinewgame());
 
-    let args = env::args()
-        .skip(1)
-        .reduce(|acc, e| format!("{} {}", acc, e))
-        .unwrap_or("".to_string());
-    let args = args.trim().to_string();
+    let args = env::args().skip(1).collect::<Vec<_>>().join(" ");
     if args.is_empty() {
         client.start();
     } else if let Err(err) = client.run_cmd_string(&args) {
