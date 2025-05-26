@@ -6,11 +6,16 @@ mod commands;
 mod core;
 mod options;
 
+const IDENT: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
+const AUTHOR: &str = env!("CARGO_PKG_AUTHORS");
+
 fn main() {
+    println!("{} by {}", IDENT, AUTHOR);
+
     let client = Client::new()
         .protocol("uci")
-        .engine("Mess v1.0.0")
-        .author("Rak Laptudirm")
+        .engine(IDENT)
+        .author(AUTHOR)
         // Register engine options.
         .option("Hash", options::hash())
         .option("Threads", options::threads())

@@ -1,13 +1,18 @@
 [package]
-name = "mess"
-version = "0.1.0"
+name = "Mess"
+version = "1.0.0"
+authors = [ "Rak Laptudirm" ]
 edition = "2024"
+description = "A Chess Engine"
+repository = "https://github.com/raklaptudirm/mess"
+license = "Apache-2.0"
 
 [dependencies]
-derive-new = "0.7.0"
 rand = "0.9.1"
+derive-new = "0.7.0"
 tetka = { git = "https://github.com/raklaptudirm/tetka.git", branch = "fixes" }
 
+# Set all optimization flags, we want all the performance we can get.
 [profile.release]
 opt-level = 3
 codegen-units = 1
