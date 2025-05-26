@@ -11,26 +11,20 @@ pub fn perft_cmd() -> Command<Context> {
     Command::new(|bundle: Bundle<Context>| {
         lock! {
             bundle > ctx =>
-            let position = ctx.position.clone(); // Get the position to search
+            let position = ctx.position.clone();
         }
 
         let (depth, split, bulk) = parse_flags(&bundle)?;
 
-        if split {
-            if bulk {
-                timed_perft::<true, true>(position.clone(), depth);
-            } else {
-                timed_perft::<true, false>(position.clone(), depth);
-            }
-        } else {
-            let max_depth = depth;
-            for depth in 1..=max_depth {
-                if bulk {
-                    timed_perft::<false, true>(position.clone(), depth);
-                } else {
-                    timed_perft::<false, false>(position.clone(), depth);
-                }
-            }
+        // If split perft is enabled, we just do the perft at the target depth.
+        // Otherwise, we run perft for each depth starting from 1 to the target.
+        let depths = match split {
+            true => depth..=depth,
+            false => 1..=depth,
+        };
+
+        for depth in depths {
+            timed_perft(split, bulk, position.clone(), depth);
         }
 
         Ok(())
@@ -43,20 +37,22 @@ pub fn perft_cmd() -> Command<Context> {
     .parallelize(true)
 }
 
-fn timed_perft<const SPLIT: bool, const BULK: bool>(position: chess::Position, depth: u8) {
+fn timed_perft(split: bool, bulk: bool, position: chess::Position, depth: u8) {
     let start = time::Instant::now();
-    let nodes = perft::<SPLIT, BULK, _>(position.clone(), depth);
+    // Manual dynamic dispatch with the correct const generics.
+    let nodes = match (split, bulk) {
+        (true, true) => perft::<true, true, _>(position, depth),
+        (true, false) => perft::<true, false, _>(position, depth),
+        (false, true) => perft::<false, true, _>(position, depth),
+        (false, false) => perft::<false, false, _>(position, depth),
+    };
     let duration = start.elapsed();
 
     let time = duration.as_millis().max(1);
+    let nps = nodes as u128 * 1000 / time;
 
-    println!(
-        "info depth {} nodes {} time {} nps {}",
-        depth,
-        nodes,
-        time,
-        1000 * nodes as u128 / time
-    );
+    // Report the perft results.
+    println!("info depth {depth} nodes {nodes} time {time} nps {nps}");
 }
 
 fn parse_flags(bundle: &Bundle<Context>) -> Result<(u8, bool, bool), RunError> {
