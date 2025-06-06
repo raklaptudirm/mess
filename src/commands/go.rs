@@ -14,8 +14,13 @@ pub fn go() -> Command<Context> {
     Command::new(|bundle: Bundle<Context>| {
         lock! {
             bundle > ctx =>
-            let position = ctx.position.clone(); // Get the position to search
-            let searcher = ctx.searcher.clone(); // Get the previous search state
+
+            // The searcher clone is a clone of the Arc, and thus quite unalike
+            // to the position clone. While the position binding contains a
+            // completely new value, searcher holds a reference to the "global"
+            // searcher instanced shared in the engine.
+            let searcher = ctx.searcher.clone();
+            let position = ctx.position.clone();
         }
 
         match searcher.lock() {
